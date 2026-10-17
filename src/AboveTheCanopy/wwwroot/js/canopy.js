@@ -1,4 +1,4 @@
-// Above the Canopy v2 - animation engine (plain canvas 2D, no dependencies).
+// Above the Canopy v4 - animation engine (plain canvas 2D, no dependencies).
 // World units: the scene is H = 600 units tall; the canvas is scaled to fit.
 // Exported as an ES module and driven from Blazor (Pages/Home.razor) via JS interop.
 //
@@ -22,6 +22,10 @@ const MEMBER_GAP = 36;
 const KOALA_SCALE = 1.45;
 const WALK_SPEED_INFORMED = 46;
 const WALK_SPEED_UNINFORMED = 42;
+// v4: project time. 1 project day = 2 seconds of animation at 1x speed (a comms-ON run is roughly 100 days).
+const SEC_PER_DAY = 2;
+const dd = n => n + (n === 1 ? " day" : " days");
+const dayOf = t => Math.floor(t / SEC_PER_DAY) + 1;
 const TEAM_COLORS = ['#f28c28', '#3f8fe8', '#f2c233', '#9b59d0']; // hard hats / bandanas
 
 // Obstacle layout, in path order. Distinct problems, distinct solutions.
@@ -43,15 +47,16 @@ const SURPRISE_DEFS = [
     reveal: 'SURPRISE! The ground collapses into a sinkhole right in front of the koalas. Nobody saw it coming, not even the Manager.',
     revSay: 'Whoa! The ground just vanished! 😱',
     up: 'Manager! A sinkhole just opened up! 🕳️', ack: 'Stay back! I\'ll tell the boss.',
-    toLeader: 'Unplanned sinkhole. Team needs planks and a bit of time.', leaderReply: 'Safety first, take the time. Goal stays the same. 🔺',
-    down: 'Boss says take your time. Planks on the way!', teamAck: 'Thanks! On it 👍',
+    toLeader: 'Unplanned sinkhole. Team needs planks, about a week.', leaderReply: 'Safety first, take the week. Goal stays the same. 🔺',
+    down: 'Boss says take the time. Gather planks!', teamAck: 'Thanks! On it 👍',
+    gatherCap: 'Gathering materials: the koalas fan out into the bush and carry planks back to the sinkhole.',
     fixCap: 'Backed by the Manager and the Leader, the koalas lay planks across the sinkhole and cross safely.',
     aloneCap: 'Alone and unsure if they\'re allowed the time, the koalas slowly rig a crossing.' },
   { type: 'treefall', x: 3900, w: 150, name: 'fallen gum tree', icon: '🌳',
     reveal: 'SURPRISE! CRAAACK! A huge gum tree crashes down across the track. Even the Manager didn\'t see that one coming.',
     revSay: 'TIMBERRR! 😵',
     up: 'Manager! A gum tree just fell across the track! 🌳', ack: 'Is everyone okay? Escalating now.',
-    toLeader: 'Tree down on the track. Team needs saws, about an hour\'s delay.', leaderReply: 'Everyone safe? Then take the hour. We\'ll adjust the plan.',
+    toLeader: 'Tree down on the track. Team needs saws, about 5 or 6 days.', leaderReply: 'Everyone safe? Then take the days. We\'ll adjust the plan.',
     down: 'Delay approved. Saw it up and roll it aside, carefully!', teamAck: 'Saws out! 🪚',
     fixCap: 'With the delay approved, the koalas saw up the trunk and roll the pieces off the track.',
     aloneCap: 'Nobody answers, so the koalas hack at the trunk for ages.' },
@@ -59,7 +64,7 @@ const SURPRISE_DEFS = [
     reveal: 'SURPRISE! A big brown snake slides out onto the track. Nobody could have planned for this.',
     revSay: 'S-s-snake!! 🐍',
     up: 'Manager! Big brown snake on the track! 🐍', ack: 'Freeze! Don\'t touch it. Telling the boss.',
-    toLeader: 'Snake on the track. Team needs to wait it out, short delay.', leaderReply: 'No rush. Let it pass safely. Goal stays the same. 🔺',
+    toLeader: 'Snake on the track. Team needs to wait it out, a few days.', leaderReply: 'No rush. Let it pass safely. Goal stays the same. 🔺',
     down: 'Boss says wait it out. Safety first!', teamAck: 'Waiting quietly... 🤫',
     fixCap: 'The koalas wait calmly at a safe distance until the snake slithers off into the bush.',
     aloneCap: 'Nobody tells them what to do, so the koalas panic, back off and wait nervously.' },
@@ -91,17 +96,30 @@ const MEETINGS = [
 ];
 const MEETING_PHASES = { arrive: 2.0, ask: 3.0, decide: 3.0, leave: 1.8 };
 
+// v4: manager-level meetings under the canopy. Another owl flies in to coordinate with the Manager while the
+// koalas are busy gathering materials, then flies off and the Manager refocuses on the team.
+const MGR_MEETINGS = [
+  { ob: 'river', label: 'OPS MANAGER', body: '#2e7d6f', wing: '#1f5a50', belly: '#d3f0e8', who: 'An Ops manager', topic: 'to share resources',
+    lines: [['visitor', 'Your team needs logs? We have spare! 🪵'], ['manager', 'Yes please! Drop them by the river.'], ['visitor', 'Done. Shout if you need more.'], ['manager', 'Legend, thanks! 🤝']] },
+  { ob: 'bog', label: 'PMO', body: '#5c6b7a', wing: '#3e4a56', belly: '#e3e9ef', who: 'The PMO', topic: 'for a quick status sync',
+    lines: [['visitor', 'Status sync? 📋'], ['manager', 'River done, bog in progress. On track.'], ['visitor', 'Great, I\'ll update the roadmap.'], ['manager', 'Thanks! Back to my koalas.']] },
+  { ob: 'cliff', label: 'PROJECT MANAGER B', body: '#b8621b', wing: '#8a4510', belly: '#ffe3c4', who: 'Project manager B', topic: 'to coordinate between teams',
+    lines: [['visitor', 'Can we share your rope after? 🪢'], ['manager', 'Sure, once my koalas are down the cliff.'], ['visitor', 'Thanks! Need a ladder later? 🪜'], ['manager', 'Yes please! Leave it by the wall.']] },
+];
+const MM_PHASES = { arrive: 1.5, talk: 6.8, leave: 1.5 };
+const MM_LINE_GAP = 1.7;
+
 // Workplace distractions for the Leader and Manager, triggered by how far the team has got.
 const DISTRACTIONS = [
   { who: 'leader', kind: 'magpie', atX: 790,
     say: 'Argh! Swooping magpies! 🐦', say2: 'Not the eyes, not the eyes!',
     cap: 'Distraction! A magpie swoops the Leader. (Every Aussie knows that feeling.)',
     refocus: 'Shake it off. Eyes on the pyramid. 🔺' },
-  { who: 'manager', kind: 'meeting', atX: 1010,
+  { who: 'manager', kind: 'meeting', atX: 380,
     say: '📅 Meeting request: "Sync about the sync"', say2: 'Ugh, another meeting...',
     cap: 'Distraction! Mid-flight, the Manager gets yet another meeting request.',
     refocus: 'Declined. Back to the team. ✅' },
-  { who: 'leader', kind: 'email', atX: 3640,
+  { who: 'leader', kind: 'email', atX: 3700,
     say: '📧 URGENT!!! Reply-all chain (47 new)', say2: 'Is it actually urgent though?',
     cap: 'Distraction! An "urgent" email storm floods the Leader\'s inbox.',
     refocus: 'That can wait. Back to the vision. 🔺' },
@@ -180,7 +198,7 @@ function buildDeco() {
   }
   for (let x = 0; x < WORLD_W; x += 40 + r() * 60) d.hang.push({ x, len: 50 + r() * 120, ph: r() * 6 });
   for (let x = 0; x < WORLD_W; x += 45 + r() * 55) {
-    if (inZone(x, 10, ['river', 'bog', 'log', 'wall'])) continue;
+    if (inZone(x, 10, ['river', 'bog', 'log', 'wall', 'boulder'])) continue;
     if (Math.abs(x - GOAL_X) < PYR_HALF) continue;
     d.bushes.push({ x, s: 0.7 + r() * 0.6, c: Math.floor(r() * 3) });
   }
@@ -218,6 +236,8 @@ function memberY(x) {
     const seg = b.w / 6;
     return GROUND - 2 - Math.abs(Math.sin(Math.PI * (x - b.x) / seg)) * 14; // hop stone to stone
   }
+  const bo = ob('boulder');
+  if (bo.done && x > bo.x - 14 && x < bo.x + bo.w + 14) return GROUND - Math.abs(Math.sin((x - bo.x) / 18)) * 6; // stepping over rubble
   return groundBase(x);
 }
 function laneOffset(x) {
@@ -238,21 +258,23 @@ function reset() {
     distractions: DISTRACTIONS.map(d => Object.assign({ done: false }, d)),
     surprises: SURPRISE_DEFS.map(d => Object.assign({}, d, { isSurprise: true, rev: 0, prog: 0, done: false, active: false, chainDone: false })),
     meetings: MEETINGS.map(m => Object.assign({ done: false }, m)),
+    mgrMeetings: MGR_MEETINGS.map(m => Object.assign({ done: false, pending: false }, m)), day: 1,
     waiters: [],
     team: { x: START_X + 70, mode: 'idle', seq: null, step: 0, stepT: 0, stepStartX: 0, mood: '', m0: 0, m0y: 0,
-      wrong: 0, surprises: 0, distractions: 0, priorities: 0, reported: 0, cheer: 0, bush: null, hackT: 0, bushesCut: 0, cleared: 0 },
-    mgr: { x: START_X + 140, y: MANAGER_Y, alert: 0, ready: false, ox: 0, oy: 0, rot: 0, dist: null, focusT: 0 },
+      wrong: 0, surprises: 0, distractions: 0, priorities: 0, reported: 0, syncs: 0, upT: 0, seqStart: 0, cheer: 0, bush: null, hackT: 0, bushesCut: 0, cleared: 0 },
+    mgr: { x: START_X + 140, y: MANAGER_Y, alert: 0, ready: false, ox: 0, oy: 0, rot: 0, dist: null, focusT: 0, meeting: null },
     leader: { x: START_X + 260, y: LEADER_Y, beam: null, beamT: 0, ox: 0, oy: 0, rot: 0, dist: null, meeting: null },
-    bubbles: [], queue: { leader: [], manager: [], team: [] }, pulses: [], events: [], particles: [],
+    bubbles: [], queue: { leader: [], manager: [], team: [], visitor: [] }, pulses: [], events: [], particles: [],
     caption: '', phase: '', capT: 0, finished: false, introCam: 'start', selected: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
   };
   camX = camTarget = 0;
   call('OnRestarted');
+  call('OnDay', 1);
   scheduleIntro();
 }
 
-function stats() { const t = S.team; call('OnStats', t.wrong, t.surprises, t.distractions, t.priorities, t.reported); }
+function stats() { const t = S.team; call('OnStats', t.wrong, t.surprises, t.distractions, t.priorities, t.reported, t.syncs); }
 function later(delay, fn) { S.events.push({ at: S.t + delay, fn }); }
 function caption(text, phase) {
   S.caption = text; S.capT = S.t; if (phase) S.phase = phase;
@@ -286,6 +308,7 @@ function say(from, to, text, reply, onArrive) {
 function agentPos(who) {
   if (who === 'leader') return { x: S.leader.x + S.leader.ox, y: S.leader.y + S.leader.oy };
   if (who === 'manager') return { x: S.mgr.x + S.mgr.ox, y: S.mgr.y + S.mgr.oy };
+  if (who === 'visitor') return S.mgr.meeting ? mgrVisitorPos() : { x: -9999, y: 0 };
   const tx = S.team.x;
   return { x: tx - MEMBER_GAP * 1.5, y: memberY(tx) - 62 + laneOffset(tx) };
 }
@@ -312,7 +335,7 @@ function scheduleIntro() {
 
 function kickOffTeam() {
   if (settings.comms) {
-    say('manager', 'team', 'Koalas: east to the pyramid! I\'ll warn you about hazards.', 'East it is! Machetes out! 🐨💪', () => {
+    say('manager', 'team', 'Koalas: east to the pyramid! I\'ll warn you about hazards.', 'East it is! Tools out! 🐨💪', () => {
       S.team.mode = 'walk';
       caption('The koalas set off on the forest floor. Down here they can only see a few metres ahead.', 'Execution');
     });
@@ -333,42 +356,46 @@ function kickOffTeam() {
 function sequenceFor(o, informed) {
   switch (o.type) {
     case 'vines': return informed ? [
-      { dur: 0.6, mood: 'work', cap: 'Warned about the vines, the koalas arrive with machetes ready and hack a path straight through.', say: 'Machetes out! 🔪' },
+      { dur: 0.6, mood: 'work', cap: 'Warned about the vines, the koalas arrive with their cutting tools ready and clear a path straight through.', say: 'Tools out! ✂️' },
       { dur: 2.6, mood: 'work', prog: true },
     ] : [
       { dur: 1.6, mood: 'stuck', cap: 'Nobody warned them: the koalas walk into a tangle of vines and get stuck!', say: 'We\'re stuck! 😩', surprise: true },
-      { dur: 1.8, mood: 'confused', move: -70, wrong: true, cap: 'Someone runs back to camp for a bigger machete...' },
+      { dur: 1.8, mood: 'confused', move: -70, wrong: true, cap: 'Someone runs back to camp for better tools...' },
       { dur: 1.6, mood: 'walk', move: 70 },
       { dur: 3.4, mood: 'work', prog: true, cap: 'Finally, they start hacking through the vines.' },
     ];
     case 'boulder': return informed ? [
-      { dur: 0.4, mood: 'walk', cap: 'Thanks to the Manager\'s heads-up, the koalas veer around the boulder early.', say: 'Around the left side! ↪', onStart: () => { o.route = true; } },
-      { dur: 3.0, mood: 'walk', move: o.w + 90 },
+      { dur: 0.6, mood: '', cap: 'Warned early, the koalas know the boulder is too big to go around, and the Manager has arranged training.', say: 'Training time! 🎓' },
+      { dur: 3.0, train: true, cap: 'Investing in team skills: a quick training session. The koalas learn to use hammers and chisels.', say: 'Training: hammer and chisel! 🔨' },
+      { dur: 5.4, mood: 'chisel', form: 'rock', prog: true, cap: 'Upskilled! Together the koalas break the boulder down: tap, tap, tap... cracks appear, then it splits.', say: 'Tap... tap... TAP! 🔨', onStart: () => { S.team.upT = 3.6; } },
+      { dur: 1.8, mood: 'walk', move: o.w + 40, cap: 'Just rubble left to step over. The new skills stay with the team for the rest of the journey.' },
     ] : [
       { dur: 1.2, mood: 'stuck', cap: 'BONK! The koalas walk straight into a giant boulder.', say: 'Ouch! A boulder?! 💥', surprise: true },
       { dur: 2.2, mood: 'work', cap: 'They try to push it out of the way. It doesn\'t budge.', say: 'Push! PUSH!' },
-      { dur: 2.0, mood: 'confused', move: -90, wrong: true, cap: 'Wrong turn: they back-track looking for another way.', say: 'Which way now? 🤷' },
-      { dur: 1.6, mood: 'walk', move: 90, onStart: () => { o.route = true; } },
-      { dur: 3.4, mood: 'walk', move: o.w + 90, cap: 'At last they find the way around.' },
+      { dur: 2.0, mood: 'confused', move: -90, wrong: true, cap: 'Wrong turn: they back-track looking for a way around. There isn\'t one.', say: 'Which way now? 🤷' },
+      { dur: 1.6, mood: 'walk', move: 90 },
+      { dur: 4.4, train: true, slow: true, cap: 'Nobody arranged any training, so the koalas teach themselves hammer and chisel by trial and error.', say: 'How does this hammer work?? 🤔' },
+      { dur: 7.2, mood: 'chisel', form: 'rock', prog: true, cap: 'Self-taught at last, they chip away at the boulder. It takes much longer.', say: 'Tap... ow... tap...', onStart: () => { S.team.upT = 3.6; } },
+      { dur: 1.8, mood: 'walk', move: o.w + 40, cap: 'Finally, rubble. Skills built the hard way.' },
     ];
     case 'river': return informed ? [
-      { dur: 0.6, mood: 'work', cap: 'The Manager spotted the river early, so the koalas brought logs and build a bridge.', say: 'Logs ready, build the bridge! 🪵' },
-      { dur: 3.4, mood: 'work', prog: true, ask: ['Need two more logs!', 'More logs on the left bank! 🪵'] },
+      { dur: 0.6, mood: 'work', cap: 'The Manager spotted the river early, so the koalas know exactly what they need: logs for a bridge.', say: 'Spread out, grab logs! 🪵' },
+      { dur: 4.2, gather: 'logs', cap: 'Gathering materials: the koalas fan out into the bush, pick up logs and carry them back to the bank.' },
+      { dur: 3.4, mood: 'work', prog: true, cap: 'Logs gathered, the koalas build the bridge together.' },
     ] : [
       { dur: 1.0, mood: 'confused', cap: 'A river! Nobody saw it coming.', say: 'A river?! 😮', surprise: true },
       { dur: 1.8, mood: 'stuck', m0: p => Math.sin(Math.PI * p) * 60, cap: 'SPLASH! One brave koala tries to wade across. Far too deep!', say: 'Too deep! 💦' },
-      { dur: 2.4, mood: 'confused', move: -110, wrong: true, cap: 'The koalas scramble back into the forest to hunt for logs...' },
-      { dur: 2.0, mood: 'walk', move: 110 },
+      { dur: 5.8, gather: 'logs', lost: true, wrong: true, cap: 'Nobody told them what to bring, so the koalas scatter into the bush hunting for anything that floats...', say: 'Logs? Sticks? Anything?! 🤷' },
       { dur: 4.2, mood: 'work', prog: true, cap: '...and slowly build a bridge by trial and error.' },
     ];
     case 'bog': return informed ? [
-      { dur: 0.6, mood: 'work', cap: 'The Manager mapped the firm spots in the bog. The koalas drop stepping stones and hop across.', say: 'Stones here, here and here! 🪨' },
-      { dur: 2.8, mood: 'work', prog: true, ask: ['Pass more stones down the line!', 'Big flat ones are by the fern! 👍'] },
+      { dur: 0.6, mood: 'work', cap: 'The Manager mapped the firm spots in the bog, so the koalas know they need flat stepping stones.', say: 'Find flat stones! 🪨' },
+      { dur: 4.0, gather: 'stones', cap: 'Gathering materials: the koalas head off the path, pick up flat stones and carry them back.' },
+      { dur: 2.8, mood: 'work', prog: true, cap: 'Stone by stone, they lay stepping stones and hop across.' },
     ] : [
       { dur: 1.0, mood: 'confused', cap: 'Squelch! A smelly bog nobody mentioned.', say: 'Ew, a bog?! 🤢', surprise: true },
       { dur: 2.0, mood: 'stuck', m0: p => Math.sin(Math.PI * p) * 50, cap: 'One koala steps in and sinks up to its tummy!', say: 'Help, I\'m sinking! 😱' },
-      { dur: 2.2, mood: 'confused', move: -90, wrong: true, cap: 'They retreat to hunt for rocks...', say: 'Which way now? 🤔' },
-      { dur: 1.8, mood: 'walk', move: 90 },
+      { dur: 5.6, gather: 'stones', lost: true, wrong: true, cap: 'They wander off the path to hunt for rocks, not sure what size they need...', say: 'Which rocks?? 🤔' },
       { dur: 3.8, mood: 'work', prog: true, cap: '...and test every wobbly stepping stone one at a time.' },
     ];
     case 'log': return informed ? [
@@ -382,12 +409,14 @@ function sequenceFor(o, informed) {
       { dur: 2.6, mood: 'work', prog: true, cap: 'Finally someone spots the hollow and they clear out the cobwebs.' },
     ];
     case 'cliff': return informed ? [
-      { dur: 0.6, mood: 'work', cap: 'The Manager found the safe spot to climb down, so the koalas tie off a rope and abseil down the cliff.', say: 'Rope here, as planned! 🪢' },
-      { dur: 2.4, mood: 'work', prog: true, ask: ['Need more rope!', 'Rope coming down! 🪢'] },
+      { dur: 0.6, mood: 'work', cap: 'The Manager found the safe spot to climb down. The koalas need rope, so they collect long vines to braid one.', say: 'Grab long vines! 🌿' },
+      { dur: 3.8, gather: 'vines', cap: 'Gathering materials: the koalas fan out and drag long vines back to braid into a rope.' },
+      { dur: 2.4, mood: 'work', prog: true, cap: 'Rope braided and tied off at the marked spot, they abseil down the cliff.' },
     ] : [
       { dur: 1.2, mood: 'stuck', cap: 'Dead end! The ground just drops away at a cliff.', say: 'Whoa! A cliff! 😱', surprise: true },
       { dur: 2.4, mood: 'confused', move: -80, wrong: true, cap: 'Wrong turn: they wander along the edge looking for a way down...', say: 'Maybe further back?' },
-      { dur: 2.2, mood: 'confused', move: 80, say: 'Nope... back again.' },
+      { dur: 1.8, mood: 'confused', move: 80, say: 'Nope... back again.' },
+      { dur: 4.4, gather: 'vines', lost: true, cap: 'No rope, so they hunt around for anything long and strong...', say: 'Will vines work?? 🤔' },
       { dur: 3.0, mood: 'work', prog: true, cap: 'Eventually they rig a rope and lower themselves down.' },
     ];
     case 'bees': return informed ? [
@@ -401,13 +430,13 @@ function sequenceFor(o, informed) {
       { dur: 4.0, mood: 'sneak', move: o.w + 90, cap: 'Lesson learned the hard way: they sneak past quietly.' },
     ];
     case 'wall': return informed ? [
-      { dur: 0.6, mood: 'work', cap: 'Warned about the rock wall, the koalas carried a ladder. Up it goes!', say: 'Ladder up! 🪜' },
-      { dur: 2.2, mood: 'work', prog: true, ask: ['Can someone steady the top?', 'I\'ve got the top, climb away! 🦉'] },
+      { dur: 0.6, mood: 'work', cap: 'Warned about the rock wall, the koalas know they need a ladder.', say: 'Poles for a ladder! 🪜' },
+      { dur: 4.0, gather: 'poles', cap: 'Gathering materials: the koalas collect straight poles from the bush to lash into a ladder.' },
+      { dur: 2.2, mood: 'work', prog: true, cap: 'Ladder lashed together, and up it goes!' },
     ] : [
       { dur: 1.2, mood: 'stuck', cap: 'A sheer rock wall! Nobody brought a ladder.', say: 'How do we get up THAT? 😰', surprise: true },
       { dur: 2.0, mood: 'work', m0y: p => -Math.sin(Math.PI * p) * 46, cap: 'One koala tries to climb with bare paws... and slides back down.', say: 'Whoooa!' },
-      { dur: 2.4, mood: 'confused', move: -90, wrong: true, cap: 'They head back into the bush to find sticks...', say: 'Need sticks! Lots of sticks!' },
-      { dur: 1.8, mood: 'walk', move: 90 },
+      { dur: 5.6, gather: 'poles', lost: true, wrong: true, cap: 'They head back into the bush to find sticks, any sticks...', say: 'Need sticks! Lots of sticks!' },
       { dur: 3.4, mood: 'work', prog: true, cap: '...and lash together a wobbly ladder.' },
     ];
   }
@@ -416,7 +445,7 @@ function sequenceFor(o, informed) {
 
 function runSeq(steps, obstacle) {
   const tm = S.team;
-  tm.mode = 'seq'; tm.seq = steps; tm.step = 0; tm.stepT = 0; tm.stepStartX = tm.x; tm.seqOb = obstacle;
+  tm.mode = 'seq'; tm.seq = steps; tm.step = 0; tm.stepT = 0; tm.stepStartX = tm.x; tm.seqOb = obstacle; tm.seqStart = S.t;
   startStep();
 }
 function startStep() {
@@ -458,15 +487,23 @@ function updateSeq(dt) {
 function obstacleCleared(o) {
   const tm = S.team;
   o.done = true; o.prog = 1; o.active = false;
+  const days = Math.max(1, Math.round((S.t - tm.seqStart) / SEC_PER_DAY));
+  const Name = o.name[0].toUpperCase() + o.name.slice(1);
   if (o.isSurprise) {
     tm.cheer = 1.0;
-    caption(`Surprise handled! The ${o.name} is sorted and the koalas are back on the path to the pyramid.`, 'Execution');
+    caption(settings.comms
+      ? `Surprise handled! The ${o.name} cost ${dd(days)}, but everyone knew why and the goal stayed the same.`
+      : `Handled alone: the ${o.name} cost ${dd(days)}, and nobody up top even knew.`, 'Execution');
     bubble('team', pick(CHEERS, tm.cleared + 2), 2.2);
     if (settings.comms) later(1.0, () => say('manager', 'leader', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} sorted. Back on track!`, 'Great recovery, team! 🦅'));
     return;
   }
   tm.cleared++; tm.cheer = 1.0;
-  caption(`${o.name[0].toUpperCase() + o.name.slice(1)} cleared! The koalas push on through the undergrowth.`, 'Execution');
+  if (o.informed) caption(`${Name} cleared in ${dd(days)}! The koalas push on through the undergrowth.`, 'Execution');
+  else {
+    const plan = Math.max(1, Math.round(sequenceFor(o, true).reduce((a, st) => a + st.dur, 0) / SEC_PER_DAY));
+    caption(`${Name} cleared, but going in blind took ${dd(days)} instead of about ${dd(plan)}.`, 'Execution');
+  }
   bubble('team', pick(CHEERS, tm.cleared), 2.2);
   // Manager reports progress up; the Leader recognises the team.
   later(1.0, () => say('manager', 'leader', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} cleared! ✅`, null, () => {
@@ -482,6 +519,9 @@ function update(dt) {
   for (const e of S.events.slice()) if (S.t >= e.at) { S.events.splice(S.events.indexOf(e), 1); e.fn(); }
   const tm = S.team, mg = S.mgr, ld = S.leader;
   tm.cheer = Math.max(0, tm.cheer - dt);
+  tm.upT = Math.max(0, tm.upT - dt);
+  if (!S.finished) { const d = dayOf(S.t); if (d !== S.day) { S.day = d; call('OnDay', d); } }
+  if (tm.mood === 'chisel' && Math.random() < dt * 16) { const b = ob('boulder'); S.particles.push({ kind: 'confetti', x: b.x + 4 + Math.random() * (b.w - 8), y: GROUND - 14 - Math.random() * 60, vx: -40 - Math.random() * 80, vy: -60 - Math.random() * 90, r: 0, vr: 6, life: 0.7, c: Math.random() < 0.5 ? '#8a8d91' : '#b9bcc0' }); }
 
   // --- team ---
   if (tm.mode === 'walk') {
@@ -517,12 +557,20 @@ function update(dt) {
   if (!S.finished && (tm.mode === 'walk' || tm.mode === 'hack')) {
     for (const d of S.distractions) {
       const ag = d.who === 'leader' ? ld : mg;
-      if (!d.done && tm.x >= d.atX && !ag.dist && !(d.who === 'leader' && ld.meeting) && mg.ready) { d.done = true; startDistraction(ag, d); }
+      if (!d.done && tm.x >= d.atX && !ag.dist && !(d.who === 'leader' && ld.meeting) && !(d.who === 'manager' && mg.meeting) && mg.ready) { d.done = true; startDistraction(ag, d); }
     }
     for (const m of S.meetings) {
-      if (!m.done && tm.x >= m.atX && !ld.dist && !ld.meeting && !S.waiters.length && mg.ready) { m.done = true; startMeeting(m); }
+      if (!m.done && tm.x >= m.atX && !ld.dist && !ld.meeting && !mg.meeting && !S.waiters.length && mg.ready) { m.done = true; startMeeting(m); }
     }
   }
+  // v4: manager meetings start while the koalas are gathering materials for that obstacle
+  for (const m of S.mgrMeetings) {
+    if (m.done || S.finished) continue;
+    const o = ob(m.ob), st = tm.seq && tm.seq[tm.step];
+    if (!m.pending && ((tm.seqOb === o && st && st.gather && tm.stepT >= 1.0) || o.done)) m.pending = true;
+    if (m.pending && mg.ready && !mg.meeting && !mg.dist && !ld.meeting && !S.waiters.length && !(tm.seqOb && tm.seqOb.isSurprise)) { m.done = true; startMgrMeeting(m); }
+  }
+  updateMgrMeeting(dt);
   updateDistraction(ld, dt);
   updateMeeting(dt);
   if (S.waiters.length && !ld.dist && !ld.meeting) S.waiters.shift()();
@@ -551,13 +599,13 @@ function update(dt) {
 
   // --- routine communication ---
   if (mg.ready && !S.finished) {
-    if (S.t > S.nextLeaderTalk && !ld.dist && !ld.meeting && !mg.dist && !S.waiters.length && !(tm.seqOb && tm.seqOb.isSurprise)) {
+    if (S.t > S.nextLeaderTalk && !ld.dist && !ld.meeting && !mg.dist && !mg.meeting && !S.waiters.length && !(tm.seqOb && tm.seqOb.isSurprise)) {
       S.nextLeaderTalk = S.t + 19;
       const [a, b] = pick(LEADER_TALK, S.leaderTalkI++);
       ld.beam = 'goal'; ld.beamT = 2.4;
       say('leader', 'manager', a, b);
     }
-    if (S.t > S.nextCheckin && !mg.dist && tm.mode !== 'seq') {
+    if (S.t > S.nextCheckin && !mg.dist && !mg.meeting && tm.mode !== 'seq') {
       S.nextCheckin = S.t + 21;
       if (settings.comms) { const [a, b] = pick(MANAGER_CHECKIN, S.checkinI++); say('manager', 'team', a, b); }
       else bubble('team', pick(LONELY, S.checkinI++), 2.6);
@@ -567,7 +615,7 @@ function update(dt) {
   // --- bubbles (with per-speaker queue) / pulses / particles ---
   for (const b of S.bubbles) b.t += dt;
   S.bubbles = S.bubbles.filter(b => b.t < b.dur);
-  for (const who of ['leader', 'manager', 'team']) {
+  for (const who of ['leader', 'manager', 'team', 'visitor']) {
     const q = S.queue[who]; if (!q.length) continue;
     const cur = S.bubbles.find(b => b.who === who);
     if (!cur || cur.t >= MIN_SHOW) { const n = q.shift(); showBubble(who, n.text, n.dur); }
@@ -635,14 +683,14 @@ function spot(o) {
   if (settings.comms) {
     caption(`The Manager spots a ${o.name} ahead and radios a warning down to the koalas.`, 'Communication');
     const advice = {
-      vines: ['Heads up: vines ahead, bring machetes!', 'Machetes ready! 🔪'],
-      boulder: ['Boulder ahead: go around the left!', 'Left it is! ↪'],
-      river: ['River ahead: collect logs for a bridge!', 'Grabbing logs! 🪵'],
-      bog: ['Bog ahead: carry flat stones!', 'Stones, check! 🪨'],
+      vines: ['Heads up: vines ahead, bring cutting tools!', 'Tools ready! ✂️'],
+      boulder: ['Boulder ahead, too big to go round. Training and hammers on the way! 🔨', 'New skills? Yes please! 🎓'],
+      river: ['River ahead: gather logs for a bridge!', 'We\'ll fan out for logs! 🪵'],
+      bog: ['Bog ahead: you\'ll need flat stones!', 'Stone hunt! 🪨'],
       log: ['Big log ahead: there\'s a hollow you can crawl through!', 'Ooh, a tunnel! 🐨'],
-      cliff: ['Cliff ahead: rope down at the marked spot!', 'Rope ready! 🪢'],
+      cliff: ['Cliff ahead: braid a rope and climb down at the marked spot!', 'Vine rope it is! 🪢'],
       bees: ['Bees\' nest ahead: tiptoe quietly!', '(whispering) Okay... 🤫'],
-      wall: ['Rock wall ahead: bring the ladder!', 'Ladder on our shoulders! 🪜'],
+      wall: ['Rock wall ahead: gather poles for a ladder!', 'Poles it is! 🪜'],
     }[o.type];
     later(0.8, () => say('manager', 'team', '📻 ' + advice[0], advice[1], () => { o.informed = true; }));
   } else {
@@ -654,13 +702,14 @@ function spot(o) {
 function finish() {
   const tm = S.team;
   S.finished = true; tm.mode = 'done'; tm.mood = 'happy';
-  caption('The koalas reach the pyramid! 🎉 Vision (Leader) + planning & communication (Manager) + everyday hard work (Team) got them here.', 'Goal reached');
+  caption(`Delivered on day ${Math.ceil(S.t / SEC_PER_DAY)}! 🎉 The koalas reach the pyramid: vision (Leader) + planning & communication (Manager) + everyday hard work (Team).`, 'Goal reached');
   bubble('team', 'We made it!! 🎉🐨', 5);
   later(1.0, () => bubble('manager', 'Brilliant work, koalas! 🦉', 4));
   later(1.8, () => bubble('leader', 'Proud of every one of you! 🦅', 4));
   later(4.6, () => bubble('team', 'Group hug!! 🤗', 4));
   for (let i = 0; i < 80; i++) confetti(tm.x - 30 + (Math.random() - 0.5) * 60, memberY(tm.x) - 50, 1);
-  call('OnFinished', Math.round(S.t), tm.wrong, tm.surprises, tm.distractions, tm.priorities, tm.reported, settings.comms);
+  const days = Math.ceil(S.t / SEC_PER_DAY); S.day = days; call('OnDay', days);
+  call('OnFinished', Math.round(S.t), days, tm.wrong, tm.surprises, tm.distractions, tm.priorities, tm.reported, tm.syncs, settings.comms);
 }
 function confetti(x, y, n) {
   const cols = ['#ff5d5d', '#ffd34d', '#5dd3ff', '#8aff5d', '#d07bff', '#ffffff'];
@@ -678,13 +727,16 @@ function surpriseSeq(sp) {
   if (settings.comms) return [
     first,
     { dur: 1.0, mood: '', until: () => sp.chainDone, onStart: () => upChain(sp) },
+    ...(sp.type === 'sinkhole' ? [{ dur: 3.6, gather: 'planks', cap: sp.gatherCap }] : []),
     { dur: snake ? 2.6 : 3.2, mood: snake ? 'sneak' : 'work', prog: true, cap: sp.fixCap },
   ];
   return [
     first,
     { dur: 2.2, mood: 'confused', cap: 'The koalas call up for help... but with communication OFF, nobody answers.', say: sp.up + ' ...hello?' },
-    { dur: 2.0, mood: 'confused', move: -70, wrong: true, say: 'Guess we\'re on our own... 😟' },
-    { dur: 1.6, mood: 'walk', move: 70 },
+    sp.type === 'sinkhole'
+      ? { dur: 5.2, gather: 'planks', lost: true, wrong: true, say: 'Guess we\'re on our own... 😟', cap: 'On their own, the koalas search the bush for anything to bridge the hole...' }
+      : { dur: 2.0, mood: 'confused', move: -70, wrong: true, say: 'Guess we\'re on our own... 😟' },
+    ...(sp.type === 'sinkhole' ? [] : [{ dur: 1.6, mood: 'walk', move: 70 }]),
     { dur: 4.4, mood: snake ? 'sneak' : 'work', prog: true, cap: sp.aloneCap },
   ];
 }
@@ -702,6 +754,36 @@ function upChain(sp) {
       });
     });
   });
+}
+
+// ---------- v4: manager meetings (sideways coordination under the canopy) ----------
+function startMgrMeeting(m) {
+  S.mgr.meeting = { def: m, phase: 'arrive', t: 0, li: 0 };
+  caption(`Manager meeting: ${m.who} owl flies in under the canopy ${m.topic}. Managers coordinate sideways too.`, 'Manager meeting');
+}
+function updateMgrMeeting(dt) {
+  const M = S.mgr.meeting; if (!M) return;
+  M.t += dt;
+  if (M.phase === 'talk') {
+    while (M.li < M.def.lines.length && M.t >= M.li * MM_LINE_GAP) { const [w, txt] = M.def.lines[M.li++]; bubble(w, txt, 2.3); }
+  }
+  if (M.t >= MM_PHASES[M.phase]) {
+    M.t = 0;
+    if (M.phase === 'arrive') M.phase = 'talk';
+    else if (M.phase === 'talk') {
+      M.phase = 'leave';
+      S.team.syncs++; stats();
+      S.mgr.focusT = 2.0;
+      caption('The visiting owl flies off, and the Manager refocuses on the koalas. 🐨', 'Refocus');
+    } else S.mgr.meeting = null;
+  }
+}
+function mgrVisitorPos() {
+  const M = S.mgr.meeting, bx = S.mgr.x + 205, by = MANAGER_Y + 46 + Math.sin(S.t * 2.4) * 5;
+  const p = Math.min(1, M.t / MM_PHASES[M.phase]);
+  if (M.phase === 'arrive') { const q = ease(p); return { x: bx + (1 - q) * 560, y: by - (1 - q) * (1 - q) * 130 }; }
+  if (M.phase === 'leave') { const q = ease(p); return { x: bx + q * 600, y: by - q * q * 150 }; }
+  return { x: bx, y: by };
 }
 
 // ---------- v3: leader meetings (competing priorities) ----------
@@ -925,18 +1007,52 @@ function drawGround() {
   }
 }
 
+// v4: the koalas break the boulder down: cracks, then it splits into chunks, then rubble.
+const CRACKS = [[[0.5, -104], [0.45, -82], [0.53, -64], [0.46, -42]], [[0.12, -46], [0.27, -44], [0.36, -28]], [[0.86, -62], [0.72, -54], [0.67, -36], [0.73, -14]],
+  [[0.46, -42], [0.38, -22], [0.44, 0]], [[0.3, -88], [0.37, -70], [0.33, -58]], [[0.6, -20], [0.72, -8]]];
+function drawRubble() {
+  const b = ob('boulder'); if (!b.done) return;
+  const x = b.x - camX; if (x > viewW + 80 || x + b.w < -80) return;
+  for (let k = 0; k < 14; k++) {
+    const rx = x - 22 + ((k * 37) % 100) / 100 * (b.w + 44), rs = 7 + (k * 13) % 7;
+    ctx.fillStyle = k % 2 ? '#8a8d91' : '#a6a9ad'; ctx.beginPath(); ctx.ellipse(rx, GROUND - rs * 0.45 + 3, rs, rs * 0.7, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.2)'; ctx.beginPath(); ctx.ellipse(rx - rs * 0.3, GROUND - rs * 0.7 + 3, rs * 0.4, rs * 0.25, 0, 0, 7); ctx.fill();
+  }
+}
 function drawBoulder() {
   const b = ob('boulder');
-  const x = b.x - camX; if (x > viewW + 50 || x + b.w < -50) return;
-  const shake = (S.team.seqOb === b && S.team.mood === 'work') ? Math.sin(S.t * 40) * 1.2 : 0;
-  ctx.fillStyle = '#8a8d91';
-  ctx.beginPath(); ctx.ellipse(x + b.w / 2 + shake, GROUND - 48, b.w / 2, 56, 0, Math.PI, 0); ctx.lineTo(x + b.w + shake, GROUND + 4); ctx.lineTo(x + shake, GROUND + 4); ctx.fill();
-  ctx.fillStyle = '#a7aaae';
-  ctx.beginPath(); ctx.ellipse(x + b.w * 0.38 + shake, GROUND - 70, b.w * 0.22, 18, -0.4, 0, 7); ctx.fill();
-  ctx.fillStyle = '#5f8f3a';
-  ctx.beginPath(); ctx.ellipse(x + b.w * 0.7 + shake, GROUND - 92, 24, 9, 0.3, 0, 7); ctx.fill();
-  ctx.strokeStyle = '#6a6d71'; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(x + b.w * 0.6, GROUND - 40); ctx.lineTo(x + b.w * 0.72, GROUND - 22); ctx.lineTo(x + b.w * 0.66, GROUND - 6); ctx.stroke();
+  const x = b.x - camX; if (x > viewW + 80 || x + b.w < -80) return;
+  const p = b.prog, busy = S.team.seqOb === b && (S.team.mood === 'chisel' || S.team.mood === 'work');
+  const shake = busy ? Math.sin(S.t * 40) * 1.2 : 0;
+  const rubble = (n, spread) => {
+    for (let k = 0; k < n; k++) {
+      const rx = x - spread / 2 + ((k * 37) % 100) / 100 * (b.w + spread), rs = 5 + (k * 13) % 7;
+      ctx.fillStyle = k % 2 ? '#8a8d91' : '#a6a9ad'; ctx.beginPath(); ctx.ellipse(rx, GROUND - rs * 0.45 + 2, rs, rs * 0.7, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.beginPath(); ctx.ellipse(rx - rs * 0.3, GROUND - rs * 0.7 + 2, rs * 0.4, rs * 0.25, 0, 0, 7); ctx.fill();
+    }
+  };
+  if (b.done) return; // the rubble is drawn in front of the bush row (drawRubble)
+  if (p < 0.55) {
+    ctx.fillStyle = '#8a8d91';
+    ctx.beginPath(); ctx.ellipse(x + b.w / 2 + shake, GROUND - 48, b.w / 2, 56, 0, Math.PI, 0); ctx.lineTo(x + b.w + shake, GROUND + 4); ctx.lineTo(x + shake, GROUND + 4); ctx.fill();
+    ctx.fillStyle = '#a7aaae';
+    ctx.beginPath(); ctx.ellipse(x + b.w * 0.38 + shake, GROUND - 70, b.w * 0.22, 18, -0.4, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5f8f3a';
+    ctx.beginPath(); ctx.ellipse(x + b.w * 0.7 + shake, GROUND - 92, 24, 9, 0.3, 0, 7); ctx.fill();
+    const n = p > 0 ? Math.ceil(p / 0.55 * CRACKS.length) : 0;
+    ctx.strokeStyle = '#34363a'; ctx.lineWidth = 2.4; ctx.lineJoin = 'round';
+    for (let k = 0; k < n; k++) { ctx.beginPath(); CRACKS[k].forEach(([fx, fy], j) => j ? ctx.lineTo(x + fx * b.w + shake, GROUND + fy) : ctx.moveTo(x + fx * b.w + shake, GROUND + fy)); ctx.stroke(); }
+    ctx.lineJoin = 'miter';
+    if (p === 0) { ctx.strokeStyle = '#6a6d71'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + b.w * 0.6, GROUND - 40); ctx.lineTo(x + b.w * 0.72, GROUND - 22); ctx.lineTo(x + b.w * 0.66, GROUND - 6); ctx.stroke(); }
+  } else {
+    if (!b.split) { b.split = true; for (let k = 0; k < 26; k++) S.particles.push({ kind: 'confetti', x: b.x + b.w / 2 + (Math.random() - 0.5) * 60, y: GROUND - 50 - Math.random() * 40, vx: (Math.random() - 0.5) * 220, vy: -80 - Math.random() * 120, r: 0, vr: 5, life: 0.9, c: '#9a9da1' }); }
+    const q = ease((p - 0.55) / 0.45), sz = lerp(1, 0.32, q);
+    rubble(Math.floor(q * 14), 40);
+    const chunk = (cx, cy, rx, ry, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(cx + shake, cy, rx, ry, 0, 0, 7); ctx.fill(); ctx.strokeStyle = 'rgba(40,40,44,0.5)'; ctx.lineWidth = 1.5; ctx.stroke(); };
+    chunk(x + b.w * 0.24 - 34 * q, GROUND - 40 * sz, 40 * sz, 42 * sz, '#868a8e');
+    chunk(x + b.w * 0.78 + 34 * q, GROUND - 38 * sz, 38 * sz, 40 * sz, '#8f9296');
+    chunk(x + b.w * 0.5, GROUND - lerp(84, 22, q), 32 * sz, 25 * sz, '#a2a5a9');
+  }
 }
 
 function drawCliff() {
@@ -1071,7 +1187,8 @@ function drawPulses() {
 }
 
 function drawBubbles() {
-  const cols = { leader: ['#fff7d6', '#b08a00'], manager: ['#f3e8ff', '#7b3fb0'], team: ['#e3f6ff', '#1f6f9f'] };
+  const cols = { leader: ['#fff7d6', '#b08a00'], manager: ['#f3e8ff', '#7b3fb0'], team: ['#e3f6ff', '#1f6f9f'],
+    visitor: S.mgr.meeting ? [S.mgr.meeting.def.belly, S.mgr.meeting.def.body] : ['#eee', '#777'] };
   ctx.font = '600 13px system-ui, sans-serif';
   for (const b of S.bubbles) {
     const p = agentPos(b.who);
@@ -1433,6 +1550,36 @@ function drawManager() {
   if (M.alert > 0) { ctx.fillStyle = '#ff7043'; ctx.font = 'bold 22px sans-serif'; ctx.fillText('!', x - 4, y - 30); }
   tag(x, y - 42, 'MANAGER', '#c792ff');
 }
+function drawOwlShape(x, y, body, wing, belly, flapSpeed) {
+  const flap = Math.sin(S.t * flapSpeed) * 8;
+  ctx.save(); ctx.translate(x, y);
+  ctx.fillStyle = wing;
+  ctx.beginPath(); ctx.moveTo(-10, 0); ctx.quadraticCurveTo(-28, -8 - flap, -36, 4 - flap); ctx.quadraticCurveTo(-24, 10, -10, 10); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(10, 0); ctx.quadraticCurveTo(28, -8 - flap, 36, 4 - flap); ctx.quadraticCurveTo(24, 10, 10, 10); ctx.fill();
+  ctx.fillStyle = body; ctx.beginPath(); ctx.ellipse(0, 2, 15, 18, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = belly; ctx.beginPath(); ctx.ellipse(0, 8, 9, 10, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = wing; ctx.beginPath(); ctx.moveTo(-13, -12); ctx.lineTo(-10, -22); ctx.lineTo(-4, -14); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(13, -12); ctx.lineTo(10, -22); ctx.lineTo(4, -14); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-6, -6, 6, 0, 7); ctx.arc(6, -6, 6, 0, 7); ctx.fill();
+  ctx.fillStyle = '#ffb000'; ctx.beginPath(); ctx.arc(-7.5, -6, 3.4, 0, 7); ctx.arc(4.5, -6, 3.4, 0, 7); ctx.fill();
+  ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(-8, -6, 1.6, 0, 7); ctx.arc(4, -6, 1.6, 0, 7); ctx.fill();
+  ctx.fillStyle = '#e8a33a'; ctx.beginPath(); ctx.moveTo(-2, 0); ctx.lineTo(0, 5); ctx.lineTo(2, 0); ctx.fill();
+  ctx.restore();
+}
+// v4: the visiting owl at a manager meeting, with a dashed "sync" link to the Manager while they talk.
+function drawMgrMeeting() {
+  const M = S.mgr.meeting; if (!M) return;
+  const v = mgrVisitorPos(), x = v.x - camX, y = v.y, d = M.def;
+  if (x < -80 || x > viewW + 80) return;
+  if (M.phase === 'talk') {
+    const mx = S.mgr.x + S.mgr.ox - camX, my = S.mgr.y + S.mgr.oy;
+    ctx.save(); ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.lineDashOffset = -S.t * 18;
+    ctx.beginPath(); ctx.moveTo(mx + 24, my + 6); ctx.lineTo(x - 24, y); ctx.stroke(); ctx.restore();
+    ctx.font = '16px sans-serif'; ctx.fillText('🤝', (mx + x) / 2 - 9, (my + y) / 2 + 6);
+  }
+  drawOwlShape(x, y, d.body, d.wing, d.belly, M.phase === 'talk' ? 8 : 14);
+  tag(x, y + 34, d.label, d.belly);
+}
 function drawManagerFX(M, x, y) {
   const d = M.dist, t = S.t, fade = d.phase === 'distract' ? 1 : Math.max(0, 1 - d.t / 0.8);
   if (fade <= 0) return;
@@ -1462,32 +1609,117 @@ function drawManagerFX(M, x, y) {
   ctx.restore();
 }
 
+// v4: gathering materials. Each koala heads off the path into the bush, picks something up and carries it back.
+const GATHER_SPOTS = [[-46, -30], [-150, 24], [-214, -28], [-92, 22]]; // [dx from the front koala, depth lane]
+function gatherPose(i, p, g) {
+  const home = -i * MEMBER_GAP, [sx, sl] = GATHER_SPOTS[i];
+  const tx = sx * (g.lost ? 1.35 : 1), tl = sl;
+  const q = clamp((p - i * 0.05) / 0.82, 0, 1);
+  let x, lane, flip, carry = false, crouch = 0, moving = true;
+  if (q < 0.3) { const e = ease(q / 0.3); x = lerp(home, tx, e); lane = tl * e; flip = tx < home; moving = q > 0; }
+  else if (q < 0.4) { x = tx; lane = tl; flip = tx < home; crouch = Math.sin((q - 0.3) / 0.1 * Math.PI) * 7; moving = false; }
+  else if (q < 0.94) { const e = (q - 0.4) / 0.54; x = lerp(tx, home, e < 0.5 ? 2 * e * e * 0 + e : e); lane = tl * (1 - e); flip = !(tx < home); carry = true; }
+  else { x = home; lane = 0; flip = false; moving = false; }
+  if (g.lost) x += Math.sin(S.t * 2.2 + i * 2) * 16 * Math.sin(Math.PI * q); // wandering, not sure where to look
+  return { x, lane, flip, carry, crouch, moving, tx, tl, picked: q >= 0.36, delivered: q >= 0.94 };
+}
+// Around the boulder: two at the left face, two round the right side (facing back), so the rock stays visible.
+const ROCK_FORM = [[8, 0, false], [-14, 28, false], [170, 0, true], [196, 26, true]];
+function drawItem(kind, x, y, s) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  if (kind === 'stones') {
+    ctx.fillStyle = '#8f9397'; ctx.beginPath(); ctx.ellipse(0, -4, 9, 5.5, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#b4b7bb'; ctx.beginPath(); ctx.ellipse(-2, -6, 4, 2, 0, 0, 7); ctx.fill();
+  } else if (kind === 'logs') {
+    ctx.fillStyle = '#7a4f2a'; rr(-15, -9, 30, 9, 4); ctx.fill();
+    ctx.fillStyle = '#d9b27c'; ctx.beginPath(); ctx.ellipse(15, -4.5, 3, 4.5, 0, 0, 7); ctx.fill();
+    ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-10, -6); ctx.lineTo(6, -6); ctx.stroke();
+  } else if (kind === 'planks') {
+    ctx.fillStyle = '#c99a5b'; ctx.strokeStyle = '#6b4a22'; ctx.lineWidth = 1; ctx.fillRect(-14, -6, 28, 5); ctx.strokeRect(-14, -6, 28, 5);
+  } else if (kind === 'vines') {
+    ctx.strokeStyle = '#3f8f3a'; ctx.lineWidth = 2.6; ctx.beginPath();
+    for (let k = 0; k <= 16; k++) { const a = k / 16 * Math.PI * 4; const px = Math.cos(a) * (4 + k * 0.45), py = -5 + Math.sin(a) * (2 + k * 0.2); k ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.stroke(); ctx.fillStyle = '#66bb6a'; ctx.beginPath(); ctx.ellipse(9, -9, 3, 1.6, 0.5, 0, 7); ctx.fill();
+  } else if (kind === 'poles') {
+    ctx.fillStyle = '#8b6a3e'; ctx.fillRect(-20, -4, 40, 3.2);
+  }
+  ctx.restore();
+}
 function drawTeam() {
   const tm = S.team, logO = ob('log');
+  const st = tm.mode === 'seq' && tm.seq ? tm.seq[tm.step] : null;
+  const sp = st ? Math.min(1, tm.stepT / st.dur) : 0;
+  const g = st && st.gather ? st : null;
+  // materials: lying in the bush before pick-up, then piled up by the obstacle
+  if (tm.seqOb) {
+    const gy0 = memberY(tm.x);
+    let pile = 0;
+    if (g) {
+      for (let i = 0; i < 4; i++) {
+        const P = gatherPose(i, sp, g);
+        if (!P.picked) drawItem(g.gather, tm.x + P.tx - camX, memberY(tm.x + P.tx) + P.tl, 1.25 * (1 + P.tl / 120));
+        if (P.delivered) pile++;
+      }
+    } else if (tm.seq) {
+      const done = tm.seq.slice(0, tm.step).find(x => x.gather);
+      if (done) pile = Math.ceil(4 * (1 - (tm.seqOb.prog || 0)) - 0.001);
+    }
+    const kind = g ? g.gather : (tm.seq && (tm.seq.slice(0, tm.step).find(x => x.gather) || {}).gather);
+    for (let k = 0; k < pile; k++) drawItem(kind, tm.x + 16 + (k % 2) * 6 - camX, gy0 + 6 - Math.floor(k / 1) * (kind === 'stones' ? 5 : 5), 1.3);
+  }
+  // training board
+  if (st && st.train) {
+    const bx = tm.x - 178 - camX, by = memberY(tm.x - 178);
+    ctx.strokeStyle = '#6d4c2f'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(bx - 22, by); ctx.lineTo(bx - 10, by - 60); ctx.moveTo(bx + 22, by); ctx.lineTo(bx + 10, by - 60); ctx.stroke();
+    ctx.fillStyle = '#fafafa'; ctx.strokeStyle = '#8d6e63'; ctx.lineWidth = 3; rr(bx - 42, by - 104, 84, 50, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#263238'; ctx.font = 'bold 10px system-ui, sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(st.slow ? 'TRIAL &' : '🔨 HAMMER &', bx, by - 86); ctx.fillText(st.slow ? 'ERROR...' : 'CHISEL 101', bx, by - 72);
+    ctx.textAlign = 'left';
+  }
   for (let i = 3; i >= 0; i--) {
-    const mx = tm.x - i * MEMBER_GAP + (i === 0 ? tm.m0 : 0);
-    const lane = laneOffset(mx);
-    const gy = memberY(mx) + lane + (i === 0 ? tm.m0y : 0);
-    const moving = tm.mode === 'walk' || (tm.seq && tm.seq[tm.step] && tm.seq[tm.step].move != null);
+    let mx = tm.x - i * MEMBER_GAP + (i === 0 ? tm.m0 : 0);
+    let lane = laneOffset(mx), flip = false, carry = null, crouch = 0;
+    let moving = tm.mode === 'walk' || (st && st.move != null);
+    let mood = tm.mood;
+    if (g) {
+      const P = gatherPose(i, sp, g);
+      mx = tm.x + P.x; lane = P.lane; flip = P.flip; crouch = P.crouch; moving = P.moving;
+      if (P.carry) { carry = g.gather; mood = 'carry'; } else mood = g.lost ? 'confused' : 'walk';
+    } else if (st && st.form === 'rock') {
+      const k = Math.min(ease(Math.min(1, sp / 0.12)), ease(Math.min(1, (1 - sp) / 0.1)));
+      mx = lerp(tm.x - i * MEMBER_GAP, tm.x + ROCK_FORM[i][0], k); lane = ROCK_FORM[i][1] * k; flip = ROCK_FORM[i][2] && k > 0.5;
+    } else if (st && st.train) { flip = true; mood = 'learn'; }
+    const gy = memberY(mx) + lane + (i === 0 ? tm.m0y : 0) + crouch;
     const ph = S.t * 9 + i * 1.7;
     let bob = moving ? Math.abs(Math.sin(ph)) * 2 : 0;
     if (tm.mood === 'happy') bob = Math.abs(Math.sin(S.t * 6 + i)) * 16;
     if (tm.cheer > 0) bob += Math.abs(Math.sin(S.t * 10 + i)) * 10 * tm.cheer;
     const shake = tm.mood === 'stuck' ? Math.sin(S.t * 30 + i) * 1.5 : 0;
-    let mood = tm.mood;
     if (mx > logO.x - 6 && mx < logO.x + logO.w + 6) mood = 'sneak'; // crawling through the hollow log
     const s = KOALA_SCALE * (1 + lane / 120);
-    drawKoala(mx - camX + shake, gy - bob, s, TEAM_COLORS[i], moving ? Math.sin(ph) : 0, mood, i);
+    drawKoala(mx - camX + shake, gy - bob, s, TEAM_COLORS[i], moving ? Math.sin(ph) : 0, mood, i, flip, carry);
+    if (st && st.train && sp > (st.slow ? 0.5 : 0.25) + i * 0.12) { // the penny drops: lightbulbs
+      ctx.font = '15px sans-serif'; ctx.fillText('💡', mx - camX - 24 * s / KOALA_SCALE - 8, gy - 60 * s / KOALA_SCALE);
+    }
   }
   const p = agentPos('team');
-  if (tm.mood === 'confused') { ctx.fillStyle = '#fff'; ctx.font = 'bold 18px sans-serif'; ctx.fillText('?', p.x - camX + 56 + Math.sin(S.t * 3) * 4, p.y + 4); }
+  if (tm.mood === 'confused' || (g && g.lost)) { ctx.fillStyle = '#fff'; ctx.font = 'bold 18px sans-serif'; ctx.fillText('?', p.x - camX + 56 + Math.sin(S.t * 3) * 4, p.y + 4); }
   if (S.selected === 'team') ring(p.x - camX, p.y + 30, 74, '#5dd3ff');
-  tag(p.x - camX, p.y - 26, 'TEAM', '#5dd3ff');
+  if (tm.upT > 0) badge(p.x - camX, p.y - 26, '🎓 UPSKILLED!', '#ffd34d', Math.min(1, tm.upT * 2));
+  else if (st && st.train) badge(p.x - camX, p.y - 26, st.slow ? '📖 SELF-TAUGHT...' : '🎓 TRAINING', '#ffd34d', 1);
+  else tag(p.x - camX, p.y - 26, 'TEAM', '#5dd3ff');
+}
+function badge(x, y, text, col, a) {
+  ctx.save(); ctx.globalAlpha = a; ctx.font = 'bold 11px system-ui, sans-serif';
+  const w = ctx.measureText(text).width + 16;
+  ctx.fillStyle = col; ctx.strokeStyle = '#8a6d00'; ctx.lineWidth = 1.5; rr(x - w / 2, y - 10, w, 17, 8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#3a2c00'; ctx.textAlign = 'center'; ctx.fillText(text, x, y + 3); ctx.textAlign = 'left'; ctx.restore();
 }
 // A cute koala, facing right, feet at (0,0). Hard hats on even koalas, bandanas on odd ones.
-function drawKoala(x, y, s, col, swing, mood, i) {
+function drawKoala(x, y, s, col, swing, mood, i, flip = false, carry = null) {
   const t = S.t;
-  ctx.save(); ctx.translate(x, y); ctx.scale(s, s * (mood === 'sneak' ? 0.86 : 1));
+  ctx.save(); ctx.translate(x, y); ctx.scale(s * (flip ? -1 : 1), s * (mood === 'sneak' ? 0.86 : 1));
   // feet
   ctx.fillStyle = '#5f6368';
   ctx.beginPath(); ctx.ellipse(-5 + swing * 4, -2, 5, 3, 0, 0, 7); ctx.ellipse(6 - swing * 4, -2, 5, 3, 0, 0, 7); ctx.fill();
@@ -1527,24 +1759,36 @@ function drawKoala(x, y, s, col, swing, mood, i) {
   ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.beginPath(); ctx.ellipse(3, -33, 1, 1.5, 0, 0, 7); ctx.fill();
   // mouth
   if (mood === 'stuck' || mood === 'confused') { ctx.fillStyle = '#5a2a2a'; ctx.beginPath(); ctx.ellipse(4, -25, 2, 1.6, 0, 0, 7); ctx.fill(); }
-  // front arm + machete
+  // front arm + tool (a small pruning saw: red garden-tool handle, toothed blade)
   let a;
   if (mood === 'hack') a = -1.4 + (Math.sin(t * 16 + i * 1.1) * 0.5 + 0.5) * 2.3;
   else if (mood === 'work') a = -1.0 + (Math.sin(t * 11 + i) * 0.5 + 0.5) * 1.6;
+  else if (mood === 'chisel') { const ph = (t * 1.5 + i * 0.27) % 1; a = ph < 0.75 ? lerp(0.15, -1.9, ease(ph / 0.75)) : lerp(-1.9, 0.3, (ph - 0.75) / 0.25); }
   else if (mood === 'happy') a = -1.9 + Math.sin(t * 8 + i) * 0.3;
   else if (mood === 'stuck') a = Math.sin(t * 18 + i) * 1.1 - 0.4;
   else if (mood === 'sneak') a = -2.2;
+  else if (mood === 'carry') a = -0.2;
+  else if (mood === 'learn') a = 0.5 + Math.sin(t * 3 + i) * 0.15;
   else a = 0.9 + swing * 0.3;
   const sx = 5, sy = -22, len = mood === 'sneak' ? 7 : 9;
   const hx = sx + Math.cos(a) * len, hy = sy + Math.sin(a) * len;
-  if (mood === 'hack' || mood === 'work' || mood === '' || mood === 'walk') {
+  if (mood === 'carry' && carry) drawItem(carry, 13, -15, 1.0);
+  if (mood === 'chisel') {
+    // chisel held against the rock, hammer swinging down onto it
+    ctx.fillStyle = '#90a4ae'; ctx.fillRect(10, -19, 9, 2.4); ctx.fillStyle = '#6d4c2f'; ctx.fillRect(7, -19.4, 4, 3.2);
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(a + 0.25);
+    ctx.fillStyle = '#8d6e63'; ctx.fillRect(-1, -1.5, 14, 3);
+    ctx.fillStyle = '#455a64'; ctx.fillRect(12, -6, 6.5, 12); ctx.fillStyle = '#78909c'; ctx.fillRect(12, -6, 6.5, 2.5);
+    ctx.restore();
+  } else if (mood === 'hack' || mood === 'work' || mood === '' || mood === 'walk') {
     const ba = mood === 'hack' || mood === 'work' ? a + 0.25 : 1.35;
-    ctx.strokeStyle = '#6d4c2f'; ctx.lineWidth = 3; ctx.lineCap = 'butt';
-    ctx.beginPath(); ctx.moveTo(hx - Math.cos(ba) * 3, hy - Math.sin(ba) * 3); ctx.lineTo(hx + Math.cos(ba) * 2, hy + Math.sin(ba) * 2); ctx.stroke();
-    ctx.strokeStyle = '#5f6b70'; ctx.lineWidth = 5.2;
-    ctx.beginPath(); ctx.moveTo(hx + Math.cos(ba) * 2, hy + Math.sin(ba) * 2); ctx.lineTo(hx + Math.cos(ba) * 18, hy + Math.sin(ba) * 18); ctx.stroke();
-    ctx.strokeStyle = '#e3eaee'; ctx.lineWidth = 3.4;
-    ctx.beginPath(); ctx.moveTo(hx + Math.cos(ba) * 2.5, hy + Math.sin(ba) * 2.5); ctx.lineTo(hx + Math.cos(ba) * 17.5, hy + Math.sin(ba) * 17.5); ctx.stroke();
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(ba);
+    ctx.fillStyle = '#d84315'; rr(-4, -2.6, 7, 5.2, 2); ctx.fill();
+    ctx.fillStyle = '#dfe6ea'; ctx.strokeStyle = '#607d8b'; ctx.lineWidth = 0.9;
+    ctx.beginPath(); ctx.moveTo(3, -2.4); ctx.lineTo(17, -1.2);
+    for (let k = 0; k <= 6; k++) ctx.lineTo(17 - k * 2.33, 1.4 + (k % 2 ? 1.5 : 0));
+    ctx.lineTo(3, 2.4); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
   }
   ctx.strokeStyle = '#9aa1a8'; ctx.lineWidth = 5; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(hx, hy); ctx.stroke();
@@ -1698,8 +1942,10 @@ function render() {
   drawLog();
   drawBushes();
   drawPathBushes();
+  drawRubble();
   drawSurprises(true);
   drawManager();
+  drawMgrMeeting();
   drawCanopy();
   drawMeeting();
   drawLeader();

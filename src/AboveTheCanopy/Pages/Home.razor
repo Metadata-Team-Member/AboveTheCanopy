@@ -11,12 +11,13 @@
             <p class="tagline">An interactive story about <b class="c-leader">leadership</b> (the eagle), <b class="c-manager">management</b> (the owl) and <b class="c-team">team members</b> (the koalas). Who sees what?</p>
         </div>
         <div class="stats">
-            <span title="Run time">⏱ @(lastTime is null ? "--" : $"{lastTime}s")</span>
+            <span class="day" title="Project time: 1 project day = 2 seconds of animation at 1× speed">📅 Day @day</span>
             <span title="Planned obstacles the koalas hit without a warning from the Manager">⚠️ Unwarned obstacles: @surprises</span>
             <span title="Times the koalas had to back-track">↩ Wrong turns: @wrongTurns</span>
             <span title="Leader and Manager distractions shaken off">🧘 Distractions handled: @distractions</span>
             <span title="Competing priorities the Leader parked or declined in meetings">🗂️ Priorities filtered: @priorities</span>
             <span title="Unexpected events the koalas reported up the chain to the Leader">📣 Surprises reported up: @reported</span>
+            <span title="Manager-to-manager meetings under the canopy: sharing resources, status syncs, coordinating teams">🤝 Manager syncs: @syncs</span>
         </div>
     </header>
 
@@ -29,21 +30,23 @@
                 <button class="close" @onclick="CloseCard" aria-label="Close">✕</button>
                 <h2>@selected.Emoji @selected.Title</h2>
                 <p class="theme">@selected.Theme</p>
-                <p><b>What they see:</b> @selected.Sees</p>
-                <ul>
-                    @foreach (var d in selected.Does)
-                    {
-                        <li>@d</li>
-                    }
-                </ul>
-                <p class="takeaway">💡 @selected.Takeaway</p>
+                <div class="info-body" tabindex="0" aria-label="Role details (scrollable)">
+                    <p><b>What they see:</b> @selected.Sees</p>
+                    <ul>
+                        @foreach (var d in selected.Does)
+                        {
+                            <li>@d</li>
+                        }
+                    </ul>
+                    <p class="takeaway">💡 @selected.Takeaway</p>
+                </div>
             </div>
         }
 
         @if (finishedSummary is not null)
         {
             <div class="summary">
-                <h2>🎉 Goal reached!</h2>
+                <h2>🎉 Delivered in @lastDays days!</h2>
                 <p>@finishedSummary</p>
                 <div class="row">
                     <button @onclick="Restart">↻ Play again</button>
@@ -111,9 +114,10 @@
     private string caption = "Loading the forest...";
     private string phase = "";
     private RoleInfo? selected;
-    private int wrongTurns, surprises, distractions, priorities, reported;
-    private string PhaseClass => phase switch { "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction", _ => "" };
-    private int? lastTime;
+    private int wrongTurns, surprises, distractions, priorities, reported, syncs, day = 1, lastDays;
+    private int? daysOn, daysOff; // results from this session, for the ON vs OFF comparison
+    private const int TypicalDaysOn = 105, TypicalDaysOff = 140; // measured at 1x, see README
+    private string PhaseClass => phase switch { "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction", "Manager meeting" => "ph-mgr", "Goal reached" => "ph-goal", _ => "" };
     private string? finishedSummary;
 
     private sealed record ViewOption(string Key, string Label, string Hint);
@@ -139,7 +143,7 @@
 
     private async Task Restart()
     {
-        finishedSummary = null; wrongTurns = 0; surprises = 0; distractions = 0; priorities = 0; reported = 0; lastTime = null;
+        finishedSummary = null; ResetCounters();
         await Js("restart");
         if (!playing) { playing = true; await Js("setPlaying", true); }
     }
@@ -176,16 +180,39 @@
     [JSInvokable] public void OnAgentClicked(string role) { selected = Roles.Get(role); StateHasChanged(); }
     [JSInvokable] public void OnPlayState(bool isPlaying) { playing = isPlaying; StateHasChanged(); }
     [JSInvokable] public void OnViewChanged(string v) { view = v; StateHasChanged(); }
-    [JSInvokable] public void OnRestarted() { finishedSummary = null; wrongTurns = 0; surprises = 0; distractions = 0; priorities = 0; reported = 0; lastTime = null; StateHasChanged(); }
-    [JSInvokable] public void OnStats(int wrong, int surprised, int distracted, int filtered, int reportedUp) { wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; StateHasChanged(); }
+    private void ResetCounters() { wrongTurns = 0; surprises = 0; distractions = 0; priorities = 0; reported = 0; syncs = 0; day = 1; }
+    [JSInvokable] public void OnRestarted() { finishedSummary = null; ResetCounters(); StateHasChanged(); }
+    [JSInvokable] public void OnDay(int d) { day = d; StateHasChanged(); }
+    [JSInvokable] public void OnStats(int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs) { wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; syncs = managerSyncs; StateHasChanged(); }
 
     [JSInvokable]
-    public void OnFinished(int seconds, int wrong, int surprised, int distracted, int filtered, int reportedUp, bool withComms)
+    public void OnFinished(int seconds, int days, int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs, bool withComms)
     {
-        lastTime = seconds; wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp;
+        wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; syncs = managerSyncs;
+        day = days; lastDays = days;
+        if (withComms) daysOn = days; else daysOff = days;
+        var mins = seconds / 60; var secs = seconds % 60;
+        var runTime = $"({mins}:{secs:00} at 1× speed)";
+        string compare;
+        if (withComms)
+        {
+            var off = daysOff ?? TypicalDaysOff;
+            var src = daysOff is null ? "usually takes about" : "took";
+            compare = off > days
+                ? $" Without communication the same project {src} {off} days: {off - days} days lost. Try it with communication OFF and compare!"
+                : " Try it with communication OFF and compare!";
+        }
+        else
+        {
+            var on = daysOn ?? TypicalDaysOn;
+            var src = daysOn is null ? "usually takes about" : "took";
+            compare = days > on
+                ? $" With the Manager communicating, the same project {src} {on} days: that's {days - on} days lost to missing information."
+                : "";
+        }
         finishedSummary = withComms
-            ? $"With the Manager communicating, the koalas arrived in {seconds}s: {surprised} unwarned obstacles, {wrong} wrong turns and {reportedUp} surprises reported up and handled together. The Leader filtered {filtered} competing priorities, and the Leader and Manager shook off {distracted} distractions. Now try it with communication OFF and compare!"
-            : $"Without communication, the koalas took {seconds}s, hit {surprised} unwarned obstacles, made {wrong} wrong turns, and faced every surprise alone (0 reported up). Same forest, same koalas: the difference is the information they had.";
+            ? $"With the Manager communicating, the koalas delivered on day {days} {runTime}: {surprised} unwarned obstacles, {wrong} wrong turns and {reportedUp} surprises reported up and handled together. The Leader filtered {filtered} competing priorities, the Manager held {managerSyncs} manager syncs, and they shook off {distracted} distractions.{compare}"
+            : $"Without communication, the koalas took {days} days {runTime}, hit {surprised} unwarned obstacles, made {wrong} wrong turns, and faced every surprise alone (0 reported up).{compare} Same forest, same koalas: the difference is the information they had.";
         StateHasChanged();
     }
 

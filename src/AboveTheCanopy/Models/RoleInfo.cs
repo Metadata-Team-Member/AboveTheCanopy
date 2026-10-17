@@ -14,6 +14,7 @@ public static class Roles
             "Keeps everyone pointed at the goal when things get hard.",
             "Shares direction with the manager and checks the course.",
             "Recognises and celebrates the team's progress.",
+            "Measures the project in days delivered, and accepts that surprises cost days.",
             "Filters competing priorities in meetings: yes to what serves the goal, \"not now\" to the rest.",
             "Accepts unavoidable delays and reassures: safety first, the goal stays the same.",
             "Gets distracted too (magpies, \"urgent\" emails, storms) but always refocuses on the goal."
@@ -28,7 +29,8 @@ public static class Roles
             "Turns the leader's vision into a plan and a route.",
             "Scouts ahead and spots obstacles before the team hits them.",
             "Communicates early and clearly, so the team is ready.",
-            "Gets the team the tools they need (machetes, logs, stones, rope, a ladder).",
+            "Gets the team the tools and skills they need (cutting tools, hammer-and-chisel training, rope).",
+            "Coordinates sideways with other managers: sharing resources, status syncs, lending kit.",
             "Reports progress up to the leader and answers the team's requests.",
             "Escalates surprises from the ground to the leader, with what the team needs and the likely delay.",
             "Shakes off distractions (meeting requests, mozzies, snags) and gets back to the team."
@@ -37,11 +39,13 @@ public static class Roles
 
     public static readonly RoleInfo Team = new(
         "team", "🐨", "The Team", "Team members = execution & problem-solving on the ground",
-        "Four koalas walking the forest floor, hacking through bush after bush. They can only see a few metres ahead, so they rely on the manager's heads-up.",
+        "Four koalas walking the forest floor, cutting through bush after bush with their tools. They can only see a few metres ahead, so they rely on the manager's heads-up.",
         new[]
         {
-            "Does the constant everyday work: hacking through bush after bush.",
+            "Does the constant everyday work: cutting through bush after bush.",
             "Solves the big obstacles: bridges, stepping stones, ropes, ladders.",
+            "Gathers the materials: fans out into the bush for logs, stones, planks and poles.",
+            "Learns new skills when the job needs them (hammer and chisel for the boulder).",
             "Works together, because nobody crosses the river alone.",
             "Spots the surprises nobody planned for (sinkholes, falling trees, snakes) and reports them up straight away.",
             "Asks for what they need (\"Need more rope!\") and feeds back what's happening on the ground."
