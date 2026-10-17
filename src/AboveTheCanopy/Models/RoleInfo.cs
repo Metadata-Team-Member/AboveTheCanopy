@@ -7,7 +7,7 @@ public static class Roles
 {
     public static readonly RoleInfo Leader = new(
         "leader", "🦅", "The Leader", "Leadership = vision, priorities, backing the team & adapting",
-        "An eagle flying above the canopy. Sees where the team is right now and the end goal (the pyramid), but can't see the obstacles on the forest floor.",
+        "An eagle flying above the canopy. Sees where the team is right now and holds the vision of the end goal (a pyramid the team will build, shown as a golden blueprint above the canopy), but can't see the obstacles on the forest floor.",
         new[]
         {
             "Sets the vision: where are we going, and why?",
@@ -20,7 +20,8 @@ public static class Roles
             "Backs the team: says YES to what they need (saws and safety gear, airdropped through the canopy after the tree falls).",
             "Protects the team's time: pushes back on the Board (\"The koalas need that time: the picnic can wait!\").",
             "Adapts: when better information comes up from the ground (Banjo's creek route), changes the plan and gives the credit back.",
-            "Gets distracted too (magpies, \"urgent\" emails, storms) but always refocuses on the goal."
+            "Gets distracted too (magpies, \"urgent\" emails, storms) but always refocuses on the goal.",
+            "During the build: keeps the vision steady, encourages the team, protects them from one last request (\"After the launch!\") and recognises them when the vision becomes reality."
         },
         "Leaders decide where we're going, back the people getting there, and change course when the ground knows better.");
 
@@ -38,7 +39,8 @@ public static class Roles
             "Grows people: coaches one-to-one (Wattle and her saw) and delegates real responsibility (Kip leads the bridge build).",
             "Looks after wellbeing and morale: calls a break after the toughest stretch, and celebrates small wins (Matilda, Koala of the week).",
             "Escalates surprises from the ground to the leader, with what the team needs and the likely delay.",
-            "Shakes off distractions (meeting requests, mozzies, snags) and gets back to the team."
+            "Shakes off distractions (meeting requests, mozzies, snags) and gets back to the team.",
+            "Supports the build without taking it over: organises the build sequence, brings stone to where it's needed, checks the plan against the leader's vision and relays progress up (\"Layer 4 done, two to go!\")."
         },
         "Managers connect vision to execution and grow the people doing it. Turn communication off and watch how much harder the team's journey gets.");
 
@@ -55,17 +57,19 @@ public static class Roles
             "Spots the surprises nobody planned for (sinkholes, falling trees, snakes) and reports them up straight away.",
             "Asks for what they need (\"Need more rope!\") and feeds back what's happening on the ground.",
             "Leads from the ground: spots better routes and fixes (Banjo's dry creek bed) and passes them up.",
-            "Steps up when trusted with the lead (Kip and the bridge build), and keeps a sustainable pace (breaks, water, gum leaves)."
+            "Steps up when trusted with the lead (Kip and the bridge build), and keeps a sustainable pace (breaks, water, gum leaves).",
+            "Builds the final product: uses every skill from the journey (gathering materials, hammer and chisel, planks, ropes, a ladder, log rollers, teamwork) to raise the pyramid course by course, then sets the capstone together."
         },
         "Teams make the vision real, one bush at a time. With good information they're fast and confident; without it they get surprises and wrong turns.");
 
     public static readonly RoleInfo Goal = new(
-        "goal", "🔺", "The Goal", "The pyramid = the shared objective",
-        "Pokes out above the canopy, so only the leader can see it from above.",
+        "goal", "🔺", "The Goal", "The pyramid = the shared objective (the final product)",
+        "Starts as the leader's vision: a golden blueprint shining above the canopy that only the leader can see. At the end the team builds the real pyramid inside it, course by course, and the outline turns solid.",
         new[]
         {
             "A clear, visible objective everyone can rally around.",
-            "The leader holds it, the manager plans toward it, and the team reaches it."
+            "The leader holds the vision, the manager plans and supports, and the team builds it.",
+            "Every milestone on the journey builds a skill the final product needs."
         },
         "A goal only one person can see is a goal only one person can chase. Share it!");
 

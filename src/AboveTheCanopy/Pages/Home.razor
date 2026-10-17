@@ -69,7 +69,7 @@
             <div class="summary" tabindex="0">
                 @if (!showReflection)
                 {
-                    <h2>🎉 Delivered in @lastDays days!</h2>
+                    <h2>🎉 Pyramid built in @lastDays days!</h2>
                     <p>@finishedSummary</p>
                     <div class="row">
                         <button class="reflect" @onclick="() => showReflection = true">💬 Reflect</button>
@@ -179,7 +179,7 @@
         }
     </section>
 
-    <footer class="hint">Tip: click the eagle, the owl, the koalas or the pyramid to learn about each role. Keys: <kbd>Space</kbd> play/pause, <kbd>R</kbd> restart, <kbd>1</kbd>–<kbd>4</kbd> perspectives, <kbd>C</kbd> chapters, <kbd>N</kbd> next chapter, <kbd>M</kbd> sound on/off.
+    <footer class="hint">Tip: click the eagle, the owl, the koalas or the pyramid (the vision) to learn about each role. Keys: <kbd>Space</kbd> play/pause, <kbd>R</kbd> restart, <kbd>1</kbd>–<kbd>4</kbd> perspectives, <kbd>C</kbd> chapters, <kbd>N</kbd> next chapter, <kbd>M</kbd> sound on/off.
         <span class="licence">© 2026 Metadata-Team-Member · <a href="https://github.com/Metadata-Team-Member/AboveTheCanopy/blob/main/LICENSE">MIT licence</a></span></footer>
 </div>
 
@@ -204,12 +204,12 @@
     private sealed record SoundPrefs(bool enabled, double volume);
     private string[] reflection = Array.Empty<string>();
     private int? daysOn, daysOff; // results from this session, for the ON vs OFF comparison
-    private const int TypicalDaysOn = 119, TypicalDaysOff = 154; // measured at 1x, see README
+    private const int TypicalDaysOn = 152, TypicalDaysOff = 198; // measured at 1x, see README
     private string PhaseClass => phase switch
     {
         "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction",
         "Manager meeting" => "ph-mgr", "Goal reached" => "ph-goal", "LEADER SUPPORT" => "ph-support",
-        "COACHING" or "DELEGATION" or "RECOGNITION" => "ph-grow", "TEAM IDEA" or "COURSE CORRECTION" => "ph-idea", "WELLBEING" => "ph-well", _ => ""
+        "COACHING" or "DELEGATION" or "RECOGNITION" or "SUPPORT" or "TEAMWORK" => "ph-grow", "BUILD" => "ph-build", "VISION → REALITY" => "ph-vision", "REDO" => "ph-surprise", "TEAM IDEA" or "COURSE CORRECTION" => "ph-idea", "WELLBEING" => "ph-well", _ => ""
     };
     private string? finishedSummary;
 
@@ -356,22 +356,22 @@
                 : "";
         }
         var people = withComms
-            ? $" Kip led the bridge build, Wattle was coached, Matilda was Koala of the week, Banjo's creek idea was adopted ({teamIdeas} team idea{(teamIdeas == 1 ? "" : "s")}), and {breaks} short break{(breaks == 1 ? "" : "s")} kept the pace sustainable."
-            : " Banjo's shortcut never reached the Leader, nobody coached Wattle, and with no break the koalas finished exhausted.";
+            ? $" Kip led the bridge build, Wattle was coached, Matilda was Koala of the week, Banjo's creek idea was adopted ({teamIdeas} team idea{(teamIdeas == 1 ? "" : "s")}), and {breaks} short break{(breaks == 1 ? "" : "s")} kept the pace sustainable. At the build site they used every skill from the journey, the owl supported without taking over, and the Leader's vision became the real pyramid."
+            : " Banjo's ideas never reached anyone, nobody coached Wattle, and with no break the koalas finished exhausted. Nobody shared the vision, so a whole course of the pyramid had to be torn down and rebuilt.";
         finishedSummary = withComms
-            ? $"With the Manager communicating, the koalas delivered on day {days} {runTime}: {surprised} unwarned obstacles, {wrong} wrong turns and {reportedUp} surprises reported up and handled together. The Leader filtered {filtered} competing priorities, the Manager held {managerSyncs} manager syncs, and they shook off {distracted} distractions.{people}{compare}"
+            ? $"With the Manager communicating, the koalas built the pyramid and delivered on day {days} {runTime}: {surprised} unwarned obstacles, {wrong} wrong turns and {reportedUp} surprises reported up and handled together. The Leader filtered {filtered} competing priorities, the Manager held {managerSyncs} manager syncs, and they shook off {distracted} distractions.{people}{compare}"
             : $"Without communication, the koalas took {days} days {runTime}, hit {surprised} unwarned obstacles, made {wrong} wrong turns, and faced every surprise alone (0 reported up).{people}{compare} Same forest, same koalas: the difference is the information they had.";
         reflection = withComms
             ? new[]
             {
-                "Banjo spotted the creek shortcut from the ground and the Leader changed the plan. How do ideas from the front line reach decision-makers where you work, and how often do they change the plan?",
-                "The owl coached Wattle one-to-one and handed Kip the lead on the bridge. Who are you growing right now, and what could you delegate this week?",
-                "The Leader said yes to saws and safety gear, protected the team's time from the Board, and the koalas still took a break. What does backing your team look like in practice?"
+                "At the build site the koalas used every skill they had built on the journey: gathering, hammer and chisel, planks, ropes, ladders, teamwork. Which skills has your team built recently, and which deliverable will they make possible?",
+                "The owl organised the build, brought stone where it was needed and relayed progress up, but never took over. Where is the line between supporting the work and taking it over?",
+                "The Leader held the vision, said \"After the launch!\" to one last request, and the team made it real. How clear is your team's picture of the final product?"
             }
             : new[]
             {
-                "Banjo's shortcut went nowhere because nobody passed it up. Which good ideas get lost in your team, and why?",
-                "Nobody noticed Wattle struggling. How would you know if someone in your team needed help?",
+                "Nobody shared the vision, so the koalas built a whole course the wrong shape and had to redo it (\"Wait, was it meant to be pointy?\"). Where has your team rebuilt something because the end product wasn't clear?",
+                "Nobody coached Wattle, Banjo's ideas went nowhere, and nobody organised the build. What happens in your team when no one supports the work?",
                 "The koalas never got a break and slowed right down. Where is your team running without breaks, and what is it costing?"
             };
         StateHasChanged();

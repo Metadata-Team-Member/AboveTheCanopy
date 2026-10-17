@@ -2,12 +2,12 @@
 
 **An interactive animation about the difference between leadership, management and team members.**
 
-A large Australian forest with a tall canopy. A pyramid pokes out of the top of the trees far to the east: that's the goal.
+A large Australian forest with a tall canopy. Far to the east, a glowing golden pyramid shimmers above the trees: that's the **Leader's vision** of the goal. It isn't built yet. At the end of the journey the koalas **build the pyramid themselves**, course by course, until it fills the vision and turns solid.
 Time is measured like a real project, in **days**: the top bar counts *Day 1, Day 2...* until the koalas deliver.
 
 | Role | Character | Where they are | What they can see | What they do |
 |---|---|---|---|---|
-| **Leader** | 🦅 Eagle | Flies *above* the canopy | Where the team is now, and the pyramid (the goal) | **Vision, priorities, backing the team & adapting.** Sets the destination, filters competing priorities, says YES to what the team needs (and protects their time), changes the plan when better information comes up from the ground |
+| **Leader** | 🦅 Eagle | Flies *above* the canopy | Where the team is now, and holds the vision of the goal (the golden blueprint of the pyramid) | **Vision, priorities, backing the team & adapting.** Sets the destination, filters competing priorities, says YES to what the team needs (and protects their time), changes the plan when better information comes up from the ground |
 | **Manager** | 🦉 Owl | Flies *below* the canopy, above the team | The obstacles ahead | **Planning, removing obstacles, communication up & down, coaching & delegating.** Scouts ahead, warns the team, coaches and delegates, passes ideas up, calls breaks, recognises wins, coordinates with other managers |
 | **Team** | 🐨 Four koalas: Kip, Banjo, Matilda & Wattle | On the forest floor, cutting through the bush | Only a few metres ahead | **Execution, problem-solving & leading from the ground.** The everyday work, gathering materials, learning new skills, solving obstacles, reporting surprises, and spotting better ways to do things |
 
@@ -17,13 +17,13 @@ Time is measured like a real project, in **days**: the top bar counts *Day 1, Da
 
 Nobody can see the whole picture on their own:
 
-- The **leader** can see the goal but not the boulders.
+- The **leader** holds the vision of the goal but can't see the boulders.
 - The **manager** can see the boulders but not the goal.
 - The **team** can see neither. They're down in the bush doing the work.
 
 The journey works when vision flows down (leader ➜ manager), warnings and plans flow down to the team (manager ➜ team), and requests and progress flow back up (team ➜ manager ➜ leader).
 Use the **Perspective** buttons to see the world through each role's eyes, and turn **Manager communication OFF**
-to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 154 days instead of about 119).
+to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 198 days instead of about 152), and even build the wrong shape.
 
 ## What happens on the journey
 
@@ -121,6 +121,53 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
 
+## New in v7: the koalas build the final product
+
+**The vision.** The pyramid is no longer waiting at the end. From the very first moment it's the Leader's **vision**: a golden, dashed, gently
+shimmering blueprint above the canopy (tagged **✨ THE VISION**). While the build site is far away it hangs on the eastern horizon, and it grows
+and slides into place as the team gets closer. The Leader's beam points at it ("The vision ➜"), and in the Team perspective it's lost in the fog.
+
+![The Leader's vision: a golden blueprint on the horizon](docs/vision-blueprint.png)
+
+**Building the final product** (tags **BUILD**, **SUPPORT**, **DELEGATION**, **TEAM IDEA**, **TEAMWORK**). After the rest break and the last eagle meeting,
+the koalas reach the build site under the vision and build the pyramid in **6 courses**, one block at a time, along a supply line:
+Matilda shapes stone at the pile, Banjo loads at the ramp foot, Wattle passes and hauls, and Kip sets each block. Every step calls back a skill from the journey,
+shown as badges in the **🧰 Skills from the journey** panel:
+
+| Skill | Where they learned it | Used on the build |
+|---|---|---|
+| 🧺 Gathering materials | River, bog, cliff and wall | Fetching stone for the pile |
+| 🔨 Hammer & chisel | The boulder training | Shaping rough stone into blocks |
+| 🪵 Planks & a ramp | The sinkhole crossing | A ramp up the side of the pyramid |
+| 🤝 Teamwork & delegation | Kip's bridge, Wattle's coaching | Kip leads a section; Wattle sets the corner stones with confidence |
+| 💡 Log rollers | Banjo's idea (logs, like the bridge) | Blocks ride up the ramp on rollers |
+| 🪢 Ropes | The cliff | Hauling blocks up the steeper courses |
+| 🪜 Ladder | The rock wall | Reaching the top course |
+
+**The Manager supports, it doesn't take over.** The owl (tag *MANAGER · SUPPORTING*) organises the build sequence, flies stone to wherever Kip is working,
+checks the work against the vision ("📐 Checked against the vision: the angles match!") and relays progress up ("Layer 3 done, halfway!", "Layer 4 done, two to go!").
+Caption: *"Good managers support the work, they don't take it over."*
+
+**The Leader protects the finish.** Mid-build, one last visiting eagle from Sales asks *"Add a gift shop to the pyramid? 🛍️"*. The Leader answers
+*"After the launch! 🛡️ Let the koalas finish."* and keeps the beam on the vision.
+
+![Mid-build: the owl brings stone and checks the plan against the vision while Kip leads a section](docs/build-manager-support.png)
+
+**Vision becomes reality.** The golden capstone is passed up the line, all four koalas climb to the top and set it **together**, and the blueprint
+turns solid with a chime: the pyramid the team built fills the Leader's vision exactly. Only then does the celebration start: confetti, fanfare,
+every character, and the summary with the days.
+
+![The capstone is set and the vision turns solid](docs/build-vision-solid.png)
+
+**With communication OFF** the build is slower and messier: nobody says what size, so blocks come out uneven and some are thrown away;
+there's no owl bringing stone; Banjo's rollers never get passed on, so every block is dragged; and because the vision never reached the koalas,
+they build course 3 as wide as the one below. *"Wait... was it meant to be pointy?!"* They tear the whole course down and build it again (tag **REDO**).
+
+![Communication OFF: the wrong-shaped course comes down](docs/comms-off-redo.png)
+
+**Sound.** Stone thunks as blocks go down, chisel taps at the pile, rope creaks on the hauled courses, a rising motif as each course is completed,
+a special chime when the vision turns solid, then the fanfare.
+
 ## New in v6: chapters, teaching mode and sound
 
 ### 📖 Chapters (teachable moments)
@@ -129,7 +176,7 @@ The button always shows the current chapter. **⏭** (or <kbd>N</kbd>) jumps to 
 
 | # | Chapter | Teaching point |
 |---|---|---|
-| 1 | The vision | Only the Leader can see both where the team is now and the pyramid |
+| 1 | The vision | Only the Leader sees where the team is now and holds the vision of the pyramid |
 | 2 | Passing the direction down | Leader ➜ Manager: the vision becomes a plan |
 | 3 | Everyday work | The bush hacking nobody up top sees |
 | 4 | The vines: a warning in time | Warned early, the right tools are ready |
@@ -150,7 +197,9 @@ The button always shows the current chapter. **⏭** (or <kbd>N</kbd>) jumps to 
 | 19 | The rock wall | Preparation pays off |
 | 20 | Rest break | A sustainable pace beats burnout |
 | 21 | Final priorities | New asks arrive even near the end |
-| 22 | The pyramid & reflection | Vision + planning & communication + everyday work |
+| 22 | Building the final product | Every skill from the journey goes into the build; the Manager supports, doesn't take over |
+| 23 | Vision becomes reality | All four set the capstone together and the vision turns solid |
+| 24 | Celebration & reflection | Vision + planning & support + skills & hard work |
 
 With communication OFF, the chapter list and the teaching cards describe what goes wrong instead (for example *"Nobody notices Wattle struggling"*).
 
@@ -214,9 +263,9 @@ Wins get recognised ("Great work, koalas!") and celebrated. With communication O
 
 ![Communication OFF: the koalas walk under the bees' nest](docs/comms-off-bees.png)
 
-**Eagle meetings: filtering competing priorities.** Three times on the journey, other eagles fly in above the canopy and circle the Leader,
+**Eagle meetings: filtering competing priorities.** Three times on the journey (and once more during the build), other eagles fly in above the canopy and circle the Leader,
 each with a priority card. The Leader weighs them up, says ✅ **yes** to the one that helps the team reach the pyramid,
-and **parks** the others ("Not now; the pyramid comes first"). The visitors fly off, and the Leader puts the beam back on the goal ("Keep it going").
+and **parks** the others ("Not now; the pyramid comes first"). The visitors fly off, and the Leader puts the beam back on the vision ("Keep it going").
 The top bar counts **Priorities filtered**.
 
 | Meeting | Visiting eagles and their asks | ✅ Accepted (supports the pyramid) |
@@ -224,6 +273,7 @@ The top bar counts **Priorities filtered**.
 | 1 | 💰 Finance: "Budget cuts?" · 🎨 Marketing: "Urgent: rebrand!" | 🦺 Safety: "Safety gear for koalas" |
 | 2 | 🏛️ Board: "Can you also run the picnic?" · 📁 Other project: "Lend us two koalas?" | 🗺️ Product: "Better map to the pyramid" |
 | 3 | 🚀 Strategy: "New initiative!" · 👥 HR: "Can you also do a survey?" | 🤝 Customers: "Pyramid opening: still on?" |
+| 4 (mid-build) | 🛍️ Sales: "Add a gift shop to the pyramid?" | None: "After the launch! 🛡️ Let the koalas finish." |
 
 ![An eagle meeting: the Leader accepts one priority and parks the others](docs/eagle-meeting-priorities.png)
 
@@ -250,16 +300,17 @@ Project time: **1 project day = 2 seconds of animation at 1× speed.**
 
 | | Project time | Real time at 1× | Unwarned obstacles | Wrong turns | Surprises reported up | Manager syncs |
 |---|---|---|---|---|---|---|
-| Communication **ON** | **about 119 days** | about 4 min (238 s) | 0 | 0 | 3 | 3 |
-| Communication **OFF** | **about 154 days** | about 5 min (306 s) | 8 | 12 | 0 | 3 |
+| Communication **ON** | **about 152 days** | about 5 min (304 s) | 0 | 0 | 3 | 3 |
+| Communication **OFF** | **about 198 days** | about 6½ min (394 s) | 8 | 13 | 0 | 3 |
 
 With communication ON the run also has 1 team idea adopted (the creek route saves 4 to 6 days) and 1 rest break (about 4 days).
 With communication OFF there's no idea and no break, but the exhausted koalas slow right down.
+The build itself takes about 33 days with communication ON and about 45 days OFF (the wrong-shaped course has to be redone).
 
-The finish summary shows "Delivered in N days" and compares it with the other mode: your own result if you've run both in this session, otherwise the typical figure.
-For example: "Without communication the same project usually takes about 154 days: 35 days lost."
+The finish summary shows "Pyramid built in N days" and compares it with the other mode: your own result if you've run both in this session, otherwise the typical figure.
+For example: "Without communication the same project usually takes about 198 days: 46 days lost."
 
-![Finish summary: delivered in about 119 days, compared with communication OFF](docs/finish-days.png)
+![Finish summary: pyramid built in about 152 days, compared with communication OFF](docs/finish-days.png)
 Use the speed slider (0.25× to 3×) to fit your session.
 
 ### Discussion prompts
@@ -307,7 +358,7 @@ The caption bar narrates each phase (with a red **SURPRISE** tag for unplanned e
 The info cards scroll (with a visible scrollbar), so all the text is readable in a small window.
 
 ![An info card scrolling in a small window](docs/info-card-scroll.png)
-When the team reaches the pyramid, a summary lets you replay with communication flipped so you can compare.
+When the capstone is set and the vision turns solid, a summary lets you replay with communication flipped so you can compare.
 
 ## Run it
 
@@ -341,7 +392,7 @@ AboveTheCanopy.sln
 src/AboveTheCanopy/
   Pages/Home.razor        UI: canvas, controls, caption bar, info cards, summary
   Models/RoleInfo.cs      Teaching text for each role
-  Models/Chapters.cs      The 22 chapters: story mark, title, teaching point, questions
+  Models/Chapters.cs      The 24 chapters: story mark, title, teaching point, questions
   wwwroot/js/canopy.js    Animation engine: scene, agents, story, perspectives, chapters
   wwwroot/js/sound.js     Procedural Web Audio sound effects and ambience
   wwwroot/css/app.css     Styling

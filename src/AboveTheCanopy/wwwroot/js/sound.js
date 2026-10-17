@@ -1,4 +1,4 @@
-// Above the Canopy: procedural sound (v6).
+// Above the Canopy: procedural sound (v6, build sounds added in v7).
 // Every sound is synthesised with the Web Audio API: no audio files, no CDNs, no licensing, works offline.
 // The AudioContext is only created (and resumed) inside a user gesture, so browser autoplay rules (and iOS Safari) are respected.
 // Mixed gently for a classroom: soft envelopes, a compressor and a low-pass on the master bus, and per-sound rate limits.
@@ -21,7 +21,7 @@ function save() { try { localStorage.setItem(LS_ON, enabled ? 'on' : 'off'); loc
 const RATE = { saw: 0.42, tap: 0.16, thunk: 0.5, clack: 0.45, creak: 0.9, snip: 0.35, rustle: 0.8, hoot: 6, screech: 14, flap: 2.5,
   pulse: 0.35, chirp: 0.4, sparkle: 1.2, idea: 2, sting: 2, echo: 4, hiss: 2, splash: 1.2, squelch: 1, thud: 0.6,
   whoosh: 1.5, ding: 1.5, emailStorm: 4, magpie: 4, thunder: 6, mozzie: 4, branch: 3, sinkhole: 4, treefall: 4, parachute: 4,
-  fanfare: 6, pops: 2, support: 3, yes: 1.5, swarm: 3 };
+  fanfare: 6, pops: 2, support: 3, yes: 1.5, swarm: 3, block: 0.3, haul: 1.1, layer: 0.8, vision: 4 };
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 // ---------- graph ----------
@@ -165,6 +165,22 @@ const SFX = {
     brass(t + 0.48, 784, 0.45, 0.04);
     for (const f of [523, 659, 784, 1046]) brass(t + 0.95, f, 1.4, 0.026);
     SFX.pops(t + 0.3);
+  },
+  // v7: the build. Stone blocks settling, rope hauling, a motif that climbs with every course, and the vision turning solid.
+  block(t) { const f = rnd(105, 125); tone(t, f, 0.24, { f2: f * 0.5, peak: 0.13 }); noise(t, 0.12, { type: 'lowpass', f: 700, peak: 0.08 }); noise(t + 0.02, 0.07, { f: 2300, q: 2, peak: 0.025 }); },
+  haul(t) {
+    tone(t, 205, 0.5, { type: 'sawtooth', f2: 262, bp: [820, 12], peak: 0.04, a: 0.15 });
+    tone(t + 0.55, 250, 0.35, { type: 'sawtooth', f2: 200, bp: [900, 12], peak: 0.03, a: 0.1 });
+    noise(t + 0.1, 0.4, { type: 'highpass', f: 3000, peak: 0.012, a: 0.1 });
+  },
+  layer(t, o) { // a short rising motif, one step higher for every course laid
+    const sc = [392, 440, 494, 587, 659, 784, 880, 988, 1175, 1319], n = (o && o.n != null ? o.n : 0) + 1;
+    for (let i = 0; i < 3; i++) bell(t + i * 0.13, sc[Math.min(sc.length - 1, n + i)], 0.55, 0.036);
+  },
+  vision(t) { // the vision turns solid: a shimmering chord with a cascade of chimes
+    for (const f of [523, 659, 784, 1046]) tone(t, f, 2.6, { type: 'triangle', vib: [5, 3], peak: 0.022, a: 0.5 });
+    [1568, 1760, 2093, 2349, 2637, 3136].forEach((f, i) => bell(t + 0.15 + i * 0.09, f, 0.9, 0.022));
+    noise(t, 2.0, { type: 'highpass', f: 6000, peak: 0.01, a: 0.8 });
   },
   pops(t) { for (let i = 0; i < 7; i++) noise(t + rnd(0, 1.3), 0.03, { f: rnd(1500, 3200), q: 2, peak: 0.07 }); },
   echo(t) { // an unanswered call fading into the forest

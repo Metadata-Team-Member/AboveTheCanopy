@@ -11,7 +11,7 @@ public static class Chapters
     public static readonly IReadOnlyList<Chapter> All = new Chapter[]
     {
         new("start", "The vision",
-            "Only the Leader, high above the canopy, can see both where the team is now (already hard at work) and the goal: the pyramid.",
+            "Only the Leader, high above the canopy, can see where the team is now (already hard at work) and holds the vision of the goal: a pyramid the team will build, shining above the canopy as a golden blueprint.",
             new[] { "Who in your organisation can see the \"pyramid\"? How does everyone else find out about it?" }),
         new("dir", "Passing the direction down",
             "The Leader shares the vision with the Manager, who turns it into a plan and scouts the way.",
@@ -86,11 +86,19 @@ public static class Chapters
             new[] { "Where is your team running without a break?", "What is skipping breaks really costing you?" },
             "Nobody calls a break: the koalas push on exhausted and slow right down."),
         new("meet:2", "Final priorities",
-            "Even near the end, new asks arrive. The Leader keeps the beam on the pyramid and keeps it going.",
+            "Even near the end, new asks arrive. The Leader keeps the beam on the vision and keeps it going.",
             new[] { "How do you stop late \"new initiatives\" from derailing delivery?" }),
-        new("finish", "The pyramid & reflection",
-            "Vision (Leader) + planning and communication (Manager) + everyday hard work (Team): together they reach the goal.",
-            new[] { "Which role do you play most days: eagle, owl or koala?", "What one change would help your team reach its pyramid sooner?" }),
+        new("build", "Building the final product",
+            "The journey was a string of milestones where the team built knowledge and skills. Now they use them all: gathering materials, hammer and chisel, planks for a ramp, Banjo's log rollers, ropes, a ladder, Kip leading a section and a confident Wattle. The owl organises, brings stone and relays progress up, but never takes over: the koalas build.",
+            new[] { "Which skills that your team built along the way make the final delivery possible?", "Does your manager support the work or take it over? What does good support look like?" },
+            "Nobody told the koalas what the final product looks like: the blocks come out all different sizes, there's no owl bringing materials, and a whole course has to be torn down and rebuilt (\"Wait, was it meant to be pointy?\")."),
+        new("reality", "Vision becomes reality",
+            "All four koalas set the capstone together, and the Leader's golden blueprint turns solid: the Leader held the vision, the team made it real.",
+            new[] { "Is your team's picture of the final product clear enough to build it without you?", "Who gets the credit when the vision becomes real?" },
+            "The pyramid finally matches the vision, but many days later, after the redo."),
+        new("finish", "Celebration & reflection",
+            "Only once the capstone is on do they celebrate: vision (Leader) + support and communication (Manager) + skills and hard work (Team) = the final product, built together.",
+            new[] { "Which role do you play most days: eagle, owl or koala?", "What one change would help your team build its pyramid sooner?" }),
     };
 
     public static string[] Marks => All.Select(c => c.Mark).ToArray();
