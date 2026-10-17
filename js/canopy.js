@@ -300,7 +300,7 @@ function reset() {
     mgr: { x: START_X + 140, y: MANAGER_Y, dy: 0, alert: 0, ready: false, ox: 0, oy: 0, rot: 0, dist: null, focusT: 0, meeting: null, task: null, busy: false },
     leader: { x: START_X + 260, y: LEADER_Y, beam: null, beamT: 0, ox: 0, oy: 0, rot: 0, dist: null, meeting: null },
     bubbles: [], queue: { leader: [], manager: [], team: [], visitor: [] }, pulses: [], events: [], particles: [],
-    caption: '', phase: '', capT: 0, cap: null, capQ: [], pend: [], finished: false, introCam: 'start', selected: null, hover: -1,
+    caption: '', phase: '', capT: 0, cap: null, capQ: [], pend: [], finished: false, introCam: 'team', selected: null, hover: -1,
     idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [],
     coachDone: false, breakDone: false, marks: new Set(['start']), chapter: 0, silent: false, quiet: false, tapT: 0, tapN: 0, finArgs: null, teachAt: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
@@ -388,8 +388,8 @@ function agentPos(who) {
 }
 
 function scheduleIntro() {
-  caption('High above the canopy, the Leader can see where the team starts... ', 'Vision');
-  S.leader.beam = 'start'; S.leader.beamT = 2.6;
+  caption('High above the canopy, the Leader can see where the team is right now, already hard at work... ', 'Vision');
+  S.leader.beam = 'team'; S.leader.beamT = 2.6;
   later(2.6, () => {
     S.introCam = 'goal'; sfx('screech');
     S.leader.beam = 'goal'; S.leader.beamT = 3.2;
@@ -435,7 +435,7 @@ function sequenceFor(o, informed) {
       { dur: 2.6, mood: 'work', prog: true },
     ] : [
       { dur: 1.6, mood: 'stuck', cap: 'Nobody warned them: the koalas walk into a tangle of vines and get stuck!', say: 'We\'re stuck! 😩', surprise: true },
-      { dur: 1.8, mood: 'confused', move: -70, wrong: true, cap: 'Someone runs back to camp for better tools...' },
+      { dur: 1.8, mood: 'confused', move: -70, wrong: true, cap: 'Someone runs all the way back for better tools...' },
       { dur: 1.6, mood: 'walk', move: 70 },
       { dur: 3.4, mood: 'work', prog: true, cap: 'Finally, they start hacking through the vines.' },
     ];
@@ -1072,7 +1072,7 @@ function visitorPos(M, i) {
 
 // ---------- camera ----------
 function updateCamera(dt) {
-  if (S.introCam === 'start') camTarget = 0;
+  if (S.introCam === 'team') camTarget = 0;
   else if (S.introCam === 'goal') camTarget = GOAL_X + 260 - viewW;
   else if (S.finished) camTarget = GOAL_X + 300 - viewW;
   else camTarget = S.team.x - viewW * 0.3;
@@ -1178,20 +1178,6 @@ function drawHangingVines() {
       ctx.beginPath(); ctx.ellipse(x + sway * k * 1.4 + 3, CANOPY_BOTTOM - 25 + v.len * k, 4, 2, 0.6, 0, 7); ctx.fill();
     }
   }
-}
-
-function drawStartCamp() {
-  const x = START_X - camX;
-  if (x < -100 || x > viewW + 100) return;
-  ctx.fillStyle = '#d0603a';
-  ctx.beginPath(); ctx.moveTo(x - 40, GROUND); ctx.lineTo(x, GROUND - 46); ctx.lineTo(x + 40, GROUND); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#8a3a20';
-  ctx.beginPath(); ctx.moveTo(x - 8, GROUND); ctx.lineTo(x, GROUND - 30); ctx.lineTo(x + 8, GROUND); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(x - 70, GROUND); ctx.lineTo(x - 70, GROUND - 70); ctx.stroke();
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath(); ctx.moveTo(x - 70, GROUND - 70); ctx.lineTo(x - 30, GROUND - 62); ctx.lineTo(x - 70, GROUND - 52); ctx.fill();
-  ctx.fillStyle = '#2d2d2d'; ctx.font = 'bold 9px sans-serif'; ctx.fillText('START', x - 67, GROUND - 58);
 }
 
 function drawRiver(front) {
@@ -1445,7 +1431,7 @@ function drawBeam() {
   const L = S.leader; if (!L.beam) return;
   const lx = L.x - camX, ly = L.y;
   const creek = L.beam === 'creek';
-  const tx = (creek ? (CREEK.x0 + CREEK.x1) / 2 : L.beam === 'goal' ? GOAL_X : START_X) - camX, ty = creek ? GROUND + 26 : L.beam === 'goal' ? PYR_APEX + 6 : CANOPY_TOP + 10;
+  const tx = (creek ? (CREEK.x0 + CREEK.x1) / 2 : L.beam === 'goal' ? GOAL_X : S.team.x - MEMBER_GAP * 1.5) - camX, ty = creek ? GROUND + 26 : L.beam === 'goal' ? PYR_APEX + 6 : memberY(S.team.x) - 70;
   const a = Math.min(1, L.beamT) * 0.8;
   if (creek) { // course correction: the beam re-aims at the better route, then on to the pyramid
     ctx.save(); ctx.globalAlpha = a; ring(tx, ty, 26 + Math.sin(S.t * 4) * 3, '#ffd34d'); ctx.restore();
@@ -1465,7 +1451,7 @@ function drawBeam() {
     const ex = tx > viewW ? viewW - 70 : 70;
     ctx.fillStyle = `rgba(0,0,0,${a * 0.6})`; rr(ex - 58, 18, 116, 26, 13); ctx.fill();
     ctx.fillStyle = `rgba(255,211,77,${a + 0.2})`; ctx.font = 'bold 13px system-ui, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(L.beam === 'goal' ? 'Pyramid  ➜' : '⬅  Start', ex, 36); ctx.textAlign = 'left';
+    ctx.fillText(L.beam === 'goal' ? 'Pyramid  ➜' : '⬅  The team', ex, 36); ctx.textAlign = 'left';
   }
 }
 
@@ -1557,7 +1543,7 @@ function drawFog() {
 function drawViewBanner() {
   const v = settings.view; if (v === 'all') return;
   const text = {
-    leader: '🦅 LEADER VIEW: sees the start and the goal, but not the ground',
+    leader: '🦅 LEADER VIEW: sees the team and the goal, but not the ground',
     manager: '🦉 MANAGER VIEW: sees the obstacles ahead, but not the far-off goal',
     team: '🐨 TEAM VIEW: the koalas see only what\'s right in front of them',
   }[v];
@@ -2228,9 +2214,9 @@ function drawSurprises(late) {
       const n = Math.floor(sp.prog * 6 + 0.0001);
       ctx.fillStyle = '#9a6a3a'; ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = 1;
       for (let k = 0; k < n; k++) { const px = x - 8 + k * (sp.w + 16) / 6; ctx.fillRect(px, gy - 5, (sp.w + 16) / 6 - 2, 9); ctx.strokeRect(px, gy - 5, (sp.w + 16) / 6 - 2, 9); }
-    } else if (sp.type === 'treefall') {
+    } else if (sp.type === 'treefall' && !sp.done && sp.prog < 1) {
       const bx = x + sp.w + 40, Lt = 175, e = ease(sp.rev);
-      const lift = sp.prog * 24, fade = 1 - sp.prog * 0.55, shrink = 1 - sp.prog * 0.25;
+      const lift = sp.prog * 24, fade = 1 - sp.prog * sp.prog, shrink = 1 - sp.prog * 0.25;
       ctx.save(); ctx.globalAlpha = fade; ctx.translate(bx, gy - lift - 26 * e); ctx.scale(shrink, shrink); ctx.rotate(-Math.PI / 2 * e);
       ctx.fillStyle = '#8a5a34'; ctx.strokeStyle = '#3e2410'; ctx.lineWidth = 2.5; ctx.fillRect(-14, -Lt, 28, Lt); ctx.strokeRect(-14, -Lt, 28, Lt);
       ctx.fillStyle = '#e3c08a'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 5, 0, 0, 7); ctx.fill(); ctx.stroke(); // fresh broken base
@@ -2241,10 +2227,10 @@ function drawSurprises(late) {
       for (const [cx2, cy2, r2] of [[0, -Lt - 8, 34], [-22, -Lt + 14, 24], [22, -Lt + 12, 24]]) { ctx.beginPath(); ctx.arc(cx2, cy2, r2, 0, 7); ctx.fill(); }
       ctx.restore();
       if (sp.rev > 0.97 && sp.rev < 1 && !sp.crashed) { sp.crashed = true; for (let i = 0; i < 16; i++) leaf(sp.x + Math.random() * 40, gy - 20); }
-    } else if (sp.type === 'snake' && sp.rev > 0) {
+    } else if (sp.type === 'snake' && sp.rev > 0 && !sp.done && sp.prog < 1) {
       const leaving = sp.prog > 0, dir = leaving ? 1 : -1;
       const hx = leaving ? lerp(x + sp.w * 0.35, x + sp.w + 160, ease(sp.prog)) : lerp(x + sp.w + 90, x + sp.w * 0.35, ease(sp.rev));
-      ctx.save(); ctx.globalAlpha = leaving ? 1 - sp.prog * 0.8 : 1;
+      ctx.save(); ctx.globalAlpha = leaving ? 1 - sp.prog : 1;
       ctx.translate(hx, gy); ctx.scale(1.7, 1.7); ctx.translate(-hx, -gy - 3); // big enough to read, in front of the bush row
       const pts = []; for (let k = 0; k < 24; k++) pts.push([hx - dir * k * 5, gy - 4 + Math.sin(k * 0.55 - S.t * 7 * (sp.done ? 0 : 1)) * 4]);
       ctx.lineCap = 'round'; ctx.lineJoin = 'round';
@@ -2321,7 +2307,6 @@ function drawMiniMap() {
     ctx.beginPath(); ctx.moveTo(x + 10 + CREEK.x0 * k, y + 22); ctx.quadraticCurveTo((lx0 + lx1) / 2, y + 33, x + 10 + CREEK.x1 * k, y + 22); ctx.stroke(); ctx.restore();
   }
   ctx.font = '11px sans-serif';
-  ctx.fillText('🏁', x + 10 + START_X * k - 6, y + 17);
   for (const o of S.obstacles) { ctx.globalAlpha = o.done ? 0.35 : 1; ctx.fillText(o.icon, x + 10 + o.x * k - 6, y + 17); ctx.globalAlpha = 1; }
   for (const o of S.surprises) { if (o.rev <= 0) continue; ctx.globalAlpha = o.done ? 0.35 : 1; ctx.fillText('❓', x + 10 + o.x * k - 6, y + 17); ctx.globalAlpha = 1; }
   ctx.fillText('🔺', x + 10 + GOAL_X * k - 6, y + 17);
@@ -2340,7 +2325,6 @@ function render() {
   drawRiver(false);
   drawGround();
   drawBog(false);
-  drawStartCamp();
   drawBoulder();
   drawCliff();
   drawWall();
