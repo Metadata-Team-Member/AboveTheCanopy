@@ -172,6 +172,8 @@ kbd { background: #24442d; border: 1px solid #3a6345; border-radius: 4px; paddin
 .info-card h2 { padding-right: 26px; }
 .caption .phase.ph-mgr { background: #2e7d6f; }
 .caption .phase.ph-goal { background: #2e7d32; }
+.caption .phase.ph-build { background: #a66b14; }
+.caption .phase.ph-vision { background: linear-gradient(90deg, #c79100, #2e7d32); }
 .stats { flex-wrap: wrap; }
 .stats .day { font-weight: 800; color: #ffe082; border-color: #b08a00 !important; }
 .role-chip small { display: block; white-space: normal; }
