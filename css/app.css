@@ -145,7 +145,7 @@ button.v-leader.active { color: var(--leader); } button.v-manager.active { color
 .info-card.role-goal { border-color: #d9b066; } .info-card.role-goal .theme { color: #d9b066; }
 .info-card .close { position: absolute; top: 8px; right: 8px; padding: 2px 8px; background: transparent; border: none; }
 
-.summary { position: absolute; left: 50%; top: 14px; transform: translateX(-50%); width: min(520px, calc(100% - 28px)); background: rgba(14, 28, 18, .95); border: 2px solid #66bb6a; border-radius: 16px; padding: 18px 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.55); animation: pop .2s ease-out; }
+.summary { position: absolute; left: 14px; top: 58px; width: min(440px, calc(100% - 28px)); background: rgba(14, 28, 18, .95); border: 2px solid #66bb6a; border-radius: 16px; padding: 18px 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.55); animation: pop .2s ease-out; }
 .summary h2 { margin: 0 0 6px; }
 .summary .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
 @keyframes pop { from { transform: scale(.94); opacity: 0; } }
@@ -153,3 +153,9 @@ button.v-leader.active { color: var(--leader); } button.v-manager.active { color
 
 .hint { color: var(--muted); font-size: .85rem; margin-top: 10px; text-align: center; }
 kbd { background: #24442d; border: 1px solid #3a6345; border-radius: 4px; padding: 0 5px; font-size: .8rem; }
+
+.caption .phase.ph-surprise { background: #e64a19; animation: flash 1s ease-in-out infinite alternate; }
+.caption .phase.ph-meeting { background: #b7791f; }
+.caption .phase.ph-distraction { background: #7b3fb0; }
+@keyframes flash { from { filter: brightness(1); } to { filter: brightness(1.35); } }
+.stats span { font-size: .82rem; }
