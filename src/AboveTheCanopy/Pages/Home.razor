@@ -44,6 +44,26 @@
             </div>
         }
 
+        @if (teachCard is int tc)
+        {
+            var tch = Chapters.All[tc];
+            <div class="teach-card" role="dialog" aria-label="Teachable moment">
+                <div class="teach-kicker">🎓 Teachable moment · Chapter @(tc + 1) of @Chapters.All.Count</div>
+                <h2>@tch.Title</h2>
+                <p class="teach-point">@(comms ? tch.Point : tch.OffPoint ?? tch.Point)</p>
+                <ul class="teach-q">
+                    @foreach (var q in tch.Questions)
+                    {
+                        <li>💬 @q</li>
+                    }
+                </ul>
+                <div class="row">
+                    <button class="primary" @onclick="ContinueFromTeach">▶ Continue</button>
+                    <button class="ghost" @onclick="StopTeaching">Stop pausing</button>
+                </div>
+            </div>
+        }
+
         @if (finishedSummary is not null)
         {
             <div class="summary" tabindex="0">
@@ -107,7 +127,47 @@
                 <span>Manager communication <b>@(comms ? "ON" : "OFF")</b></span>
             </label>
         </div>
+
+        <div class="group chapters-group">
+            <button class="chapters-btn" @onclick="ToggleChapters" aria-expanded="@(showChapters ? "true" : "false")" title="Chapters (C) · next chapter (N)">📖 <span class="ch-name">Chapter @(chapter + 1)/@Chapters.All.Count: @Chapters.All[chapter].Title</span></button>
+            <button class="next-ch" @onclick="NextChapter" disabled="@(chapter + 1 >= Chapters.All.Count)" title="Next chapter (N)" aria-label="Next chapter">⏭</button>
+            <button class="toggle teach @(teach ? "active" : "")" aria-pressed="@(teach ? "true" : "false")" @onclick="ToggleTeach" title="Teaching mode: pause at the start of each chapter with a teachable moment">🎓 Pause at chapters</button>
+        </div>
+
+        <div class="group sound">
+            <button data-sound-toggle class="toggle sound-btn @(soundOn ? "active" : "")" aria-pressed="@(soundOn ? "true" : "false")" @onclick="ToggleSound" title="Sound on/off (M)">@(soundOn ? "🔊 Sound on" : "🔇 Sound off")</button>
+            <input type="range" class="volume" min="0" max="1" step="0.05" value="@volume" @oninput="OnVolume" aria-label="Volume" title="Volume" disabled="@(!soundOn)" />
+        </div>
     </div>
+
+    @if (showChapters)
+    {
+        <div class="chapters-backdrop" @onclick="() => showChapters = false"></div>
+        <aside class="chapters" role="dialog" aria-label="Chapters">
+            <div class="chapters-head">
+                <h2>📖 Chapters</h2>
+                <button class="close" @onclick="() => showChapters = false" aria-label="Close chapters">✕</button>
+            </div>
+            <label class="switch teach-switch">
+                <input type="checkbox" checked="@teach" @onchange="OnTeach" />
+                <span class="slider"></span>
+                <span>Pause at each chapter <small>(teaching mode)</small></span>
+            </label>
+            <p class="chapters-hint">Tap a chapter to jump straight to it. Keys: <kbd>C</kbd> chapters, <kbd>N</kbd> next chapter.</p>
+            <ol class="chapter-list">
+                @for (var i = 0; i < Chapters.All.Count; i++)
+                {
+                    var idx = i; var c = Chapters.All[i];
+                    <li>
+                        <button class="chapter @(idx == chapter ? "current" : "")" @onclick="() => JumpTo(idx)" aria-current="@(idx == chapter ? "step" : null)">
+                            <span class="num">@(idx + 1)</span>
+                            <span class="txt"><b>@c.Title</b><small>@(comms ? c.Point : c.OffPoint ?? c.Point)</small></span>
+                        </button>
+                    </li>
+                }
+            </ol>
+        </aside>
+    }
 
     <section class="roles">
         @foreach (var r in new[] { Roles.Leader, Roles.Manager, Roles.Team })
@@ -119,7 +179,8 @@
         }
     </section>
 
-    <footer class="hint">Tip: click the eagle, the owl, the koalas or the pyramid to learn about each role. Keys: <kbd>Space</kbd> play/pause, <kbd>R</kbd> restart, <kbd>1</kbd>–<kbd>4</kbd> perspectives.</footer>
+    <footer class="hint">Tip: click the eagle, the owl, the koalas or the pyramid to learn about each role. Keys: <kbd>Space</kbd> play/pause, <kbd>R</kbd> restart, <kbd>1</kbd>–<kbd>4</kbd> perspectives, <kbd>C</kbd> chapters, <kbd>N</kbd> next chapter, <kbd>M</kbd> sound on/off.
+        <span class="licence">© 2026 Metadata-Team-Member · <a href="https://github.com/Metadata-Team-Member/AboveTheCanopy/blob/main/LICENSE">MIT licence</a></span></footer>
 </div>
 
 @code {
@@ -136,6 +197,11 @@
     private RoleInfo? selected;
     private int wrongTurns, surprises, distractions, priorities, reported, syncs, ideas, day = 1, lastDays;
     private bool showReflection;
+    private int chapter;
+    private bool showChapters, teach, soundOn = true;
+    private int? teachCard;
+    private double volume = 0.6;
+    private sealed record SoundPrefs(bool enabled, double volume);
     private string[] reflection = Array.Empty<string>();
     private int? daysOn, daysOff; // results from this session, for the ON vs OFF comparison
     private const int TypicalDaysOn = 119, TypicalDaysOff = 154; // measured at 1x, see README
@@ -162,15 +228,52 @@
         module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/canopy.js");
         selfRef = DotNetObjectReference.Create(this);
         await module.InvokeVoidAsync("init", canvas, selfRef);
+        await module.InvokeVoidAsync("setChapters", (object)Chapters.Marks);
+        try
+        {
+            var prefs = await module.InvokeAsync<SoundPrefs>("soundPrefs");
+            soundOn = prefs.enabled; volume = prefs.volume;
+        }
+        catch (JSException) { }
+        StateHasChanged();
     }
 
     private ValueTask Js(string fn, params object?[] args) => module is null ? ValueTask.CompletedTask : module.InvokeVoidAsync(fn, args);
 
-    private async Task TogglePlay() { playing = !playing; await Js("setPlaying", playing); }
+    private async Task TogglePlay() { playing = !playing; teachCard = null; await Js("setPlaying", playing); }
+
+    // ---- v6: chapters and teaching mode ----
+    private void ToggleChapters() => showChapters = !showChapters;
+    private async Task ToggleTeach() { teach = !teach; await Js("setTeach", teach); }
+    private async Task OnTeach(ChangeEventArgs e) { teach = e.Value is bool b && b; await Js("setTeach", teach); }
+    private async Task JumpTo(int i)
+    {
+        if (module is null) return;
+        showChapters = false; teachCard = null; finishedSummary = null; showReflection = false; ResetCounters();
+        chapter = await module.InvokeAsync<int>("jumpTo", i);
+        if (teach && chapter > 0 && Chapters.All[chapter].Mark != "finish")
+        {
+            teachCard = chapter; playing = false; await Js("setPlaying", false);
+        }
+        else if (!playing) { playing = true; await Js("setPlaying", true); }
+    }
+    private async Task NextChapter() { if (chapter + 1 < Chapters.All.Count) await JumpTo(chapter + 1); }
+    private async Task ContinueFromTeach() { teachCard = null; playing = true; await Js("setPlaying", true); }
+    private async Task StopTeaching() { teach = false; await Js("setTeach", false); await ContinueFromTeach(); }
+
+    // ---- v6: sound ----
+    private async Task ToggleSound() { soundOn = !soundOn; await Js("setSound", soundOn); }
+    private async Task OnVolume(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v))
+        {
+            volume = v; await Js("setVolume", v);
+        }
+    }
 
     private async Task Restart()
     {
-        finishedSummary = null; showReflection = false; ResetCounters();
+        finishedSummary = null; showReflection = false; teachCard = null; chapter = 0; ResetCounters();
         await Js("restart");
         if (!playing) { playing = true; await Js("setPlaying", true); }
     }
@@ -208,7 +311,21 @@
     [JSInvokable] public void OnPlayState(bool isPlaying) { playing = isPlaying; StateHasChanged(); }
     [JSInvokable] public void OnViewChanged(string v) { view = v; StateHasChanged(); }
     private void ResetCounters() { wrongTurns = 0; surprises = 0; distractions = 0; priorities = 0; reported = 0; syncs = 0; ideas = 0; day = 1; }
-    [JSInvokable] public void OnRestarted() { finishedSummary = null; showReflection = false; ResetCounters(); StateHasChanged(); }
+    [JSInvokable] public void OnRestarted() { finishedSummary = null; showReflection = false; teachCard = null; chapter = 0; ResetCounters(); StateHasChanged(); }
+    [JSInvokable] public void OnChapter(int i) { chapter = Math.Clamp(i, 0, Chapters.All.Count - 1); StateHasChanged(); }
+    [JSInvokable] public void OnTeachable(int i) { teachCard = Math.Clamp(i, 0, Chapters.All.Count - 1); playing = false; StateHasChanged(); }
+    [JSInvokable]
+    public async Task OnShortcut(string key)
+    {
+        switch (key)
+        {
+            case "chapters": showChapters = !showChapters; break;
+            case "next": await NextChapter(); break;
+            case "mute": await ToggleSound(); break;
+            case "escape": showChapters = false; break;
+        }
+        StateHasChanged();
+    }
     [JSInvokable] public void OnDay(int d) { day = d; StateHasChanged(); }
     [JSInvokable] public void OnStats(int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs, int teamIdeas) { wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; syncs = managerSyncs; ideas = teamIdeas; StateHasChanged(); }
 

@@ -121,6 +121,73 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
 
+## New in v6: chapters, teaching mode and sound
+
+### 📖 Chapters (teachable moments)
+Open **📖 Chapters** in the controls bar (or press <kbd>C</kbd>) to see every chapter with a short title and its teaching point, and tap one to jump straight to it.
+The button always shows the current chapter. **⏭** (or <kbd>N</kbd>) jumps to the next chapter. The list is a scrollable panel that works by touch on a phone (it slides up from the bottom).
+
+| # | Chapter | Teaching point |
+|---|---|---|
+| 1 | The vision | Only the Leader can see both the start and the pyramid |
+| 2 | Passing the direction down | Leader ➜ Manager: the vision becomes a plan |
+| 3 | Everyday work | The bush hacking nobody up top sees |
+| 4 | The vines: a warning in time | Warned early, the right tools are ready |
+| 5 | Coaching Wattle | Managers grow people |
+| 6 | The boulder & upskilling | Training first makes the work faster |
+| 7 | Competing priorities | The first eagle meeting: yes to the pyramid, park the rest |
+| 8 | The river & delegation | Kip gets the lead on the bridge build |
+| 9 | Manager meetings | Managers coordinate sideways (the Ops owl shares logs) |
+| 10 | Surprise! The sinkhole | Bottom-up communication, and the answer back down |
+| 11 | The bog | Knowing exactly what to gather |
+| 12 | Leader support: protecting time | "The koalas need that time: the picnic can wait!" |
+| 13 | The fallen log | A small tip saves a long detour |
+| 14 | Banjo's idea & course correction | Team members lead too; leaders adapt |
+| 15 | The cliff | The Manager scouts the safe spot |
+| 16 | Supply drop: leaders back the team | The Leader says YES to saws and safety gear |
+| 17 | The bees & Koala of the week | Tiptoe past, then celebrate a small win |
+| 18 | The snake | Some delays you wait out safely |
+| 19 | The rock wall | Preparation pays off |
+| 20 | Rest break | A sustainable pace beats burnout |
+| 21 | Final priorities | New asks arrive even near the end |
+| 22 | The pyramid & reflection | Vision + planning & communication + everyday work |
+
+With communication OFF, the chapter list and the teaching cards describe what goes wrong instead (for example *"Nobody notices Wattle struggling"*).
+
+**How a jump works.** Jumping restarts the story and silently fast-forwards the simulation to the chapter's first moment, with sound and screen updates muted.
+The simulation steps at a fixed rate and its randomness is seeded, so a jump to a chapter always lands in exactly the same state (in about a twentieth of a second on a laptop).
+
+![The chapters panel](docs/chapters-panel.png)
+
+### 🎓 Teaching mode: pause at each chapter
+Turn on **🎓 Pause at chapters** (in the controls bar or at the top of the chapters panel). At the start of every chapter the story pauses and a
+**Teachable moment** card shows the teaching point and one or two discussion questions. **▶ Continue** carries on; **Stop pausing** turns teaching mode off.
+The last chapter goes straight to the finish summary and its 💬 Reflect panel instead.
+
+![A teachable moment card](docs/teachable-moment.png)
+
+![Chapters on a phone](docs/phone-chapters.png)
+
+### 🔊 Sound
+Every sound is **generated in the browser with the Web Audio API**: there are no audio files, no CDNs and no licensing issues, and it works offline.
+Sound is on by default but only starts after your first tap, click or key press (browser autoplay rules; on iOS Safari it unlocks on the first touch).
+**🔊 Sound on / 🔇 Sound off** (or <kbd>M</kbd>) and the volume slider are in the controls bar, and your choice is remembered on this device.
+Pausing the story pauses the audio. At high speeds repeated sounds are thinned out, and every sound has its own rate limit so nothing gets spammy.
+The mix is deliberately gentle for a classroom: soft envelopes, a compressor and a low-pass filter on the master output.
+
+| Moment | Sound |
+|---|---|
+| The forest | Soft wind and leaf rustle, bird chirps, a distant kookaburra-ish laugh, cicada swells, running water near the river (a trickle in the creek bed) |
+| Messages | Chimes on every message pulse: falling notes for Leader ➜ Manager and Manager ➜ Team, a rising arpeggio for escalations up the chain |
+| Leader & Manager | A soft eagle cry and wing flaps; owl hoots when the Manager spots a hazard and when a visiting owl arrives; a whoosh when visiting eagles fly in |
+| Work | Saw rasps for bushes, rhythmic hammer-and-chisel taps at the boulder, log and plank thunks, stone clacks in the bog, rope creaks at the cliff, vine snips |
+| Distractions | Magpie squawk, an email ping storm, thunder and a wind gust, a mozzie whine, a calendar ding for the meeting request, a branch snag |
+| Surprises | An alert sting, plus a sinkhole rumble, a tree creak and crash, or a snake hiss |
+| Obstacles (comms OFF) | A splash in the river, a squelch in the bog, a bonk on the boulder, the angry bees' swarm, and an echo when a call goes unanswered |
+| Support & growth | Parachute whoosh and a thud when the supply drop lands; sparkles for Upskilled, coached Wattle, Kip's lead, Banjo's idea and Koala of the week; a soft chord when the Leader backs the team |
+| Rest break | Campfire crackle and the billy bubbling |
+| Finish | A small fanfare and confetti pops |
+
 ## More of the journey
 
 **Distractions happen, so refocus.** The Leader and the Manager get distracted too, veer off course, then refocus on the goal.
@@ -228,6 +295,10 @@ Use the speed slider (0.25× to 3×) to fit your session.
 | Manager communication ON/OFF | When OFF, the manager still spots obstacles but never tells the koalas |
 | Click the eagle, owl, koalas or pyramid | Opens an info card about that role |
 | Hover over a koala | Shows its name (Kip, Banjo, Matilda or Wattle) |
+| 📖 Chapters | Lists every chapter; tap one to jump to it (<kbd>C</kbd>) |
+| ⏭ | Next chapter (<kbd>N</kbd>) |
+| 🎓 Pause at chapters | Teaching mode: pause at each chapter with a teachable moment |
+| 🔊 Sound on/off + volume | Procedural sound effects and forest ambience (<kbd>M</kbd>); remembered on this device |
 | 💬 Reflect (at the finish) | Three discussion questions for the run you just watched |
 
 The caption bar narrates each phase (with a red **SURPRISE** tag for unplanned events and an amber tag for meetings). The stats at the top count:
@@ -270,7 +341,9 @@ AboveTheCanopy.sln
 src/AboveTheCanopy/
   Pages/Home.razor        UI: canvas, controls, caption bar, info cards, summary
   Models/RoleInfo.cs      Teaching text for each role
-  wwwroot/js/canopy.js    Animation engine: scene, agents, story, perspectives
+  Models/Chapters.cs      The 22 chapters: story mark, title, teaching point, questions
+  wwwroot/js/canopy.js    Animation engine: scene, agents, story, perspectives, chapters
+  wwwroot/js/sound.js     Procedural Web Audio sound effects and ambience
   wwwroot/css/app.css     Styling
 deploy/pages.yml             GitHub Pages workflow (move to .github/workflows/ to enable)
 ```
@@ -286,9 +359,11 @@ Want to change the story? Everything is in `canopy.js`:
 - `WALK_SPEED_INFORMED` / `WALK_SPEED_UNINFORMED` and `makePathBushes()` control the pacing.
 - `KOALAS` holds the koalas' names, colours and hats. `COACH_X`, `LANTANA`, `CREEK` and `BREAK_X` place the coaching moment, the lantana patch, the creek route and the rest break.
 - `coachSeq()`, `startIdea()` / `adoptIdea()`, `startRecognition()` and `startBreak()` run the v5 moments. `whenFree()` waits until the Manager is free (no meeting, distraction or task) before starting one, so they never talk over each other.
+- `mark()` records story moments; a chapter starts at the first moment named in `Models/Chapters.cs`. `jumpTo()` restarts and fast-forwards (fixed 1/60 s steps, seeded randomness) to a chapter.
+- `sound.js` holds every sound as a small synth recipe (`SFX`), the ambient forest bed (`buildAmbience()`, `tick()`), the per-sound rate limits (`RATE`) and the saved on/off and volume settings. `audioTick()` and `ambLevels()` in `canopy.js` connect it to the story.
 - `caption()` queues captions with a priority and an optional hold (`pumpCaptions()` shows them), so meeting and surprise captions are never cut off.
 
 Note: .NET 10 fingerprints static files at build time, so after editing `canopy.js` outside Visual Studio, rebuild (or use `dotnet watch`).
 
-## License
-[MIT](LICENSE)
+## Licence
+[MIT](LICENSE). Copyright (c) 2026 Metadata-Team-Member.

@@ -1,4 +1,6 @@
-// Above the Canopy v4 - animation engine (plain canvas 2D, no dependencies).
+// Above the Canopy v6 - animation engine (plain canvas 2D, no dependencies).
+// v6: procedural Web Audio sound (sound.js), chapters with deterministic jumps, and a teaching mode.
+import * as snd from './sound.js';
 // World units: the scene is H = 600 units tall; the canvas is scaled to fit.
 // Exported as an ES module and driven from Blazor (Pages/Home.razor) via JS interop.
 //
@@ -180,15 +182,20 @@ let fog, fctx;
 let scale = 1, viewW = 1200, camX = 0, camTarget = 0;
 let deco = null;
 let S = null;
-const settings = { speed: 1, playing: true, view: 'all', comms: true };
+const settings = { speed: 1, playing: true, view: 'all', comms: true, teach: false };
+// v6 chapters: each chapter starts when its mark is first hit in the story (see mark()). Blazor passes the same list (Models/Chapters.cs).
+let CH_MARKS = ['start', 'dir', 'go', 'ob:vines', 'coach', 'ob:boulder', 'meet:0', 'ob:river', 'mm:0', 'sp:sinkhole', 'ob:bog', 'meet:1', 'ob:log', 'idea', 'ob:cliff', 'sp:treefall', 'ob:bees', 'sp:snake', 'ob:wall', 'break', 'meet:2', 'finish'];
+const JUMP_STEP = 1 / 60, TEACH_DELAY = 0.4;
 
 // ---------- helpers ----------
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, t) => a + (b - a) * t;
 const ease = t => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const pick = (arr, i) => arr[((i % arr.length) + arr.length) % arr.length];
+let seed = 20261017;
+function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
 function rng(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
-function call(method, ...args) { try { dotnet && dotnet.invokeMethodAsync(method, ...args); } catch (e) { /* ignore */ } }
+function call(method, ...args) { if (S && S.quiet) return; try { dotnet && dotnet.invokeMethodAsync(method, ...args); } catch (e) { /* ignore */ } }
 function inZone(x, pad, types) {
   return OB_DEFS.concat(SURPRISE_DEFS).some(o => (!types || types.includes(o.type)) && x > o.x - pad && x < o.x + o.w + pad);
 }
@@ -198,6 +205,15 @@ function makeObstacles() {
   return OB_DEFS.map(o => Object.assign({}, o, { prog: 0, spotted: false, informed: false, done: false, active: false, angry: 0, route: false }));
 }
 const ob = type => S.obstacles.find(o => o.type === type);
+const sfx = (name, opts) => { if (S && !S.silent) snd.play(name, opts); };
+function mark(key) {
+  if (S.marks.has(key)) return; S.marks.add(key);
+  let idx = S.chapter; CH_MARKS.forEach((m, i) => { if (i > idx && S.marks.has(m)) idx = i; });
+  if (idx === S.chapter) return;
+  S.chapter = idx; call('OnChapter', idx);
+  // teaching mode: pause a moment after the chapter starts (so its first bubbles have faded in)
+  if (settings.teach && !S.quiet && CH_MARKS[idx] !== 'finish') S.teachAt = { t: S.t + TEACH_DELAY, idx };
+}
 
 function buildDeco() {
   const r = rng(42);
@@ -268,6 +284,7 @@ function laneOffset(x) {
 
 // ---------- state ----------
 function reset() {
+  seed = 20261017;
   S = {
     t: 0,
     obstacles: makeObstacles(),
@@ -285,7 +302,7 @@ function reset() {
     bubbles: [], queue: { leader: [], manager: [], team: [], visitor: [] }, pulses: [], events: [], particles: [],
     caption: '', phase: '', capT: 0, cap: null, capQ: [], pend: [], finished: false, introCam: 'start', selected: null, hover: -1,
     idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [],
-    coachDone: false, breakDone: false,
+    coachDone: false, breakDone: false, marks: new Set(['start']), chapter: 0, silent: false, quiet: false, tapT: 0, tapN: 0, finArgs: null, teachAt: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
   };
   camX = camTarget = 0;
@@ -333,10 +350,11 @@ function pumpCaptions() {
   S.capQ.splice(S.capQ.indexOf(best), 1); showCaption(best);
 }
 // A badge shown under one koala's feet (name + what they did), so it never collides with the speech bubbles.
-function kbadge(i, text, dur, col = '#ffd34d') { S.kb = S.kb.filter(b => b.i !== i); S.kb.push({ i, text, t: dur, dur, col }); }
+function kbadge(i, text, dur, col = '#ffd34d') { sfx('sparkle'); S.kb = S.kb.filter(b => b.i !== i); S.kb.push({ i, text, t: dur, dur, col }); }
 // Speech bubbles: one per speaker on screen at a time; extra lines queue up so nothing overlaps or gets lost.
 const MIN_SHOW = 1.6;
 function bubble(who, text, dur = 3.2, priority = false) {
+  if (who === 'team' && !settings.comms && /hello\?|anyone up there|tell someone/i.test(text)) sfx('echo');
   if (priority) { S.queue[who] = []; showBubble(who, text, dur); return; }
   const cur = S.bubbles.find(b => b.who === who);
   if (cur && cur.t < MIN_SHOW) {
@@ -351,7 +369,8 @@ function showBubble(who, text, dur) {
   S.bubbles = S.bubbles.filter(b => b.who !== who);
   S.bubbles.push({ who, text, t: 0, dur });
 }
-function pulse(from, to, color, onArrive, dur = 1.3) { S.pulses.push({ from, to, color, onArrive, t: 0, dur }); }
+function pulse(from, to, color, onArrive, dur = 1.3) {
+  sfx('pulse', { from, to }); S.pulses.push({ from, to, color, onArrive, t: 0, dur }); }
 const PULSE_COL = { leader: '#ffd34d', manager: '#c792ff', team: '#5dd3ff' };
 // A message that travels: speaker says it, a pulse carries it, the listener replies.
 function say(from, to, text, reply, onArrive) {
@@ -372,13 +391,13 @@ function scheduleIntro() {
   caption('High above the canopy, the Leader can see where the team starts... ', 'Vision');
   S.leader.beam = 'start'; S.leader.beamT = 2.6;
   later(2.6, () => {
-    S.introCam = 'goal';
+    S.introCam = 'goal'; sfx('screech');
     S.leader.beam = 'goal'; S.leader.beamT = 3.2;
     caption('...and the end goal: a pyramid poking out of the top of the canopy, far to the east.', 'Vision');
     bubble('leader', 'There it is: the pyramid! 🔺', 3);
   });
   later(5.8, () => {
-    S.introCam = null;
+    S.introCam = null; mark('dir');
     caption('The Leader shares the vision and the direction with the Manager below the canopy.', 'Direction');
     say('leader', 'manager', 'Head east to the pyramid.', 'Got it. I\'ll scout a route.', () => {
       caption('The Manager turns the vision into a plan, flying ahead under the canopy to scout the way.', 'Planning');
@@ -389,6 +408,7 @@ function scheduleIntro() {
 }
 
 function kickOffTeam() {
+  mark('go');
   if (settings.comms) {
     say('manager', 'team', 'Koalas: east to the pyramid! I\'ll warn you about hazards.', 'East it is! Tools out! 🐨💪', () => {
       S.team.mode = 'walk';
@@ -503,12 +523,20 @@ function sequenceFor(o, informed) {
 function runSeq(steps, obstacle, onDone = null) {
   const tm = S.team;
   tm.mode = 'seq'; tm.seq = steps; tm.step = 0; tm.stepT = 0; tm.stepStartX = tm.x; tm.seqOb = obstacle; tm.seqStart = S.t; tm.onDone = onDone;
+  if (obstacle) {
+    mark((obstacle.isSurprise ? 'sp:' : 'ob:') + obstacle.type);
+    if (obstacle.isSurprise) { sfx('sting'); sfx({ sinkhole: 'sinkhole', treefall: 'treefall', snake: 'hiss' }[obstacle.type]); }
+  }
   startStep();
 }
 function startStep() {
   const tm = S.team, st = tm.seq[tm.step], seq = tm.seq, idx = tm.step;
   if (st.cap) caption(st.cap, st.phase || (tm.seqOb ? (tm.seqOb.isSurprise ? 'SURPRISE' : 'Obstacle') : S.phase), { valid: () => tm.seq === seq && tm.step === idx || (idx === 0 && S.t - tm.seqStart < 4), hold: st.capHold, prio: st.capPrio != null ? st.capPrio : idx === 0 && tm.seqOb ? 2 : undefined });
   if (st.say) bubble('team', st.say, Math.max(2, st.dur + 0.6));
+  const words = (st.cap || '') + ' ' + (st.say || '');
+  if (/SPLASH/.test(words)) sfx('splash'); else if (/sinks|Squelch/.test(words)) sfx('squelch'); else if (/BONK/.test(words)) sfx('thud');
+  else if (/BZZZ/.test(words)) sfx('swarm'); else if (/slide/.test(words)) sfx('rustle');
+  if (st.train) sfx('idea'); if (st.mood === 'chisel') sfx('sparkle');
   if (st.ask) {
     const [q, a] = st.ask;
     later(0.5, () => {
@@ -530,7 +558,7 @@ function updateSeq(dt) {
   tm.m0 = st.m0 ? st.m0(p) : 0;
   tm.m0y = st.m0y ? st.m0y(p) : 0;
   if (st.prog && tm.seqOb) tm.seqOb.prog = Math.max(tm.seqOb.prog, p);
-  if (st.bushHp && tm.bush) { tm.bush.hp = lerp(st.bushHp[0], st.bushHp[1], p); if (Math.random() < dt * 14) leaf(tm.bush.x - 4, groundBase(tm.bush.x) - 14 - Math.random() * 14); }
+  if (st.bushHp && tm.bush) { tm.bush.hp = lerp(st.bushHp[0], st.bushHp[1], p); if (rand() < dt * 14) leaf(tm.bush.x - 4, groundBase(tm.bush.x) - 14 - rand() * 14); }
   if (st.rev && tm.seqOb) tm.seqOb.rev = Math.max(tm.seqOb.rev, p);
   if (p >= 1 && (!st.until || st.until())) {
     tm.step++; tm.stepT = 0; tm.stepStartX = tm.x;
@@ -587,9 +615,12 @@ function update(dt) {
   for (const b of S.kb) b.t -= dt; S.kb = S.kb.filter(b => b.t > 0);
   if (S.idea.go) S.idea.goT += dt;
   if (S.leafFly) { S.leafFly.t += dt; if (S.leafFly.t > 1.0) S.leafFly = null; }
-  if (S.drop) { const D = S.drop; D.t += dt; if (!D.landed && D.t >= 3.0) { D.landed = true; tm.supplied = 3.2; for (let i = 0; i < 10; i++) leaf(D.x, GROUND - 10); } if (D.sp.done) D.fade = (D.fade || 0) + dt; if (D.fade > 1) S.drop = null; }
+  if (S.drop) { const D = S.drop; D.t += dt; if (!D.landed && D.t >= 3.0) { D.landed = true; sfx('thud'); tm.supplied = 3.2; for (let i = 0; i < 10; i++) leaf(D.x, GROUND - 10); } if (D.sp.done) D.fade = (D.fade || 0) + dt; if (D.fade > 1) S.drop = null; }
   if (!S.finished) { const d = dayOf(S.t); if (d !== S.day) { S.day = d; call('OnDay', d); } }
-  if (tm.mood === 'chisel' && Math.random() < dt * 16) { const b = ob('boulder'); S.particles.push({ kind: 'confetti', x: b.x + 4 + Math.random() * (b.w - 8), y: GROUND - 14 - Math.random() * 60, vx: -40 - Math.random() * 80, vy: -60 - Math.random() * 90, r: 0, vr: 6, life: 0.7, c: Math.random() < 0.5 ? '#8a8d91' : '#b9bcc0' }); }
+  if (tm.mood === 'chisel' && rand() < dt * 16) { const b = ob('boulder'); S.particles.push({ kind: 'confetti', x: b.x + 4 + rand() * (b.w - 8), y: GROUND - 14 - rand() * 60, vx: -40 - rand() * 80, vy: -60 - rand() * 90, r: 0, vr: 6, life: 0.7, c: rand() < 0.5 ? '#8a8d91' : '#b9bcc0' }); }
+
+  if (!S.silent) audioTick(dt);
+  if (S.teachAt && S.t >= S.teachAt.t) { const i = S.teachAt.idx; S.teachAt = null; if (settings.teach) { settings.playing = false; snd.setPaused(true); call('OnTeachable', i); } }
 
   // --- team ---
   if (tm.mode === 'walk' && !S.breakDone && tm.x >= BREAK_X && !S.finished && (!settings.comms || mgFree())) startBreak();
@@ -619,7 +650,7 @@ function update(dt) {
     if (b.lantana && S.idea.go) { tm.mode = 'walk'; tm.bush = null; } // leave the lantana for the creek route
     else {
     b.hp = Math.max(0, 1 - tm.hackT / dur);
-    if (Math.random() < dt * 22) leaf(b.x - 4, groundBase(b.x) - 14 - Math.random() * 14);
+    if (rand() < dt * 22) leaf(b.x - 4, groundBase(b.x) - 14 - rand() * 14);
     if (tm.hackT >= dur) {
       b.cut = true; tm.bush = null; tm.mode = 'walk'; tm.bushesCut++;
       for (let i = 0; i < 6; i++) leaf(b.x, groundBase(b.x) - 12);
@@ -713,11 +744,13 @@ function update(dt) {
   }
   S.particles = S.particles.filter(p => p.life > 0);
   for (const o of S.obstacles) o.angry = Math.max(0, o.angry - dt);
-  if (S.finished && Math.random() < dt * 30) confetti(GOAL_X + (Math.random() - 0.5) * 300, 60 + Math.random() * 60, 1);
+  if (S.finished && rand() < dt * 30) confetti(GOAL_X + (rand() - 0.5) * 300, 60 + rand() * 60, 1);
 }
 
 function startDistraction(ag, d) {
   ag.dist = { def: d, t: 0, phase: 'distract', last: { ox: 0, oy: 0, rot: 0 } };
+  sfx({ magpie: 'magpie', email: 'emailStorm', storm: 'thunder', meeting: 'ding', mosquito: 'mozzie', branch: 'branch' }[d.def ? d.def.kind : d.kind]);
+  if (d.kind === 'magpie') later(0.7, () => sfx('screech'));
   caption(d.cap, 'Distraction');
   bubble(d.who, d.say, 2.4, true);
   later(1.8, () => bubble(d.who, d.say2, 1.9, true));
@@ -744,6 +777,7 @@ function updateDistraction(ag, dt) {
       d.phase = 'refocus'; d.t = 0;
       bubble(d.def.who, d.def.refocus, 2.6, true);
       if (d.def.who === 'leader') {
+        sfx('flap');
         S.leader.beam = 'goal'; S.leader.beamT = 2.4;
         caption('The Leader refocuses on the pyramid. Distractions happen; what matters is getting back to the main objective.', 'Refocus');
       } else {
@@ -760,7 +794,7 @@ function updateDistraction(ag, dt) {
 
 function spot(o) {
   o.spotted = true;
-  S.mgr.alert = 2.2;
+  S.mgr.alert = 2.2; sfx('hoot');
   bubble('manager', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} ahead!`, 2.6);
   if (settings.comms) {
     caption(`The Manager spots a ${o.name} ahead and radios a warning down to the koalas.`, 'Communication');
@@ -784,23 +818,26 @@ function spot(o) {
 function finish() {
   const tm = S.team;
   S.finished = true; tm.mode = 'done'; tm.mood = 'happy';
+  sfx('fanfare');
   caption(`Delivered on day ${Math.ceil(S.t / SEC_PER_DAY)}! 🎉 The koalas reach the pyramid: vision (Leader) + planning & communication (Manager) + everyday hard work (Team).`, 'Goal reached', { force: true });
   S.mgr.task = null; S.mgr.busy = false;
   bubble('team', 'We made it!! 🎉🐨', 5);
   later(1.0, () => bubble('manager', 'Brilliant work, koalas! 🦉', 4));
   later(1.8, () => bubble('leader', 'Proud of every one of you! 🦅', 4));
   later(4.6, () => bubble('team', 'Group hug!! 🤗', 4));
-  for (let i = 0; i < 80; i++) confetti(tm.x - 30 + (Math.random() - 0.5) * 60, memberY(tm.x) - 50, 1);
+  for (let i = 0; i < 80; i++) confetti(tm.x - 30 + (rand() - 0.5) * 60, memberY(tm.x) - 50, 1);
   const days = Math.ceil(S.t / SEC_PER_DAY); S.day = days; call('OnDay', days);
-  call('OnFinished', Math.round(S.t), days, tm.wrong, tm.surprises, tm.distractions, tm.priorities, tm.reported, tm.syncs, tm.ideas, tm.breaks, settings.comms);
+  S.finArgs = [Math.round(S.t), days, tm.wrong, tm.surprises, tm.distractions, tm.priorities, tm.reported, tm.syncs, tm.ideas, tm.breaks, settings.comms];
+  call('OnFinished', ...S.finArgs);
+  mark('finish');
 }
 function confetti(x, y, n) {
   const cols = ['#ff5d5d', '#ffd34d', '#5dd3ff', '#8aff5d', '#d07bff', '#ffffff'];
-  for (let i = 0; i < n; i++) S.particles.push({ kind: 'confetti', x, y, vx: (Math.random() - 0.5) * 220, vy: -120 - Math.random() * 200, r: Math.random() * 6, vr: (Math.random() - 0.5) * 10, life: 2.5 + Math.random(), c: cols[Math.floor(Math.random() * cols.length)] });
+  for (let i = 0; i < n; i++) S.particles.push({ kind: 'confetti', x, y, vx: (rand() - 0.5) * 220, vy: -120 - rand() * 200, r: rand() * 6, vr: (rand() - 0.5) * 10, life: 2.5 + rand(), c: cols[Math.floor(rand() * cols.length)] });
 }
 function leaf(x, y) {
   const cols = ['#4caf50', '#66bb6a', '#2e7d32', '#9ccc65'];
-  S.particles.push({ kind: 'leaf', x, y, vx: 30 + Math.random() * 90, vy: -60 - Math.random() * 80, r: Math.random() * 6, vr: (Math.random() - 0.5) * 8, life: 1.1 + Math.random() * 0.6, c: cols[Math.floor(Math.random() * 4)] });
+  S.particles.push({ kind: 'leaf', x, y, vx: 30 + rand() * 90, vy: -60 - rand() * 80, r: rand() * 6, vr: (rand() - 0.5) * 8, life: 1.1 + rand() * 0.6, c: cols[Math.floor(rand() * 4)] });
 }
 
 // ---------- v5: growing people, ideas from the ground, wellbeing ----------
@@ -813,7 +850,7 @@ function mgTaskTarget(T) {
 }
 // Wattle (the smallest koala) struggles with her saw at a thick bush. ON: the owl coaches her. OFF: nobody notices.
 function coachSeq() {
-  const tm = S.team;
+  const tm = S.team; mark('coach');
   if (settings.comms) return [
     { dur: 2.0, mood: 'hack', struggle: true, bushHp: [1, 0.8], phase: 'COACHING', until: mgFree,
       cap: 'The everyday work, but Wattle, the smallest koala, is struggling: her saw keeps getting stuck and she\'s falling behind.', say: 'Wattle: My saw keeps getting stuck... 😣' },
@@ -838,9 +875,11 @@ function coachDone(bush) {
 // Banjo spots a dry creek bed beside the lantana. ON: the idea goes up, the Leader adopts it and changes course.
 function startIdea() {
   const I = S.idea; I.started = true; I.bulb = true;
+  if (!settings.comms) mark('idea');
   if (settings.comms) whenFree(() => mgFree() && !S.bubbles.some(b => b.who !== 'visitor') && !S.queue.team.length && !S.queue.manager.length, () => {
+    mark('idea');
     caption('Team members lead too: hacking through thick lantana, Banjo spots a dry creek bed running alongside. A better route, seen from the ground!', 'TEAM IDEA', { hold: 3.2 });
-    bubble('team', 'Banjo: There\'s a shortcut along the creek bed! 💡', 2.8, true);
+    bubble('team', 'Banjo: There\'s a shortcut along the creek bed! 💡', 2.8, true); sfx('idea');
     whenFree(mgFree, () => {
       S.mgr.busy = true;
       later(0.4, () => say('team', 'manager', 'Banjo: A dry creek bed skips all this lantana!', 'Smart! Taking it to the boss. 🦉', () => {
@@ -850,7 +889,7 @@ function startIdea() {
     });
   }); else {
     caption('Banjo spots a dry creek bed that would skip the lantana, but with communication OFF the idea goes nowhere.', 'No communication', { hold: 3 });
-    bubble('team', 'Banjo: Psst... a creek bed! Should we tell someone? 🤔', 3, true);
+    bubble('team', 'Banjo: Psst... a creek bed! Should we tell someone? 🤔', 3, true); sfx('idea');
     later(3.4, () => bubble('team', 'Banjo: ...hello? Guess we keep hacking. 😕', 2.6));
     later(6.2, () => { I.bulb = false; });
   }
@@ -860,7 +899,7 @@ function adoptIdea() {
   const left = S.pathBushes.filter(b => b.lantana && !b.cut).length;
   const days = Math.max(1, Math.round((left - 1.3) * LANTANA_HACK.on / SEC_PER_DAY));
   I.adopted = true; I.saved = days; tm.ideas++; stats();
-  S.leader.beam = 'creek'; S.leader.beamT = 5.5;
+  S.leader.beam = 'creek'; S.leader.beamT = 5.5; sfx('yes');
   bubble('leader', `New info from the ground. We'll take the creek route; it saves ${days} days.`, 3.6, true);
   caption(`Course correction: leaders adapt. With new information from the ground, the Leader changes the plan: the creek route saves about ${days} days.`, 'COURSE CORRECTION', { force: true, hold: 3.6 });
   later(2.0, () => pulse('leader', 'manager', PULSE_COL.leader, () => say('manager', 'team', 'Creek route approved! Great idea, Banjo! 🌟', 'Banjo: Woohoo! Follow me! 🐨', () => {
@@ -875,13 +914,13 @@ function startRecognition() {
   mg.task = { kind: 'recog', t: 0 };
   caption('Celebrating small wins: the owl names Matilda "Koala of the week" for keeping everyone calm past the bees. 🌿', 'RECOGNITION', { hold: 3.4 });
   later(1.0, () => bubble('manager', 'Koala of the week: Matilda! 🌿 You kept us calm.', 2.6, true));
-  later(1.7, () => { S.leafFly = { t: 0 }; });
+  later(1.7, () => { S.leafFly = { t: 0 }; sfx('rustle'); });
   later(2.7, () => { tm.leaf = 2; kbadge(2, '🌿 Matilda: Koala of the week', 4.5, '#c5e1a5'); bubble('team', 'Matilda: Aww, thanks! 🥰', 2.2); });
   later(4.4, () => { mg.task = null; mg.focusT = 1.4; say('manager', 'leader', '🐝 Bees\' nest cleared! ✅ Matilda kept everyone calm.', 'Great work, Matilda! 🦅'); });
 }
 // Wellbeing: after the toughest stretch. ON: the owl calls a break. OFF: no break, and the koalas tire.
 function startBreak() {
-  const tm = S.team; S.breakDone = true;
+  const tm = S.team; S.breakDone = true; mark('break');
   if (!settings.comms) {
     tm.tired = true;
     caption('Nobody calls a break. After the toughest stretch of the journey, the koalas push on exhausted, and slow right down.', 'WELLBEING', { hold: 3.5 });
@@ -934,7 +973,7 @@ function upChain(sp) {
         const down = () => pulse('leader', 'manager', PULSE_COL.leader, () => say('manager', 'team', sp.down, sp.teamAck, () => { sp.chainDone = true; }));
         if (sp.support) {
           caption('Leaders back the team: the Leader says YES to saws and safety gear, and a supply drop floats down through a gap in the canopy. 🪂', 'LEADER SUPPORT', { hold: 4 });
-          S.drop = { x: S.team.x - 160, t: 0, landed: false, sp };
+          S.drop = { x: S.team.x - 160, t: 0, landed: false, sp }; sfx('yes'); later(0.3, () => sfx('parachute'));
           whenFree(() => S.drop && S.drop.landed, () => later(0.5, down));
         } else {
           caption('The Leader accepts the delay and reassures everyone: safety first, the goal stays the same.', 'SURPRISE');
@@ -948,6 +987,7 @@ function upChain(sp) {
 // ---------- v4: manager meetings (sideways coordination under the canopy) ----------
 function startMgrMeeting(m) {
   S.mgr.meeting = { def: m, phase: 'arrive', t: 0, li: 0 };
+  mark('mm:' + S.mgrMeetings.indexOf(m)); sfx('hoot', { visitor: true });
   caption(`Manager meeting: ${m.who} owl flies in under the canopy ${m.topic}. Managers coordinate sideways too.`, 'Manager meeting', { force: true, hold: () => S.mgr.meeting && S.mgr.meeting.phase !== 'leave' });
 }
 function updateMgrMeeting(dt) {
@@ -978,6 +1018,7 @@ function mgrVisitorPos() {
 // ---------- v3: leader meetings (competing priorities) ----------
 function startMeeting(m) {
   S.leader.meeting = { def: m, phase: 'arrive', t: 0, cards: m.visitors.map(() => ({ shown: false, state: 'pending' })) };
+  mark('meet:' + S.meetings.indexOf(m)); sfx('whoosh'); later(0.5, () => sfx('flap'));
   caption(`Meeting time! Eagles from ${m.who} fly in above the canopy, each with their own priority.`, 'Meeting', { hold: () => S.leader.meeting && S.leader.meeting.phase === 'arrive' });
 }
 function updateMeeting(dt) {
@@ -988,7 +1029,7 @@ function updateMeeting(dt) {
     M.cards.forEach((c, i) => { if (!c.shown && M.t >= i * 0.8) c.shown = true; });
   } else if (M.phase === 'decide') {
     const yi = d.visitors.findIndex(v => v.accept);
-    if (M.t >= 0.3 && M.cards[yi].state === 'pending') { M.cards[yi].state = 'yes'; bubble('leader', d.yes, 2.4, true); }
+    if (M.t >= 0.3 && M.cards[yi].state === 'pending') { M.cards[yi].state = 'yes'; bubble('leader', d.yes, 2.4, true); sfx('yes'); }
     if (M.t >= 1.5 && M.cards.some(c => c.state === 'pending')) {
       let n = 0; M.cards.forEach(c => { if (c.state === 'pending') { c.state = 'parked'; n++; } });
       S.team.priorities += n; stats();
@@ -1003,10 +1044,11 @@ function updateMeeting(dt) {
       M.cards.forEach(c => c.shown = false);
     } else if (M.phase === 'ask') {
       M.phase = 'decide';
+      if (d.support) sfx('support');
       if (d.support) caption(d.support, 'LEADER SUPPORT', { hold: () => S.leader.meeting && S.leader.meeting.phase === 'decide' });
       else caption('The Leader weighs them up: yes to what supports the pyramid, "not now" to the rest.', 'Priorities', { hold: () => S.leader.meeting && S.leader.meeting.phase === 'decide' });
     } else if (M.phase === 'decide') {
-      M.phase = 'leave';
+      M.phase = 'leave'; sfx('whoosh');
       S.leader.beam = 'goal'; S.leader.beamT = 3.0;
       caption('The visiting eagles fly off. The Leader keeps the beam on the goal and keeps it going. 🔺', 'Focus');
     } else {
@@ -1037,6 +1079,29 @@ function updateCamera(dt) {
   camTarget = clamp(camTarget, 0, Math.max(0, WORLD_W - viewW));
   camX += (camTarget - camX) * Math.min(1, dt * 2.2);
 }
+// ---------- v6: sound that follows the story ----------
+// Repeating work sounds (saws, hammer taps, thunks...) are driven from the simulation; sound.js rate-limits them.
+function audioTick(dt) {
+  const tm = S.team;
+  if (tm.mode === 'hack') sfx('saw');
+  else if (tm.mode === 'seq' && tm.seq) {
+    const st = tm.seq[tm.step];
+    if (tm.mood === 'chisel') { S.tapT += dt; if (S.tapT >= 0.3) { S.tapT = 0; S.tapN++; sfx('tap', { accent: S.tapN % 3 === 1 }); } }
+    else if (!tm.seqOb && st && st.bushHp) sfx('saw');
+    else if (tm.seqOb && st && st.prog && tm.mood !== 'sneak') sfx({ vines: 'snip', river: 'thunk', bog: 'clack', log: 'rustle', cliff: 'creak', wall: 'thunk', sinkhole: 'thunk', treefall: 'saw' }[tm.seqOb.type] || 'thunk');
+  }
+}
+// Ambient levels (0..1) for the forest bed: water near the river (and a trickle in the creek bed), bees, the campfire, storm wind.
+function ambLevels() {
+  const tm = S.team, tx = tm.x, rv = ob('river'), bz = ob('bees'), ld = S.leader;
+  let water = rv ? clamp(1 - Math.abs(tx - (rv.x + rv.w / 2)) / 420, 0, 1) : 0;
+  if (S.idea.go && tx > CREEK.x0 - 150 && tx < CREEK.x1 + 80) water = Math.max(water, 0.35);
+  const bees = bz ? clamp(1 - Math.abs(tx - bz.x) / 520, 0, 1) : 0;
+  const fire = tm.mood === 'rest' || (S.mgr.task && S.mgr.task.kind === 'break' && tm.mode === 'seq' && tm.step === 1) ? 1 : 0;
+  const wind = ld.dist && ld.dist.def.kind === 'storm' && ld.dist.phase === 'distract' ? 1 : 0;
+  return { water: S.finished ? 0 : water, bees, angry: bz && bz.angry > 0 ? 1 : 0, fire, wind };
+}
+
 // ---------- drawing (scene pieces kept from v1) ----------
 function drawSky() {
   const g = ctx.createLinearGradient(0, 0, 0, CANOPY_BOTTOM);
@@ -1510,7 +1575,8 @@ function frame(ts) {
     const sdt = dt * settings.speed;
     // sub-step for stability at high speeds
     const n = Math.ceil(sdt / 0.02) || 1;
-    for (let i = 0; i < n; i++) { update(sdt / n); updateCamera(sdt / n); }
+    for (let i = 0; i < n && settings.playing; i++) { update(sdt / n); updateCamera(sdt / n); }
+    if (settings.playing) snd.tick(ambLevels());
   }
   render();
 }
@@ -1528,8 +1594,13 @@ function resize() {
 
 function onKey(e) {
   if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
-  if (e.code === 'Space') { e.preventDefault(); settings.playing = !settings.playing; call('OnPlayState', settings.playing); }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.code === 'Space') { e.preventDefault(); settings.playing = !settings.playing; snd.setPaused(!settings.playing); call('OnPlayState', settings.playing); }
   else if (e.key === 'r' || e.key === 'R') { reset(); call('OnRestarted'); }
+  else if (e.key === 'c' || e.key === 'C') call('OnShortcut', 'chapters');
+  else if (e.key === 'n' || e.key === 'N') call('OnShortcut', 'next');
+  else if (e.key === 'm' || e.key === 'M') call('OnShortcut', 'mute');
+  else if (e.key === 'Escape') call('OnShortcut', 'escape');
   else if (['1', '2', '3', '4'].includes(e.key)) { settings.view = ['all', 'leader', 'manager', 'team'][+e.key - 1]; call('OnViewChanged', settings.view); }
 }
 
@@ -2346,22 +2417,50 @@ export function init(canvasEl, dotnetRef) {
   canvas.addEventListener('click', onClick);
   canvas.addEventListener('mousemove', onMove);
   window.addEventListener('keydown', onKey);
+  snd.init();
   lastT = 0; raf = requestAnimationFrame(frame);
-  window.aboveTheCanopy = { settings, get state() { return S; }, get cam() { return { camX, scale, viewW }; }, fastForward, restart, runToEnd };
+  window.aboveTheCanopy = { settings, get state() { return S; }, get cam() { return { camX, scale, viewW }; }, fastForward, restart, runToEnd, jumpTo, chapters: () => CH_MARKS.slice(), sound: () => snd.debug(), soundTestAll: () => snd.testAll() };
 }
-export function setPlaying(p) { settings.playing = !!p; }
+export function setPlaying(p) { settings.playing = !!p; snd.setPaused(!settings.playing); }
 export function restart() { reset(); }
-export function setSpeed(v) { settings.speed = clamp(+v || 1, 0.1, 5); }
+export function setSpeed(v) { settings.speed = clamp(+v || 1, 0.1, 5); snd.setSpeed(settings.speed); }
 export function setView(v) { settings.view = v; }
 export function setComms(on) { settings.comms = !!on; }
 export function select(role) { S.selected = role || null; }
-export function fastForward(seconds) { const step = 1 / 30; for (let t = 0; t < seconds; t += step) { update(step); updateCamera(step); } render(); }
+export function fastForward(seconds) { const step = 1 / 30, n = Math.round(seconds / step); S.silent = true; for (let i = 0; i < n; i++) { update(step); updateCamera(step); } S.silent = false; render(); }
 // Simulates a full run (used for testing pacing); returns the sim-time when the team finished.
-export function runToEnd(maxSeconds = 600) { const step = 1 / 30; while (!S.finished && S.t < maxSeconds) { update(step); updateCamera(step); } render(); return S.t; }
+export function runToEnd(maxSeconds = 600) { const step = 1 / 30; S.silent = true; while (!S.finished && S.t < maxSeconds) { update(step); updateCamera(step); } S.silent = false; render(); return S.t; }
+// ---- v6: chapters ----
+export function setChapters(marks) { if (Array.isArray(marks) && marks.length) CH_MARKS = marks.slice(); }
+export function setTeach(on) { settings.teach = !!on; }
+export function getChapter() { return S ? S.chapter : 0; }
+// Jump = restart, then silently fast-forward the (seeded, fixed-step) simulation until the chapter's first moment.
+// Every jump to a chapter therefore lands in exactly the same state. Sound and Blazor callbacks are muted during the run.
+export function jumpTo(i) {
+  i = clamp(i | 0, 0, CH_MARKS.length - 1);
+  reset();
+  if (i > 0) {
+    S.silent = S.quiet = true;
+    while (S.chapter < i && !S.finished && S.t < 900) { update(JUMP_STEP); updateCamera(JUMP_STEP); }
+    if (!S.finished) for (let k = Math.round(TEACH_DELAY / JUMP_STEP); k > 0; k--) { update(JUMP_STEP); updateCamera(JUMP_STEP); }
+    if (S.capQ.length) { const best = S.capQ.reduce((a, c) => c.prio > a.prio ? c : a, S.capQ[0]); S.capQ.splice(S.capQ.indexOf(best), 1); S.quiet = false; showCaption(best); }
+    S.silent = S.quiet = false;
+    updateCamera(JUMP_STEP); camX = camTarget;
+    stats(); call('OnDay', S.day); if (S.cap) call('OnCaption', S.cap.text, S.cap.phase); call('OnChapter', S.chapter);
+    if (S.finArgs) call('OnFinished', ...S.finArgs);
+  }
+  render();
+  return S.chapter;
+}
+// ---- v6: sound ----
+export function setSound(on) { snd.setEnabled(on); }
+export function setVolume(v) { snd.setVolume(v); }
+export function soundPrefs() { return snd.prefs(); }
 export function dispose() {
   cancelAnimationFrame(raf);
   if (ro) ro.disconnect();
   if (canvas) { canvas.removeEventListener('click', onClick); canvas.removeEventListener('mousemove', onMove); }
   window.removeEventListener('keydown', onKey);
+  snd.dispose();
   dotnet = null;
 }
