@@ -7,9 +7,9 @@ Time is measured like a real project, in **days**: the top bar counts *Day 1, Da
 
 | Role | Character | Where they are | What they can see | What they do |
 |---|---|---|---|---|
-| **Leader** | 🦅 Eagle | Flies *above* the canopy | Where the team started, and the pyramid (the goal) | **Vision & direction.** Sets the destination, keeps everyone pointed at it, filters competing priorities, accepts unavoidable delays, recognises progress |
-| **Manager** | 🦉 Owl | Flies *below* the canopy, above the team | The obstacles ahead | **Planning, removing obstacles, communication.** Scouts ahead, warns the team, arranges training, coordinates with other managers, escalates surprises, reports progress |
-| **Team** | 🐨 Four koalas | On the forest floor, cutting through the bush | Only a few metres ahead | **Execution & problem-solving.** The everyday work, gathering materials, learning new skills, solving every obstacle, and reporting the surprises nobody planned for |
+| **Leader** | 🦅 Eagle | Flies *above* the canopy | Where the team started, and the pyramid (the goal) | **Vision, priorities, backing the team & adapting.** Sets the destination, filters competing priorities, says YES to what the team needs (and protects their time), changes the plan when better information comes up from the ground |
+| **Manager** | 🦉 Owl | Flies *below* the canopy, above the team | The obstacles ahead | **Planning, removing obstacles, communication up & down, coaching & delegating.** Scouts ahead, warns the team, coaches and delegates, passes ideas up, calls breaks, recognises wins, coordinates with other managers |
+| **Team** | 🐨 Four koalas: Kip, Banjo, Matilda & Wattle | On the forest floor, cutting through the bush | Only a few metres ahead | **Execution, problem-solving & leading from the ground.** The everyday work, gathering materials, learning new skills, solving obstacles, reporting surprises, and spotting better ways to do things |
 
 ![The koalas hacking through the bush, the owl scouting, the eagle above the canopy](docs/koalas-hacking-bushes.png)
 
@@ -23,7 +23,7 @@ Nobody can see the whole picture on their own:
 
 The journey works when vision flows down (leader ➜ manager), warnings and plans flow down to the team (manager ➜ team), and requests and progress flow back up (team ➜ manager ➜ leader).
 Use the **Perspective** buttons to see the world through each role's eyes, and turn **Manager communication OFF**
-to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 140 days instead of about 105).
+to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 154 days instead of about 119).
 
 ## What happens on the journey
 
@@ -58,6 +58,70 @@ they fan out off the path into the bush, pick the materials up and carry them ba
 With communication OFF they wander further, unsure what they're even looking for.
 
 ![Koalas carrying logs back to the river while the Manager meets an Ops manager owl](docs/gathering-logs-manager-meeting.png)
+
+## New in v5: leaders back the team, managers grow people, team members lead too
+
+**Meet the koalas.** Hover over a koala to see its name (the team info card lists them too):
+
+| Koala | Look | Moment in the story |
+|---|---|---|
+| **Kip** | orange hard hat | Gets delegated the lead on the river bridge (⭐ pennant) |
+| **Banjo** | blue bandana | Spots the creek-bed shortcut |
+| **Matilda** | yellow hard hat | "Koala of the week" 🌿 for keeping everyone calm past the bees |
+| **Wattle** | purple bandana, the smallest | Struggles with her saw and gets coached |
+
+![Hover over a koala to see its name](docs/koala-hover-names.png)
+
+**Managers grow people: coaching.** Early on, Wattle lags behind, her saw stuck in a bush. With communication ON, the owl drops down
+beside her (caption tag **COACHING**): *"You've got this, Wattle! Hold it like this. ✂️"*. She gets it, catches up, and earns a 💪 badge.
+With communication OFF nobody notices, and she keeps struggling.
+
+![The owl drops down to coach Wattle](docs/coaching-wattle.png)
+
+**Managers grow people: delegation.** At the river the owl says *"Kip, you lead the bridge build! ⭐"* (tag **DELEGATION**).
+Kip carries a ⭐ pennant and directs the gathering ("Kip: Spread out, grab logs!"), and gets a "Great leading, Kip!" when the bridge is done.
+
+![Kip leads the bridge build](docs/delegation-kip.png)
+
+**Leaders back the team** (tag **LEADER SUPPORT**). Twice the eagle visibly sides with the koalas:
+- At the second eagle meeting, the Board asks for a picnic and another project wants to borrow two koalas. The Leader pushes back:
+  *"The koalas need that time: the picnic can wait! 🛡️"*
+- When the gum tree falls, the koalas ask for saws and safety gear. The Leader says *"Yes! Sending saws and safety gear down now. 🪂"*,
+  and a supply crate floats down on a parachute through a gap in the canopy (🪂 **SUPPLIES ARRIVED**).
+
+![A supply drop through a gap in the canopy](docs/leader-support-supply-drop.png)
+
+**Team members lead too, and leaders adapt** (tags **TEAM IDEA** and **COURSE CORRECTION**). Hacking through thick lantana, Banjo spots a dry creek bed
+running alongside: *"There's a shortcut along the creek bed! 💡"*. The owl takes it up to the eagle, and the eagle changes the plan from ground information:
+the beam re-aims at the creek, the minimap shows the new dashed route, and the eagle says *"New info from the ground. We'll take the creek route; it saves N days."*
+(N is worked out from the lantana still left, usually 4 to 6 days.) Credit flows back down: *"Creek route approved! Great idea, Banjo! 🌟"*.
+The top bar counts **💡 Team ideas adopted**. With communication OFF, Banjo's idea goes nowhere ("Should we tell someone?") and the koalas hack through every lantana bush.
+
+![The Leader adopts Banjo's creek route: the beam re-aims and the minimap updates](docs/course-correction-creek.png)
+
+**Celebrating small wins.** After the bees, the owl names Matilda **Koala of the week** and a gum leaf drifts down onto her chest. 🌿
+
+![Matilda gets the gum leaf: Koala of the week](docs/koala-of-the-week.png)
+
+**Trust and wellbeing** (tag **WELLBEING**). After the toughest stretch (cliff, bees, snake, rock wall) the owl calls *"Take five, team"*.
+The koalas sit down around a billy, drink water and munch eucalyptus leaves. It costs about 4 days, and the caption says why that's worth it:
+a sustainable pace beats burnout. Afterwards they're ⚡ **REFRESHED**. With communication OFF, nobody calls a break: the koalas droop,
+sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). The break days come back and more.
+
+![A rest break: billy tea and gum leaves](docs/rest-break.png)
+
+![Communication OFF: no break, exhausted koalas](docs/comms-off-exhausted.png)
+
+**Reflection.** At the finish, the summary has a **💬 Reflect** button that shows three workplace questions (different ones for ON and OFF runs).
+
+![The reflection panel](docs/reflection.png)
+
+**Captions queue up.** Captions now wait their turn: a meeting caption stays on screen until the meeting ends, and important captions
+(meetings, surprises, coaching, course corrections) are never cut off by routine narration.
+
+**Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
+
+## More of the journey
 
 **Distractions happen, so refocus.** The Leader and the Manager get distracted too, veer off course, then refocus on the goal.
 Each distraction is narrated, and the top bar counts **Distractions handled**:
@@ -105,7 +169,7 @@ the answer travels back down, and the team solves it together. The top bar count
 | # | Surprise | Reported up and answered | Fix |
 |---|---|---|---|
 | 1 | 🕳️ Sinkhole opens in the track | "Safety first, take the week. Goal stays the same." | Gather planks from the bush and lay them across |
-| 2 | 🌳 A gum tree falls across the path | "Everyone safe? Then take the days. We'll adjust the plan." | Saw it up and roll it away |
+| 2 | 🌳 A gum tree falls across the path | "Yes! Sending saws and safety gear down now. 🪂" (a supply drop lands) | Saw it up with the new gear and roll it away |
 | 3 | 🐍 Big brown snake on the track | "No rush. Let it pass safely. Goal stays the same." | Wait quietly until it slithers off |
 
 When a surprise is handled, the caption says how many days it cost ("The sinkhole cost 7 days, but everyone knew why and the goal stayed the same").
@@ -119,13 +183,16 @@ Project time: **1 project day = 2 seconds of animation at 1× speed.**
 
 | | Project time | Real time at 1× | Unwarned obstacles | Wrong turns | Surprises reported up | Manager syncs |
 |---|---|---|---|---|---|---|
-| Communication **ON** | **about 105 days** | about 3½ min (210 s) | 0 | 0 | 3 | 3 |
-| Communication **OFF** | **about 140 days** | about 4⅔ min (278 s) | 8 | 12 | 0 | 3 |
+| Communication **ON** | **about 119 days** | about 4 min (238 s) | 0 | 0 | 3 | 3 |
+| Communication **OFF** | **about 154 days** | about 5 min (306 s) | 8 | 12 | 0 | 3 |
+
+With communication ON the run also has 1 team idea adopted (the creek route saves 4 to 6 days) and 1 rest break (about 4 days).
+With communication OFF there's no idea and no break, but the exhausted koalas slow right down.
 
 The finish summary shows "Delivered in N days" and compares it with the other mode: your own result if you've run both in this session, otherwise the typical figure.
-For example: "Without communication the same project usually takes about 140 days: 35 days lost."
+For example: "Without communication the same project usually takes about 154 days: 35 days lost."
 
-![Finish summary: delivered in 105 days, compared with communication OFF](docs/finish-days.png)
+![Finish summary: delivered in about 119 days, compared with communication OFF](docs/finish-days.png)
 Use the speed slider (0.25× to 3×) to fit your session.
 
 ### Discussion prompts
@@ -138,6 +205,13 @@ Use the speed slider (0.25× to 3×) to fit your session.
 7. When something nobody planned for happens, how fast does the news travel up, and does the answer come back down?
 8. The boulder only broke once the koalas learned a new skill. Where would an hour of training save your team days?
 9. Who are the "other owls" your managers coordinate with? What do they share?
+10. When did a leader last say YES to something your team needed, or push back to protect your time? What difference did it make?
+11. Wattle was struggling and the owl coached her. Who in your team is quietly struggling, and who notices?
+12. Kip led the bridge build. What could you delegate this month, not just a task but the lead?
+13. Banjo saw the creek bed because he was in the lantana. How do ideas from the ground reach your leaders, and do they get credit?
+14. When did your plan last change because of new information? Was that seen as a failure or as good leadership?
+15. The break cost 4 days; skipping it cost more. Where is your team running without a break?
+16. Who would you give the gum leaf to this week, and why?
 
 ![Communication OFF: the koalas' call about the sinkhole goes unanswered](docs/comms-off-surprise.png)
 
@@ -153,10 +227,12 @@ Use the speed slider (0.25× to 3×) to fit your session.
 | Perspective: Everything / Leader / Manager / Team | Fogs out what that role **can't** see (<kbd>1</kbd> to <kbd>4</kbd>) |
 | Manager communication ON/OFF | When OFF, the manager still spots obstacles but never tells the koalas |
 | Click the eagle, owl, koalas or pyramid | Opens an info card about that role |
+| Hover over a koala | Shows its name (Kip, Banjo, Matilda or Wattle) |
+| 💬 Reflect (at the finish) | Three discussion questions for the run you just watched |
 
 The caption bar narrates each phase (with a red **SURPRISE** tag for unplanned events and an amber tag for meetings). The stats at the top count:
 **📅 Day** (project time), **⚠️ Unwarned obstacles** (planned obstacles the koalas hit with no warning), **↩ Wrong turns**, **🧘 Distractions handled**,
-**🗂️ Priorities filtered** (asks the Leader parked or declined), **📣 Surprises reported up** and **🤝 Manager syncs**.
+**🗂️ Priorities filtered** (asks the Leader parked or declined), **📣 Surprises reported up**, **🤝 Manager syncs** and **💡 Team ideas adopted**.
 The info cards scroll (with a visible scrollbar), so all the text is readable in a small window.
 
 ![An info card scrolling in a small window](docs/info-card-scroll.png)
@@ -208,6 +284,9 @@ Want to change the story? Everything is in `canopy.js`:
 - `SURPRISE_DEFS` holds the unplanned events and the full up-the-chain conversation for each one. `surpriseSeq()` and `upChain()` run them.
 - `LEADER_TALK`, `MANAGER_CHECKIN`, `RECOGNITION` and `CHEERS` hold the routine messages.
 - `WALK_SPEED_INFORMED` / `WALK_SPEED_UNINFORMED` and `makePathBushes()` control the pacing.
+- `KOALAS` holds the koalas' names, colours and hats. `COACH_X`, `LANTANA`, `CREEK` and `BREAK_X` place the coaching moment, the lantana patch, the creek route and the rest break.
+- `coachSeq()`, `startIdea()` / `adoptIdea()`, `startRecognition()` and `startBreak()` run the v5 moments. `whenFree()` waits until the Manager is free (no meeting, distraction or task) before starting one, so they never talk over each other.
+- `caption()` queues captions with a priority and an optional hold (`pumpCaptions()` shows them), so meeting and surprise captions are never cut off.
 
 Note: .NET 10 fingerprints static files at build time, so after editing `canopy.js` outside Visual Studio, rebuild (or use `dotnet watch`).
 

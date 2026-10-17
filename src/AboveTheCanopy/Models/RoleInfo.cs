@@ -6,7 +6,7 @@ public sealed record RoleInfo(string Key, string Emoji, string Title, string The
 public static class Roles
 {
     public static readonly RoleInfo Leader = new(
-        "leader", "🦅", "The Leader", "Leadership = vision & direction",
+        "leader", "🦅", "The Leader", "Leadership = vision, priorities, backing the team & adapting",
         "An eagle flying above the canopy. Sees where the team started and the end goal (the pyramid), but can't see the obstacles on the forest floor.",
         new[]
         {
@@ -17,12 +17,15 @@ public static class Roles
             "Measures the project in days delivered, and accepts that surprises cost days.",
             "Filters competing priorities in meetings: yes to what serves the goal, \"not now\" to the rest.",
             "Accepts unavoidable delays and reassures: safety first, the goal stays the same.",
+            "Backs the team: says YES to what they need (saws and safety gear, airdropped through the canopy after the tree falls).",
+            "Protects the team's time: pushes back on the Board (\"The koalas need that time: the picnic can wait!\").",
+            "Adapts: when better information comes up from the ground (Banjo's creek route), changes the plan and gives the credit back.",
             "Gets distracted too (magpies, \"urgent\" emails, storms) but always refocuses on the goal."
         },
-        "Leaders decide where we're going. They need managers and teams to work out how to get there.");
+        "Leaders decide where we're going, back the people getting there, and change course when the ground knows better.");
 
     public static readonly RoleInfo Manager = new(
-        "manager", "🦉", "The Manager", "Management = planning, removing obstacles, communication",
+        "manager", "🦉", "The Manager", "Management = planning, removing obstacles, communication, coaching & delegating",
         "An owl flying below the canopy and above the team. Can't see the pyramid, but can see the obstacles ahead: vines, a boulder, a river, a bog, a fallen log, a cliff, a bees' nest and a rock wall.",
         new[]
         {
@@ -31,15 +34,17 @@ public static class Roles
             "Communicates early and clearly, so the team is ready.",
             "Gets the team the tools and skills they need (cutting tools, hammer-and-chisel training, rope).",
             "Coordinates sideways with other managers: sharing resources, status syncs, lending kit.",
-            "Reports progress up to the leader and answers the team's requests.",
+            "Communicates both ways: warnings and plans down, progress, problems and ideas up (Banjo's creek route).",
+            "Grows people: coaches one-to-one (Wattle and her saw) and delegates real responsibility (Kip leads the bridge build).",
+            "Looks after wellbeing and morale: calls a break after the toughest stretch, and celebrates small wins (Matilda, Koala of the week).",
             "Escalates surprises from the ground to the leader, with what the team needs and the likely delay.",
             "Shakes off distractions (meeting requests, mozzies, snags) and gets back to the team."
         },
-        "Managers connect vision to execution. Turn communication off and watch how much harder the team's journey gets.");
+        "Managers connect vision to execution and grow the people doing it. Turn communication off and watch how much harder the team's journey gets.");
 
     public static readonly RoleInfo Team = new(
-        "team", "🐨", "The Team", "Team members = execution & problem-solving on the ground",
-        "Four koalas walking the forest floor, cutting through bush after bush with their tools. They can only see a few metres ahead, so they rely on the manager's heads-up.",
+        "team", "🐨", "The Team", "Team members = execution, problem-solving & leading from the ground",
+        "Four koalas walking the forest floor, cutting through bush after bush with their tools: Kip (orange hard hat), Banjo (blue bandana), Matilda (yellow hard hat) and Wattle (purple bandana, the smallest). They can only see a few metres ahead, so they rely on the manager's heads-up, but they see the ground better than anyone.",
         new[]
         {
             "Does the constant everyday work: cutting through bush after bush.",
@@ -48,7 +53,9 @@ public static class Roles
             "Learns new skills when the job needs them (hammer and chisel for the boulder).",
             "Works together, because nobody crosses the river alone.",
             "Spots the surprises nobody planned for (sinkholes, falling trees, snakes) and reports them up straight away.",
-            "Asks for what they need (\"Need more rope!\") and feeds back what's happening on the ground."
+            "Asks for what they need (\"Need more rope!\") and feeds back what's happening on the ground.",
+            "Leads from the ground: spots better routes and fixes (Banjo's dry creek bed) and passes them up.",
+            "Steps up when trusted with the lead (Kip and the bridge build), and keeps a sustainable pace (breaks, water, gum leaves)."
         },
         "Teams make the vision real, one bush at a time. With good information they're fast and confident; without it they get surprises and wrong turns.");
 

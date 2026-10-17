@@ -18,6 +18,7 @@
             <span title="Competing priorities the Leader parked or declined in meetings">🗂️ Priorities filtered: @priorities</span>
             <span title="Unexpected events the koalas reported up the chain to the Leader">📣 Surprises reported up: @reported</span>
             <span title="Manager-to-manager meetings under the canopy: sharing resources, status syncs, coordinating teams">🤝 Manager syncs: @syncs</span>
+            <span title="Ideas from the koalas that travelled up the chain and were adopted by the Leader">💡 Team ideas adopted: @ideas</span>
         </div>
     </header>
 
@@ -45,14 +46,33 @@
 
         @if (finishedSummary is not null)
         {
-            <div class="summary">
-                <h2>🎉 Delivered in @lastDays days!</h2>
-                <p>@finishedSummary</p>
-                <div class="row">
-                    <button @onclick="Restart">↻ Play again</button>
-                    <button @onclick="RestartWithOtherComms">@(comms ? "Try with communication OFF" : "Try with communication ON")</button>
-                    <button class="ghost" @onclick="() => finishedSummary = null">Close</button>
-                </div>
+            <div class="summary" tabindex="0">
+                @if (!showReflection)
+                {
+                    <h2>🎉 Delivered in @lastDays days!</h2>
+                    <p>@finishedSummary</p>
+                    <div class="row">
+                        <button class="reflect" @onclick="() => showReflection = true">💬 Reflect</button>
+                        <button @onclick="Restart">↻ Play again</button>
+                        <button @onclick="RestartWithOtherComms">@(comms ? "Try with communication OFF" : "Try with communication ON")</button>
+                        <button class="ghost" @onclick="() => finishedSummary = null">Close</button>
+                    </div>
+                }
+                else
+                {
+                    <h2>💬 Reflection</h2>
+                    <p class="reflect-intro">Three questions to talk about. How does this run compare with your workplace?</p>
+                    <ol class="reflection">
+                        @foreach (var q in reflection)
+                        {
+                            <li>@q</li>
+                        }
+                    </ol>
+                    <div class="row">
+                        <button @onclick="() => showReflection = false">← Back</button>
+                        <button @onclick="RestartWithOtherComms">@(comms ? "↻ Try with comms OFF" : "↻ Try with comms ON")</button>
+                    </div>
+                }
             </div>
         }
     </div>
@@ -114,10 +134,17 @@
     private string caption = "Loading the forest...";
     private string phase = "";
     private RoleInfo? selected;
-    private int wrongTurns, surprises, distractions, priorities, reported, syncs, day = 1, lastDays;
+    private int wrongTurns, surprises, distractions, priorities, reported, syncs, ideas, day = 1, lastDays;
+    private bool showReflection;
+    private string[] reflection = Array.Empty<string>();
     private int? daysOn, daysOff; // results from this session, for the ON vs OFF comparison
-    private const int TypicalDaysOn = 105, TypicalDaysOff = 140; // measured at 1x, see README
-    private string PhaseClass => phase switch { "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction", "Manager meeting" => "ph-mgr", "Goal reached" => "ph-goal", _ => "" };
+    private const int TypicalDaysOn = 119, TypicalDaysOff = 154; // measured at 1x, see README
+    private string PhaseClass => phase switch
+    {
+        "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction",
+        "Manager meeting" => "ph-mgr", "Goal reached" => "ph-goal", "LEADER SUPPORT" => "ph-support",
+        "COACHING" or "DELEGATION" or "RECOGNITION" => "ph-grow", "TEAM IDEA" or "COURSE CORRECTION" => "ph-idea", "WELLBEING" => "ph-well", _ => ""
+    };
     private string? finishedSummary;
 
     private sealed record ViewOption(string Key, string Label, string Hint);
@@ -143,7 +170,7 @@
 
     private async Task Restart()
     {
-        finishedSummary = null; ResetCounters();
+        finishedSummary = null; showReflection = false; ResetCounters();
         await Js("restart");
         if (!playing) { playing = true; await Js("setPlaying", true); }
     }
@@ -180,15 +207,16 @@
     [JSInvokable] public void OnAgentClicked(string role) { selected = Roles.Get(role); StateHasChanged(); }
     [JSInvokable] public void OnPlayState(bool isPlaying) { playing = isPlaying; StateHasChanged(); }
     [JSInvokable] public void OnViewChanged(string v) { view = v; StateHasChanged(); }
-    private void ResetCounters() { wrongTurns = 0; surprises = 0; distractions = 0; priorities = 0; reported = 0; syncs = 0; day = 1; }
-    [JSInvokable] public void OnRestarted() { finishedSummary = null; ResetCounters(); StateHasChanged(); }
+    private void ResetCounters() { wrongTurns = 0; surprises = 0; distractions = 0; priorities = 0; reported = 0; syncs = 0; ideas = 0; day = 1; }
+    [JSInvokable] public void OnRestarted() { finishedSummary = null; showReflection = false; ResetCounters(); StateHasChanged(); }
     [JSInvokable] public void OnDay(int d) { day = d; StateHasChanged(); }
-    [JSInvokable] public void OnStats(int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs) { wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; syncs = managerSyncs; StateHasChanged(); }
+    [JSInvokable] public void OnStats(int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs, int teamIdeas) { wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; syncs = managerSyncs; ideas = teamIdeas; StateHasChanged(); }
 
     [JSInvokable]
-    public void OnFinished(int seconds, int days, int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs, bool withComms)
+    public void OnFinished(int seconds, int days, int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs, int teamIdeas, int breaks, bool withComms)
     {
-        wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; syncs = managerSyncs;
+        wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; syncs = managerSyncs; ideas = teamIdeas;
+        showReflection = false;
         day = days; lastDays = days;
         if (withComms) daysOn = days; else daysOff = days;
         var mins = seconds / 60; var secs = seconds % 60;
@@ -210,9 +238,25 @@
                 ? $" With the Manager communicating, the same project {src} {on} days: that's {days - on} days lost to missing information."
                 : "";
         }
+        var people = withComms
+            ? $" Kip led the bridge build, Wattle was coached, Matilda was Koala of the week, Banjo's creek idea was adopted ({teamIdeas} team idea{(teamIdeas == 1 ? "" : "s")}), and {breaks} short break{(breaks == 1 ? "" : "s")} kept the pace sustainable."
+            : " Banjo's shortcut never reached the Leader, nobody coached Wattle, and with no break the koalas finished exhausted.";
         finishedSummary = withComms
-            ? $"With the Manager communicating, the koalas delivered on day {days} {runTime}: {surprised} unwarned obstacles, {wrong} wrong turns and {reportedUp} surprises reported up and handled together. The Leader filtered {filtered} competing priorities, the Manager held {managerSyncs} manager syncs, and they shook off {distracted} distractions.{compare}"
-            : $"Without communication, the koalas took {days} days {runTime}, hit {surprised} unwarned obstacles, made {wrong} wrong turns, and faced every surprise alone (0 reported up).{compare} Same forest, same koalas: the difference is the information they had.";
+            ? $"With the Manager communicating, the koalas delivered on day {days} {runTime}: {surprised} unwarned obstacles, {wrong} wrong turns and {reportedUp} surprises reported up and handled together. The Leader filtered {filtered} competing priorities, the Manager held {managerSyncs} manager syncs, and they shook off {distracted} distractions.{people}{compare}"
+            : $"Without communication, the koalas took {days} days {runTime}, hit {surprised} unwarned obstacles, made {wrong} wrong turns, and faced every surprise alone (0 reported up).{people}{compare} Same forest, same koalas: the difference is the information they had.";
+        reflection = withComms
+            ? new[]
+            {
+                "Banjo spotted the creek shortcut from the ground and the Leader changed the plan. How do ideas from the front line reach decision-makers where you work, and how often do they change the plan?",
+                "The owl coached Wattle one-to-one and handed Kip the lead on the bridge. Who are you growing right now, and what could you delegate this week?",
+                "The Leader said yes to saws and safety gear, protected the team's time from the Board, and the koalas still took a break. What does backing your team look like in practice?"
+            }
+            : new[]
+            {
+                "Banjo's shortcut went nowhere because nobody passed it up. Which good ideas get lost in your team, and why?",
+                "Nobody noticed Wattle struggling. How would you know if someone in your team needed help?",
+                "The koalas never got a break and slowed right down. Where is your team running without breaks, and what is it costing?"
+            };
         StateHasChanged();
     }
 

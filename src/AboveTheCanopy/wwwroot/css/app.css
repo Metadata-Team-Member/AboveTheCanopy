@@ -145,7 +145,7 @@ button.v-leader.active { color: var(--leader); } button.v-manager.active { color
 .info-card.role-goal { border-color: #d9b066; } .info-card.role-goal .theme { color: #d9b066; }
 .info-card .close { position: absolute; top: 8px; right: 8px; padding: 2px 8px; background: transparent; border: none; }
 
-.summary { position: absolute; left: 14px; top: 58px; width: min(440px, calc(100% - 28px)); background: rgba(14, 28, 18, .95); border: 2px solid #66bb6a; border-radius: 16px; padding: 18px 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.55); animation: pop .2s ease-out; }
+.summary { position: absolute; left: 14px; top: 58px; max-height: calc(100% - 72px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #66bb6a rgba(255,255,255,.08); width: min(440px, calc(100% - 28px)); background: rgba(14, 28, 18, .95); border: 2px solid #66bb6a; border-radius: 16px; padding: 18px 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.55); animation: pop .2s ease-out; }
 .summary h2 { margin: 0 0 6px; }
 .summary .row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
 @keyframes pop { from { transform: scale(.94); opacity: 0; } }
@@ -175,3 +175,14 @@ kbd { background: #24442d; border: 1px solid #3a6345; border-radius: 4px; paddin
 .stats { flex-wrap: wrap; }
 .stats .day { font-weight: 800; color: #ffe082; border-color: #b08a00 !important; }
 .role-chip small { display: block; white-space: normal; }
+
+/* v5 */
+.caption .phase.ph-support { background: #c79100; }
+.caption .phase.ph-grow { background: #6a3fb0; }
+.caption .phase.ph-idea { background: #1565c0; }
+.caption .phase.ph-well { background: #00838f; }
+.summary::-webkit-scrollbar { width: 8px; }
+.summary::-webkit-scrollbar-thumb { background: #66bb6a; border-radius: 8px; }
+.summary .reflect { background: #1565c0; border-color: #1565c0; color: #fff; }
+.summary .reflect-intro { opacity: .85; margin: 0 0 8px; }
+.summary ol.reflection { text-align: left; margin: 0; padding-left: 22px; display: grid; gap: 8px; line-height: 1.4; }
