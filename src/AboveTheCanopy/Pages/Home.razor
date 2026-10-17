@@ -1,0 +1,201 @@
+@page "/"
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+<PageTitle>Above the Canopy: Leadership, Management &amp; Teams</PageTitle>
+
+<div class="app">
+    <header class="top">
+        <div>
+            <h1>🌳 Above the Canopy</h1>
+            <p class="tagline">An interactive story about <b class="c-leader">leadership</b>, <b class="c-manager">management</b> and <b class="c-team">team members</b>. Who sees what?</p>
+        </div>
+        <div class="stats" title="Surprises = obstacles the team hit without warning. Wrong turns = back-tracking.">
+            <span>⏱ @(lastTime is null ? "--" : $"{lastTime}s")</span>
+            <span>😱 Surprises: @surprises</span>
+            <span>↩ Wrong turns: @wrongTurns</span>
+        </div>
+    </header>
+
+    <div class="stage">
+        <canvas @ref="canvas" class="scene" aria-label="Animated forest scene showing a leader, a manager and a team"></canvas>
+
+        @if (selected is not null)
+        {
+            <div class="info-card role-@selected.Key" role="dialog" aria-label="@selected.Title">
+                <button class="close" @onclick="CloseCard" aria-label="Close">✕</button>
+                <h2>@selected.Emoji @selected.Title</h2>
+                <p class="theme">@selected.Theme</p>
+                <p><b>What they see:</b> @selected.Sees</p>
+                <ul>
+                    @foreach (var d in selected.Does)
+                    {
+                        <li>@d</li>
+                    }
+                </ul>
+                <p class="takeaway">💡 @selected.Takeaway</p>
+            </div>
+        }
+
+        @if (finishedSummary is not null)
+        {
+            <div class="summary">
+                <h2>🎉 Goal reached!</h2>
+                <p>@finishedSummary</p>
+                <div class="row">
+                    <button @onclick="Restart">↻ Play again</button>
+                    <button @onclick="RestartWithOtherComms">@(comms ? "Try with communication OFF" : "Try with communication ON")</button>
+                    <button class="ghost" @onclick="() => finishedSummary = null">Close</button>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="caption" aria-live="polite">
+        <span class="phase">@phase</span>
+        <span>@caption</span>
+    </div>
+
+    <div class="controls">
+        <div class="group">
+            <button class="primary" @onclick="TogglePlay">@(playing ? "⏸ Pause" : "▶ Play")</button>
+            <button @onclick="Restart">↻ Restart</button>
+            <label class="speed">Speed
+                <input type="range" min="0.25" max="3" step="0.25" value="@speed" @oninput="OnSpeed" />
+                <span>@speed.ToString("0.##")×</span>
+            </label>
+        </div>
+
+        <div class="group views" role="group" aria-label="Perspective">
+            <span class="label">Perspective:</span>
+            @foreach (var v in views)
+            {
+                <button class="view @(view == v.Key ? "active" : "") v-@v.Key" @onclick="() => SetView(v.Key)" title="@v.Hint">@v.Label</button>
+            }
+        </div>
+
+        <div class="group">
+            <label class="switch" title="When OFF, the manager still sees obstacles but never tells the team.">
+                <input type="checkbox" checked="@comms" @onchange="OnComms" />
+                <span class="slider"></span>
+                <span>Manager communication <b>@(comms ? "ON" : "OFF")</b></span>
+            </label>
+        </div>
+    </div>
+
+    <section class="roles">
+        @foreach (var r in new[] { Roles.Leader, Roles.Manager, Roles.Team })
+        {
+            <button class="role-chip role-@r.Key" @onclick="() => Select(r.Key)">
+                <span class="emoji">@r.Emoji</span>
+                <span><b>@r.Title</b><br /><small>@r.Theme</small></span>
+            </button>
+        }
+    </section>
+
+    <footer class="hint">Tip: click the eagle, the owl, the team or the pyramid to learn about each role. Keys: <kbd>Space</kbd> play/pause, <kbd>R</kbd> restart, <kbd>1</kbd>–<kbd>4</kbd> perspectives.</footer>
+</div>
+
+@code {
+    private ElementReference canvas;
+    private IJSObjectReference? module;
+    private DotNetObjectReference<Home>? selfRef;
+
+    private bool playing = true;
+    private double speed = 1;
+    private string view = "all";
+    private bool comms = true;
+    private string caption = "Loading the forest...";
+    private string phase = "";
+    private RoleInfo? selected;
+    private int wrongTurns, surprises;
+    private int? lastTime;
+    private string? finishedSummary;
+
+    private sealed record ViewOption(string Key, string Label, string Hint);
+    private static readonly ViewOption[] views =
+    {
+        new("all", "👁 Everything", "Show the whole scene"),
+        new("leader", "🦅 Leader", "Only what the leader can see from above the canopy"),
+        new("manager", "🦉 Manager", "Only what the manager can see below the canopy"),
+        new("team", "🧑‍🤝‍🧑 Team", "Only what the team can see on the forest floor"),
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/canopy.js");
+        selfRef = DotNetObjectReference.Create(this);
+        await module.InvokeVoidAsync("init", canvas, selfRef);
+    }
+
+    private ValueTask Js(string fn, params object?[] args) => module is null ? ValueTask.CompletedTask : module.InvokeVoidAsync(fn, args);
+
+    private async Task TogglePlay() { playing = !playing; await Js("setPlaying", playing); }
+
+    private async Task Restart()
+    {
+        finishedSummary = null; wrongTurns = 0; surprises = 0; lastTime = null;
+        await Js("restart");
+        if (!playing) { playing = true; await Js("setPlaying", true); }
+    }
+
+    private async Task RestartWithOtherComms()
+    {
+        comms = !comms;
+        await Js("setComms", comms);
+        await Restart();
+    }
+
+    private async Task OnSpeed(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var v))
+        {
+            speed = v;
+            await Js("setSpeed", v);
+        }
+    }
+
+    private async Task SetView(string v) { view = v; await Js("setView", v); }
+
+    private async Task OnComms(ChangeEventArgs e)
+    {
+        comms = e.Value is bool b && b;
+        await Js("setComms", comms);
+    }
+
+    private async Task Select(string key) { selected = Roles.Get(key); await Js("select", key); }
+    private async Task CloseCard() { selected = null; await Js("select", ""); }
+
+    // ---- callbacks from the JS engine ----
+    [JSInvokable] public void OnCaption(string text, string ph) { caption = text; phase = ph; StateHasChanged(); }
+    [JSInvokable] public void OnAgentClicked(string role) { selected = Roles.Get(role); StateHasChanged(); }
+    [JSInvokable] public void OnPlayState(bool isPlaying) { playing = isPlaying; StateHasChanged(); }
+    [JSInvokable] public void OnViewChanged(string v) { view = v; StateHasChanged(); }
+    [JSInvokable] public void OnRestarted() { finishedSummary = null; wrongTurns = 0; surprises = 0; lastTime = null; StateHasChanged(); }
+    [JSInvokable] public void OnStats(int wrong, int surprised) { wrongTurns = wrong; surprises = surprised; StateHasChanged(); }
+
+    [JSInvokable]
+    public void OnFinished(int seconds, int wrong, int surprised, bool withComms)
+    {
+        lastTime = seconds; wrongTurns = wrong; surprises = surprised;
+        finishedSummary = withComms
+            ? $"With the manager communicating, the team arrived in {seconds}s with {surprised} surprises and {wrong} wrong turns. Now try it with communication OFF and compare!"
+            : $"Without communication, the team took {seconds}s, hit {surprised} surprises and made {wrong} wrong turns. Same forest, same team: the difference is the information they had.";
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (module is not null)
+            {
+                await module.InvokeVoidAsync("dispose");
+                await module.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException) { }
+        selfRef?.Dispose();
+    }
+}
