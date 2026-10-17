@@ -186,3 +186,57 @@ kbd { background: #24442d; border: 1px solid #3a6345; border-radius: 4px; paddin
 .summary .reflect { background: #1565c0; border-color: #1565c0; color: #fff; }
 .summary .reflect-intro { opacity: .85; margin: 0 0 8px; }
 .summary ol.reflection { text-align: left; margin: 0; padding-left: 22px; display: grid; gap: 8px; line-height: 1.4; }
+
+/* v6: chapters, teaching mode, sound */
+.toggle.active { outline: 2px solid #66bb6a; font-weight: 700; }
+.chapters-btn { max-width: 340px; display: inline-flex; gap: 6px; align-items: center; }
+.chapters-btn .ch-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sound .volume { width: 90px; accent-color: #66bb6a; }
+.sound .volume:disabled { opacity: .4; }
+.sound-btn { min-width: 118px; }
+.hint .licence { display: block; margin-top: 6px; opacity: .85; }
+.hint a { color: #a5d6a7; }
+
+.chapters-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 50; }
+.chapters { position: fixed; top: 0; right: 0; bottom: 0; width: min(400px, 100vw); z-index: 51; display: flex; flex-direction: column; background: rgba(14, 28, 18, .98); border-left: 2px solid #66bb6a; box-shadow: -10px 0 30px rgba(0,0,0,.5); padding: 14px 14px 10px; }
+.chapters-head { display: flex; align-items: center; justify-content: space-between; }
+.chapters-head h2 { margin: 0; font-size: 1.25rem; }
+.chapters .close { background: transparent; border: none; font-size: 1.1rem; }
+.chapters .teach-switch { margin: 10px 0 4px; }
+.chapters .teach-switch small { color: var(--muted); }
+.chapters-hint { color: var(--muted); font-size: .85rem; margin: 4px 0 8px; }
+.chapter-list { list-style: none; margin: 0; padding: 0 4px 0 0; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; flex: 1 1 auto; min-height: 0; display: grid; gap: 6px; align-content: start; scrollbar-width: thin; scrollbar-color: #66bb6a rgba(255,255,255,.08); }
+.chapter { width: 100%; display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 9px 10px; min-height: 44px; }
+.chapter .num { flex: none; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: #2c4d35; font-weight: 700; font-size: .85rem; }
+.chapter .txt { display: flex; flex-direction: column; gap: 2px; }
+.chapter small { color: var(--muted); line-height: 1.3; }
+.chapter.current { border-color: #66bb6a; background: #24502f; }
+.chapter.current .num { background: #66bb6a; color: #0f1f14; }
+
+.teach-card { position: absolute; right: 14px; top: 14px; width: min(400px, calc(100% - 28px)); max-height: calc(100% - 28px); overflow-y: auto; background: rgba(14, 28, 18, .96); border: 2px solid #ffd34d; border-radius: 16px; padding: 14px 16px; box-shadow: 0 10px 30px rgba(0,0,0,.55); z-index: 5; scrollbar-width: thin; }
+.teach-kicker { color: #ffd34d; font-weight: 700; font-size: .85rem; letter-spacing: .3px; }
+.teach-card h2 { margin: 4px 0 6px; font-size: 1.3rem; }
+.teach-point { margin: 0 0 8px; line-height: 1.4; }
+.teach-q { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.teach-q li { background: rgba(255,255,255,.07); border-radius: 8px; padding: 7px 9px; line-height: 1.35; }
+.teach-card .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+@media (max-width: 700px) {
+    .app { padding: 10px 10px 20px; }
+    .top h1 { font-size: 1.4rem; }
+    .scene { height: 56vw; min-height: 200px; }
+    .controls { gap: 8px 12px; padding: 8px 10px; }
+    .controls .group { width: 100%; }
+    .speed input { width: 100px; }
+    .chapters-btn { max-width: 100%; flex: 1 1 auto; }
+    .chapters { top: auto; left: 0; width: 100vw; max-height: 78vh; border-left: none; border-top: 2px solid #66bb6a; border-radius: 16px 16px 0 0; }
+    .teach-card { position: fixed; left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-height: 62vh; z-index: 40; }
+    .caption { font-size: .95rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .caption .phase.ph-surprise { animation: none; }
+}
+.next-ch { padding: 7px 10px; }
+.next-ch:disabled { opacity: .4; cursor: default; }
+@media (max-width: 700px) { .chapters-group .chapters-btn { flex: 1 1 0; min-width: 0; } }
+@media (max-width: 700px) { .chapters-group .toggle.teach { flex: 1 1 100%; } .chapters-group .chapters-btn { flex: 1 1 auto; } }
