@@ -133,7 +133,7 @@ button.v-leader.active { color: var(--leader); } button.v-manager.active { color
 .role-chip small { color: var(--muted); }
 .role-chip.role-leader { border-color: var(--leader); } .role-chip.role-manager { border-color: var(--manager); } .role-chip.role-team { border-color: var(--team); }
 
-.info-card { position: absolute; top: 14px; right: 14px; width: min(360px, calc(100% - 28px)); background: rgba(14, 28, 18, .94); border: 2px solid #3a6345; border-radius: 14px; padding: 14px 16px; box-shadow: 0 8px 24px rgba(0,0,0,.5); animation: pop .18s ease-out; }
+.info-card { position: absolute; top: 14px; right: 14px; width: min(360px, calc(100% - 28px)); max-height: calc(100% - 28px); display: flex; flex-direction: column; box-sizing: border-box; background: rgba(14, 28, 18, .94); border: 2px solid #3a6345; border-radius: 14px; padding: 14px 16px; box-shadow: 0 8px 24px rgba(0,0,0,.5); animation: pop .18s ease-out; }
 .info-card h2 { margin: 0 0 4px; font-size: 1.25rem; }
 .info-card .theme { margin: 0 0 8px; font-weight: 700; }
 .info-card ul { margin: 6px 0; padding-left: 20px; }
@@ -159,3 +159,19 @@ kbd { background: #24442d; border: 1px solid #3a6345; border-radius: 4px; paddin
 .caption .phase.ph-distraction { background: #7b3fb0; }
 @keyframes flash { from { filter: brightness(1); } to { filter: brightness(1.35); } }
 .stats span { font-size: .82rem; }
+
+/* v4: the info card body scrolls, so every line is readable at any window size */
+.info-card .info-body { overflow-y: auto; min-height: 0; flex: 1 1 auto; padding-right: 8px; margin-right: -6px; scrollbar-width: thin; scrollbar-color: #7fbf8a rgba(255,255,255,.08); overscroll-behavior: contain; }
+.info-card .info-body::-webkit-scrollbar { width: 9px; }
+.info-card .info-body::-webkit-scrollbar-track { background: rgba(255,255,255,.08); border-radius: 8px; }
+.info-card .info-body::-webkit-scrollbar-thumb { background: #7fbf8a; border-radius: 8px; border: 2px solid rgba(14, 28, 18, .94); }
+.info-card .info-body:focus-visible { outline: 2px solid #7fbf8a; outline-offset: 2px; }
+.info-card.role-leader .info-body { scrollbar-color: var(--leader) rgba(255,255,255,.08); } .info-card.role-leader .info-body::-webkit-scrollbar-thumb { background: var(--leader); }
+.info-card.role-manager .info-body { scrollbar-color: var(--manager) rgba(255,255,255,.08); } .info-card.role-manager .info-body::-webkit-scrollbar-thumb { background: var(--manager); }
+.info-card.role-team .info-body { scrollbar-color: var(--team) rgba(255,255,255,.08); } .info-card.role-team .info-body::-webkit-scrollbar-thumb { background: var(--team); }
+.info-card h2 { padding-right: 26px; }
+.caption .phase.ph-mgr { background: #2e7d6f; }
+.caption .phase.ph-goal { background: #2e7d32; }
+.stats { flex-wrap: wrap; }
+.stats .day { font-weight: 800; color: #ffe082; border-color: #b08a00 !important; }
+.role-chip small { display: block; white-space: normal; }
