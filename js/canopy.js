@@ -325,11 +325,11 @@ function reset() {
     leader: { x: START_X + 260, y: LEADER_Y, beam: null, beamT: 0, ox: 0, oy: 0, rot: 0, dist: null, meeting: null },
     bubbles: [], queue: { leader: [], manager: [], team: [], visitor: [] }, pulses: [], events: [], particles: [],
     caption: '', phase: '', capT: 0, cap: null, capQ: [], pend: [], finished: false, introCam: 'team', selected: null, hover: -1,
-    idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [],
+    idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [], huddle: { on: false, done: false, t: 0, spk: -1, wrapT: -1, capLater: false },
     coachDone: false, breakDone: false, marks: new Set(['start']), chapter: 0, silent: false, quiet: false, tapT: 0, tapN: 0, finArgs: null, teachAt: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
     build: { on: false, t0: 0, c: [0, 0, 0, 0, 0, 0], wrongP: 0, wrongShow: false, pl: [0, 0, 0, 0, 0, 0, 0], doneK: [], rampL: -1, rampG: 0, ladder: 0,
-      rollers: false, cap: null, capSet: false, solid: 0, stock: 0, shaped: 0, rejects: 0, skills: [], kp: null, kpOn: false, tgt: null, mt: null, mcarry: false, check: 0, climbR: null },
+      rollers: false, cap: null, capSet: false, solid: 0, stock: 0, shaped: 0, rejects: 0, skills: [], kp: null, kpOn: false, tgt: null, mt: null, mcarry: false, check: 0, climbR: null, downR: null, clearT: null },
   };
   camX = camTarget = 0;
   call('OnRestarted');
@@ -408,7 +408,8 @@ function agentPos(who) {
   if (who === 'leader') return { x: S.leader.x + S.leader.ox, y: S.leader.y + S.leader.oy };
   if (who === 'manager') return { x: S.mgr.x + S.mgr.ox, y: S.mgr.y + S.mgr.oy };
   if (who === 'visitor') return S.mgr.meeting ? mgrVisitorPos() : { x: -9999, y: 0 };
-  const B = S.build;
+  const B = S.build, Hd = S.huddle;
+  if (Hd.on && Hd.spk >= 0 && S.kpos[Hd.spk]) { const K = S.kpos[Hd.spk]; return { x: K.x, y: K.y - 60 * K.s / KOALA_SCALE }; }
   if (B.on && B.kpOn) { const ax = B.kp.reduce((a, P) => a + P.x, 0) / 4, ay = B.kp.reduce((a, P) => a + P.y, 0) / 4; return { x: ax, y: ay - 62 }; }
   const tx = S.team.x;
   const lo = laneOffset(tx);
@@ -652,6 +653,8 @@ function update(dt) {
   if (S.teachAt && S.t >= S.teachAt.t) { const i = S.teachAt.idx; S.teachAt = null; if (settings.teach) { settings.playing = false; snd.setPaused(true); call('OnTeachable', i); } }
 
   // --- team ---
+  tm.moved = tm.lastX != null && Math.abs(tm.x - tm.lastX) > 1e-4; tm.lastX = tm.x; tm.stillT = tm.moved ? 0 : (tm.stillT || 0) + dt; // v7.1: walk cycles only when actually moving
+  if (S.huddle.on) updateHuddle(dt);
   if (tm.mode === 'walk' && !S.breakDone && tm.x >= BREAK_X && !S.finished && (!settings.comms || mgFree())) startBreak();
   if (tm.mode === 'walk') {
     const next = S.obstacles.concat(S.surprises).filter(o => !o.done).sort((a, b) => a.x - b.x)[0];
@@ -668,6 +671,7 @@ function update(dt) {
     } else if (nx >= stopX) {
       tm.x = stopX;
       if (next) { next.active = true; runSeq(next.isSurprise ? surpriseSeq(next) : sequenceFor(next, next.informed), next); }
+      else if (!S.huddle.done) { if (!S.huddle.on) startHuddle(); } // v7.1: a team huddle before the build
       else if (!ld.meeting && !S.build.on && S.meetings.every(m => m.done || m.atX === Infinity)) startBuild(); // v7: then the koalas build the pyramid
     } else tm.x = nx;
   } else if (tm.mode === 'hack') {
@@ -850,14 +854,15 @@ function finish() {
   S.finished = true; tm.mode = 'done'; tm.mood = 'happy';
   sfx('fanfare');
   caption(settings.comms
-    ? `Delivered on day ${days}! 🎉 The koalas built the pyramid themselves: vision (Leader) + support & communication (Manager) + skills & hard work (Team).`
-    : `Finally delivered on day ${days}! 🎉 The koalas built the pyramid, but without communication it took a redo and many extra days.`, 'Goal reached', { force: true });
-  S.mgr.task = { kind: 'build', t: 0 }; S.mgr.busy = false; B.mt = { x: GOAL_X - 175, dy: cTop(4) - 50 - MANAGER_Y }; B.mcarry = false; // everyone gathers at the top
+    ? `Safely down, now we celebrate! Delivered on day ${days}! 🎉 The koalas built the pyramid themselves: vision (Leader) + support & communication (Manager) + skills & hard work (Team).`
+    : `Safely down at last. Finally delivered on day ${days}! 🎉 The koalas built the pyramid, but without communication it took a redo and many extra days.`, 'Goal reached', { force: true });
+  S.mgr.task = { kind: 'build', t: 0 }; S.mgr.busy = false; B.mt = { x: 5160, dy: GROUND - 150 - MANAGER_Y }; B.mcarry = false; B.clearT = S.t; // everyone celebrates on the ground
   bubble('team', 'We built it!! 🎉🐨', 5);
   later(1.0, () => bubble('manager', 'Brilliant work, koalas! 🦉', 4));
   later(1.8, () => bubble('leader', settings.comms ? 'You built the vision. Proud of every one of you! 🦅' : 'We got there in the end. Proud of you all! 🦅', 4));
   later(4.6, () => bubble('team', 'Group hug!! 🤗', 4));
-  for (let i = 0; i < 80; i++) confetti(GOAL_X + (rand() - 0.5) * 140, cTop(4) - 50, 1);
+  for (let i = 0; i < 80; i++) confetti(5250 + (rand() - 0.5) * 160, GROUND - 90, 1);
+  for (let i = 0; i < 30; i++) confetti(GOAL_X + (rand() - 0.5) * 60, CAP_BASE - 20, 1);
   S.day = days; call('OnDay', days);
   S.finArgs = [Math.round(S.t), days, tm.wrong, tm.surprises, tm.distractions, tm.priorities, tm.reported, tm.syncs, tm.ideas, tm.breaks, settings.comms];
   call('OnFinished', ...S.finArgs);
@@ -1011,6 +1016,8 @@ function stations(k, p, o = {}) {
   return [kip, ban, mat, wat];
 }
 function holdStations() { return S.build.tgt || S.build.kp.map(P => ({ x: P.x, y: P.y, face: 1 })); }
+// v7.1: where the koalas celebrate, safely back on the ground beside the pyramid (first one down walks furthest).
+function grounds() { return [[5265, 2, -1], [5230, 6, 1], [5195, 0, 1], [5300, 8, -1]].map(([x, lane, face]) => ({ x, y: GROUND, lane, face })); }
 function finals() { return FINAL.map(([dx, lane]) => ({ x: GOAL_X + dx, y: cTop(4), lane, face: dx < 0 ? 1 : -1 })); }
 // The supply line: blocks travel from the pile, paw to paw, up the ramp (on rollers, pulled by rope) and the ladder, to Kip.
 // Each point is [x, y, height of the block above the feet].
@@ -1088,6 +1095,17 @@ function buildSeq(on) {
     dur, b: 'caplift', mood: 'lift', phase: 'TEAMWORK', cap, onStart: () => { sfx('haul'); kbadge(0, '🤝 All four, together', 3.5, '#ffe082'); },
     tick: p => { B.cap.lift = p; if (p >= 1 && !B.capSet) { B.capSet = true; sfx('block'); } },
   });
+  // v7.1: after the capstone, back down one at a time (ladder, then the ramp) before anyone celebrates.
+  const down = (dur, cap, say) => ({
+    dur, b: 'down', phase: 'SAFETY', cap, say,
+    onStart: () => {
+      const K = B.kp, t4 = cTop(4), G = grounds(), P = i => [K[i].x, K[i].y];
+      const over = [[GOAL_X + 26, t4], [GOAL_X + 24, CAP_BASE], [GOAL_X - 24, CAP_BASE], [GOAL_X - 26, t4]];
+      const rest = i => [LADDER.t, LADDER.b, rampTop(3), [RAMP_FOOT, GROUND], [G[i].x, GROUND]];
+      B.downR = [0, 1, 2, 3].map(i => [P(i), ...(K[i].x > GOAL_X ? over : []), ...rest(i)]);
+    },
+    route: (i, p) => { const q = clamp((p - [0.14, 0.28, 0.42, 0][i]) / 0.56, 0, 1); return along(B.downR[i], q * q * (3 - 2 * q)); },
+  });
   const reality = (dur, cap, leaderSays) => ({
     dur, b: 'reality', phase: 'VISION → REALITY', cap, capPrio: 2,
     onStart: () => { B.capSet = true; mark('reality'); sfx('vision'); S.leader.beam = 'goal'; S.leader.beamT = 3; later(0.7, () => bubble('leader', leaderSays, 2.8, true)); },
@@ -1120,9 +1138,10 @@ function buildSeq(on) {
     climb(3.4, 'All four koalas climb to the top: this last stone goes on together.'),
     capLift(3.0, 'Together, all four lift the capstone and set it on top...'),
     reality(3.2, 'Vision becomes reality: the pyramid the team built fills the Leader\'s blueprint exactly, and the outline turns solid. ✨', 'That\'s it! That\'s the vision! 🦅✨'),
+    down(6.0, 'Safety first, right to the end: one at a time, the koalas climb back down the ladder and the ramp.', 'Careful now, one at a time! 🪜'),
   ];
   return [
-    { dur: 3.0, b: 'arrive', mood: 'confused', phase: 'No communication', cap: 'They\'ve reached the spot, but with communication OFF nobody ever told the koalas what the final product looks like.', say: 'So... what are we building? 🤔',
+    { dur: 3.0, b: 'arrive', mood: 'confused', phase: 'No communication', cap: 'They\'ve reached the spot, but with communication OFF nobody ever told the koalas what the final product looks like.', say: 'Right... where do we even start? 🤷',
       onStart: () => later(1.2, () => bubble('manager', '(...keeps it to themselves 🤐)', 2.4)) },
     { dur: 6.0, b: 'gather', gather: 'stones', lost: true, phase: 'BUILD', cap: 'They fan out for stone, unsure what they need or how much...', say: 'Big rocks? Small rocks? 🤷',
       onStart: () => skill('🧺', 'Gathering materials', 'river, bog, cliff and wall'), tick: p => { B.stock = Math.max(B.stock, [0, 1, 2, 3].filter(i => gatherPose(i, p, { lost: true }).delivered).length * 2); } },
@@ -1146,6 +1165,7 @@ function buildSeq(on) {
     climb(3.8, 'All four koalas climb to the top.'),
     capLift(3.4, 'Together they lift the capstone and set it on top...'),
     reality(3.0, 'Finally the pyramid matches the vision, but many days later than it could have.', 'There it is... at last. 🦅'),
+    down(6.4, 'Tired, the koalas climb back down carefully, one at a time.', 'Slowly... one at a time. 🪜'),
   ];
 }
 // Runs every update while building: koalas walk to their stations, blocks are counted (for sound), courses complete.
@@ -1161,10 +1181,11 @@ function updateBuild(dt) {
   if (!B.kpOn) return;
   if (st && st.route) {
     B.kp.forEach((P, i) => { const q = st.route(i, p), dx = q.x - P.x; P.mv = Math.hypot(dx, q.y - P.y) > 0.05; if (Math.abs(dx) > 0.02) P.dir = Math.sign(dx); P.x = q.x; P.y = q.y; });
-    B.tgt = finals(); return;
+    B.tgt = st.b === 'down' ? grounds() : finals(); return;
   }
   let T = st && st.st ? st.st(p) : null;
-  if (!T && (S.finished || (st && (st.b === 'caplift' || st.b === 'reality')))) T = finals();
+  if (!T && S.finished) T = grounds();
+  if (!T && st && (st.b === 'caplift' || st.b === 'reality')) T = finals();
   if (!T) T = B.tgt; if (!T) return;
   B.tgt = T;
   const V = 170 * dt;
@@ -1192,7 +1213,7 @@ function buildPoses(st, sp) {
     else if (b === 'hold') mood = st.mood || '';
     else if (near) mood = 'carry';
     else if (b === 'course' || b === 'capflow') mood = i === 2 ? 'chisel' : i === 3 && st.rope ? 'haul' : i === 3 && !on ? 'struggle' : 'work';
-    if (P.mv && Math.abs(T[i] ? T[i].y - P.y : 0) > 20 && b !== 'climb') hop = 4; // hopping up a step
+    if (P.mv && Math.abs(T[i] ? T[i].y - P.y : 0) > 20 && b !== 'climb' && b !== 'down') hop = 4; // hopping up a step
     let x = P.x;
     if (!on && b === 'course' && !P.mv) x += Math.sin(S.t * 2.1 + i * 1.7) * 5; // unsure, shuffling about
     return { x, y: P.y, lane, flip: P.mv ? P.dir < 0 : t.face < 0, carry, mood, moving: P.mv, hop };
@@ -1210,6 +1231,75 @@ function flowBlocks(st, sp) {
   return out;
 }
 function blocksIn(k, wide) { const h = wide ? cHalf(k - 1) : cHalf(k), n = Math.max(1, Math.round(2 * h / 36)); return n * 2 + 1; }
+
+
+// ---------- v7.1: the team huddle (a stand-up before the build) ----------
+// Formation: a little circle, each koala facing the middle. [dx from the team's centre, lane (depth), faces left]
+const HUDDLE = [[60, 9, true], [24, -9, true], [-24, -9, false], [-60, 9, false]];
+const HUDDLE_OFF_CAP = 'The koalas huddle too, but nobody ever told them what the final product looks like. A team can\'t self-organise around a goal it can\'t see.';
+const HUDDLE_LINES = {
+  on: [[0, 0.9, "Kip: Okay team, next steps? 👉🔺"], [2, 2.7, "Matilda: I'll shape the stone. 🔨"], [1, 4.5, "Banjo: Rollers from the logs, like the bridge! 🪵"], [3, 6.3, "Wattle: I can haul. I've got this now! 💪"]],
+  off: [[0, 0.9, "Kip: So... what's next?"], [1, 2.6, "Banjo: What are we even building? 🤔"], [2, 4.3, "Matilda: Something big? A box?"]],
+};
+function startHuddle() {
+  const H = S.huddle, on = settings.comms; H.on = true; H.t = 0; H.spk = -1; H.wrapT = -1;
+  if (on || !S.leader.meeting) caption(on ? 'The team meets to plan their next steps: teams self-organise when they understand the goal.' : HUDDLE_OFF_CAP, 'TEAM HUDDLE', { hold: 3.4 });
+  else H.capLater = true; // OFF: the Leader's meeting holds the caption bar, so say it when the huddle breaks up
+  for (const [i, at, text] of HUDDLE_LINES[on ? 'on' : 'off']) later(at, () => { if (!H.on) return; H.spk = i; bubble('team', text, 1.7, true); });
+}
+function updateHuddle(dt) {
+  const H = S.huddle, on = settings.comms; H.t += dt;
+  const talkEnd = on ? 8.1 : 6.0;
+  if (H.wrapT < 0 && H.t >= talkEnd && !S.leader.meeting) { // the plan is agreed (and the Leader's meeting is over): paws in
+    H.wrapT = H.t; H.spk = -1;
+    if (on) { sfx('support'); bubble('team', 'Paws in... GO TEAM! 🐾🙌', 1.8, true); caption('Plan agreed, paws in: everyone knows their part and how it fits the vision.', 'TEAM HUDDLE', { hold: 1.8 }); }
+    else { H.spk = 3; bubble('team', 'Wattle: Let\'s just... start? 🤷', 2.4, true); if (H.capLater) caption(HUDDLE_OFF_CAP, 'TEAM HUDDLE', { hold: 2.6 }); }
+  }
+  if (H.wrapT >= 0 && H.t - H.wrapT >= (on ? 2.4 : 2.8)) { H.on = false; H.done = true; H.spk = -1; S.team.lastX = null; }
+}
+// 0 → 1 as the koalas step into the circle, back to 0 as they step out again.
+function huddleK() {
+  const H = S.huddle, inK = ease(clamp(H.t / 0.9, 0, 1));
+  if (H.wrapT < 0) return inK;
+  const outAt = H.wrapT + (settings.comms ? 1.8 : 2.2);
+  return inK * (1 - ease(clamp((H.t - outAt) / 0.6, 0, 1)));
+}
+function huddlePoses() {
+  const H = S.huddle; if (!H.on) return null;
+  const tm = S.team, cx = tm.x - 1.5 * MEMBER_GAP, k = huddleK(), on = settings.comms;
+  const inMove = H.t < 0.9, outMove = H.wrapT >= 0 && k < 0.999 && H.t > H.wrapT + 0.5;
+  const paws = on && H.wrapT >= 0 ? clamp((H.t - H.wrapT) / 0.4, 0, 1) * k : 0;
+  return HUDDLE.map(([dx, ln, left], i) => {
+    const x0 = tm.x - i * MEMBER_GAP, lean = paws * (left ? -16 : 16);
+    const x = lerp(x0, cx + dx, k) + lean, lane = ln * k;
+    let mood = on ? '' : 'confused', flip = k > 0.5 ? left : false, hop = 0;
+    const moving = (inMove || outMove) && Math.abs(cx + dx - x0) > 1;
+    if (moving) { mood = 'walk'; flip = outMove ? false : (cx + dx < x0); }
+    else if (H.spk === i && H.wrapT < 0) { mood = on ? 'lift' : 'confused'; if (on && i === 0 && H.t < 2.6) flip = false; } // the speaker gestures (Kip points east, to the build site)
+    else if (H.wrapT < 0) hop = on ? Math.max(0, Math.sin(H.t * 5 + i * 1.3)) * 1.6 : 0; // listeners nod along
+    if (paws > 0) { mood = 'lift'; hop = Math.max(0, Math.sin((H.t - H.wrapT - 0.5) * 9)) * (H.t - H.wrapT > 0.5 && H.t - H.wrapT < 1.6 ? 9 : 0); }
+    if (!on && H.wrapT >= 0 && !moving) mood = 'confused';
+    return { x, lane, flip, mood, moving, hop };
+  });
+}
+// The plan, scratched in the dirt in the middle of the circle: a stepped triangle (ON) or a wobbly box with a "?" (OFF).
+function drawHuddleSketch() {
+  const H = S.huddle, tm = S.team, cx = tm.x - 1.5 * MEMBER_GAP, x = cx - camX, y = memberY(cx) + 3, on = settings.comms;
+  const a = huddleK(); if (a <= 0.01) return;
+  const f = clamp((H.t - 1.2) / (on ? 4.8 : 3.6), 0, 1);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.fillStyle = 'rgba(150,110,70,0.6)'; ctx.beginPath(); ctx.ellipse(x, y, 32, 8, 0, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#3e2a1a'; ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+  const pts = on ? [[-20, 3], [20, 3], [0, -9], [-20, 3]] : [[-15, 3], [15, 4], [14, -7], [-14, -8], [-15, 3]];
+  const segs = pts.length - 1, upto = f * segs;
+  ctx.beginPath(); ctx.moveTo(x + pts[0][0], y + pts[0][1]);
+  for (let j = 1; j <= segs; j++) { const q = clamp(upto - (j - 1), 0, 1); if (q <= 0) break; const A = pts[j - 1], B2 = pts[j]; ctx.lineTo(x + lerp(A[0], B2[0], q), y + lerp(A[1], B2[1], q)); }
+  ctx.stroke();
+  if (on && f >= 1) { ctx.lineWidth = 1; ctx.beginPath(); for (const yy of [-1, -5]) { const hw = 20 * (9 - (3 - yy)) / 12 * 0 + (yy === -1 ? 13 : 7); ctx.moveTo(x - hw, y + yy); ctx.lineTo(x + hw, y + yy); } ctx.stroke();
+    ctx.fillStyle = '#ffd34d'; ctx.font = '9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('★', x, y - 11); ctx.textAlign = 'left'; }
+  if (!on && f >= 1) { ctx.fillStyle = '#3e2a1a'; ctx.font = 'bold 11px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('?', x + 22, y - 2); ctx.textAlign = 'left'; }
+  ctx.restore();
+}
 
 // ---------- v3: surprise delays (bottom-up communication) ----------
 function surpriseSeq(sp) {
@@ -1323,7 +1413,7 @@ function updateMeeting(dt) {
       caption(d.capLeave || 'The visiting eagles fly off. The Leader keeps the beam on the vision and the team keeps going. 🔺', 'Focus');
     } else {
       S.leader.meeting = null;
-      bubble('leader', 'Keep it going. Eyes on the pyramid. 🔺', 2.4);
+      bubble('leader', 'Keep it going. Eyes on the vision. 🔺', 2.4);
     }
   }
 }
@@ -1966,7 +2056,7 @@ function drawPile(a) {
 function drawBuild() {
   const B = S.build, x = GOAL_X - camX;
   if (x < -PYR_HALF - 700 || x > viewW + PYR_HALF + 40) return;
-  const tidy = 1 - B.solid; // construction gear is cleared away as the vision becomes reality
+  const tidy = B.clearT != null ? clamp(1 - (S.t - B.clearT) / 1.6, 0, 1) : 1; // v7.1: the gear stays until everyone is safely down, then it's cleared away
   for (let k = 0; k < COURSES; k++) if (B.c[k] > 0) drawCourse(k, B.c[k], false);
   if (B.wrongP > 0) drawCourse(2, B.wrongP, true);
   if (B.solid > 0) { // the finished pyramid: smooth sandstone casing over the courses (the old v2 pyramid look)
@@ -2462,11 +2552,13 @@ function drawTeam() {
     ctx.globalAlpha = 1;
   }
   const BP = buildPoses(st, sp); // v7: on the build site the koalas have their own stations
+  const HP = huddlePoses(); if (HP) drawHuddleSketch();
   for (let i = 3; i >= 0; i--) {
     let mx = tm.x - i * MEMBER_GAP + (i === 0 ? tm.m0 : 0);
     if (st && st.struggle && i === 3) mx -= 22 + Math.sin(S.t * 3) * 3; // Wattle falls behind
     let lane = laneOffset(mx), flip = false, carry = null, crouch = 0;
-    let moving = tm.mode === 'walk' || (st && st.move != null);
+    let moving = (tm.mode === 'walk' || (st && st.move != null)) && tm.moved;
+    if (tm.mode === 'walk' && tm.stillT > 0.4 && !S.huddle.on) flip = Math.sin(S.t * 0.7 + i * 2.1) > 0.75; // waiting: stand and look around
     let mood = tm.mood;
     if (st && st.struggle && i === 3) mood = 'struggle';
     if (st && st.rest) { mood = 'rest'; flip = i < 2; mx += i < 2 ? 4 : -4; lane = 12; moving = false; }
@@ -2479,11 +2571,14 @@ function drawTeam() {
       mx = lerp(tm.x - i * MEMBER_GAP, tm.x + ROCK_FORM[i][0], k); lane = ROCK_FORM[i][1] * k; flip = ROCK_FORM[i][2] && k > 0.5;
     } else if (st && st.train) { flip = true; mood = 'learn'; }
     let gy = memberY(mx) + lane + (i === 0 ? tm.m0y : 0) + crouch;
+    let hhop = 0;
+    if (HP) { const P = HP[i]; mx = P.x; lane = P.lane; flip = P.flip; mood = P.mood; moving = P.moving; hhop = P.hop; gy = memberY(mx) + lane; }
     if (BP) { const P = BP[i]; mx = P.x; lane = P.lane; flip = P.flip; carry = P.carry; mood = P.mood; moving = P.moving; gy = P.y + lane; }
     const ph = S.t * 9 + i * 1.7;
     let bob = moving ? Math.abs(Math.sin(ph)) * 2 : 0;
     if (tm.mood === 'happy') bob = Math.abs(Math.sin(S.t * 6 + i)) * 16;
     if (BP && BP[i].hop) bob += BP[i].hop;
+    bob += hhop;
     if (tm.cheer > 0) bob += Math.abs(Math.sin(S.t * 10 + i)) * 10 * tm.cheer;
     const shake = tm.mood === 'stuck' ? Math.sin(S.t * 30 + i) * 1.5 : 0;
     if (mx > logO.x - 6 && mx < logO.x + logO.w + 6) mood = 'sneak'; // crawling through the hollow log
