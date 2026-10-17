@@ -6,9 +6,9 @@ A large Australian forest with a tall canopy. A pyramid pokes out of the top of 
 
 | Role | Character | Where they are | What they can see | What they do |
 |---|---|---|---|---|
-| **Leader** | 🦅 Eagle | Flies *above* the canopy | Where the team started, and the pyramid (the goal) | **Vision & direction.** Sets the destination, keeps everyone pointed at it, recognises progress |
-| **Manager** | 🦉 Owl | Flies *below* the canopy, above the team | The obstacles ahead | **Planning, removing obstacles, communication.** Scouts ahead, warns the team, answers requests, reports progress |
-| **Team** | 🐨 Four koalas | On the forest floor, hacking through the bush | Only a few metres ahead | **Execution & problem-solving.** The everyday work, plus solving every obstacle |
+| **Leader** | 🦅 Eagle | Flies *above* the canopy | Where the team started, and the pyramid (the goal) | **Vision & direction.** Sets the destination, keeps everyone pointed at it, filters competing priorities, accepts unavoidable delays, recognises progress |
+| **Manager** | 🦉 Owl | Flies *below* the canopy, above the team | The obstacles ahead | **Planning, removing obstacles, communication.** Scouts ahead, warns the team, answers requests, escalates surprises, reports progress |
+| **Team** | 🐨 Four koalas | On the forest floor, hacking through the bush | Only a few metres ahead | **Execution & problem-solving.** The everyday work, solving every obstacle, and reporting the surprises nobody planned for |
 
 ![The koalas hacking through the bush, the owl scouting, the eagle above the canopy](docs/koalas-hacking-bushes.png)
 
@@ -56,8 +56,38 @@ Wins get recognised ("Great work, koalas!") and celebrated. With communication O
 
 ![Communication OFF: the koalas walk under the bees' nest](docs/comms-off-bees.png)
 
+**Eagle meetings: filtering competing priorities.** Three times on the journey, other eagles fly in above the canopy and circle the Leader,
+each with a priority card. The Leader weighs them up, says ✅ **yes** to the one that helps the team reach the pyramid,
+and **parks** the others ("Not now; the pyramid comes first"). The visitors fly off, and the Leader puts the beam back on the goal ("Keep it going").
+The top bar counts **Priorities filtered**.
+
+| Meeting | Visiting eagles and their asks | ✅ Accepted (supports the pyramid) |
+|---|---|---|
+| 1 | 💰 Finance: "Budget cuts?" · 🎨 Marketing: "Urgent: rebrand!" | 🦺 Safety: "Safety gear for koalas" |
+| 2 | 🏛️ Board: "Can you also run the picnic?" · 📁 Other project: "Lend us two koalas?" | 🗺️ Product: "Better map to the pyramid" |
+| 3 | 🚀 Strategy: "New initiative!" · 👥 HR: "Can you also do a survey?" | 🤝 Customers: "Pyramid opening: still on?" |
+
+![An eagle meeting: the Leader accepts one priority and parks the others](docs/eagle-meeting-priorities.png)
+
+**Surprises: things nobody saw coming.** Three events happen that the Manager *couldn't* have spotted, even with communication ON.
+They're marked with a pulsing orange **❓ UNPLANNED** sign and a red **SURPRISE** caption tag.
+The koalas stop and report **up the chain**: koalas ➜ Manager ("Manager! A sinkhole just opened up!"), then Manager ➜ Leader
+("Unplanned sinkhole. Team needs planks and a bit of time."). The Leader answers ("Safety first, take the time. Goal stays the same."),
+the answer travels back down, and the team solves it together. The top bar counts **Surprises reported up**.
+
+| # | Surprise | Reported up and answered | Fix |
+|---|---|---|---|
+| 1 | 🕳️ Sinkhole opens in the track | "Safety first, take the time. Goal stays the same." | Lay planks across |
+| 2 | 🌳 A gum tree falls across the path | "Everyone safe? Then take the hour. We'll adjust the plan." | Saw it up and roll it away |
+| 3 | 🐍 Big brown snake on the track | "No rush. Let it pass safely. Goal stays the same." | Wait quietly until it slithers off |
+
+With communication OFF, the koalas' calls go unanswered ("...hello?"). They handle each surprise alone, with a false start and a slower fix.
+
+![A surprise reported up the chain: koalas to Manager to Leader, and back down](docs/surprise-up-the-chain.png)
+
 ### How long is a run?
-At 1× speed, a run with communication ON takes about **2½ minutes** (around 153 s). With communication OFF it takes about **3¾ minutes** (around 226 s), with 8 surprises and 9 wrong turns.
+At 1× speed, a run with communication ON takes about **3 minutes** (around 182 s): 0 unwarned obstacles, 0 wrong turns, 6 priorities filtered, 3 surprises reported up and 6 distractions handled.
+With communication OFF it takes about **4¼ minutes** (around 257 s), with 8 unwarned obstacles, 12 wrong turns and 0 surprises reported up.
 Use the speed slider (0.25× to 3×) to fit your session.
 
 ### Discussion prompts
@@ -66,6 +96,10 @@ Use the speed slider (0.25× to 3×) to fit your session.
 3. Most of the koalas' time went on small bushes, not big obstacles. What's the "bush hacking" in your team's week?
 4. What are your magpies, meeting requests and reply-all storms? How do you get back to the goal?
 5. In your organisation, who is the "manager under the canopy"? How do the warnings reach the team, and how do requests get back up?
+6. Which "Can you also...?" requests land on your leaders? How do they decide what to park?
+7. When something nobody planned for happens, how fast does the news travel up, and does the answer come back down?
+
+![Communication OFF: the koalas' call about the sinkhole goes unanswered](docs/comms-off-surprise.png)
 
 ![Team view: the koalas only see what's right in front of them](docs/team-view.png)
 
@@ -80,7 +114,9 @@ Use the speed slider (0.25× to 3×) to fit your session.
 | Manager communication ON/OFF | When OFF, the manager still spots obstacles but never tells the koalas |
 | Click the eagle, owl, koalas or pyramid | Opens an info card about that role |
 
-The caption bar narrates each phase, and the stats at the top count **surprises**, **wrong turns** and **distractions handled**.
+The caption bar narrates each phase (with a red **SURPRISE** tag for unplanned events and an amber tag for meetings). The stats at the top count:
+**⚠️ Unwarned obstacles** (planned obstacles the koalas hit with no warning), **↩ Wrong turns**, **🧘 Distractions handled**,
+**🗂️ Priorities filtered** (asks the Leader parked or declined) and **📣 Surprises reported up**.
 When the team reaches the pyramid, a summary lets you replay with communication flipped so you can compare.
 
 ## Run it
@@ -123,6 +159,8 @@ deploy/pages.yml             GitHub Pages workflow (move to .github/workflows/ t
 Want to change the story? Everything is in `canopy.js`:
 - `OB_DEFS` sets the obstacle layout, and `sequenceFor()` holds the obstacle scripts, with an "informed" and an "uninformed" version of each.
 - `DISTRACTIONS` holds the leader and manager distractions (when they trigger, and what they say).
+- `MEETINGS` holds the eagle meetings: visiting eagles, their asks, which one is accepted, and the Leader's answers.
+- `SURPRISE_DEFS` holds the unplanned events and the full up-the-chain conversation for each one. `surpriseSeq()` and `upChain()` run them.
 - `LEADER_TALK`, `MANAGER_CHECKIN`, `RECOGNITION` and `CHEERS` hold the routine messages.
 - `WALK_SPEED_INFORMED` / `WALK_SPEED_UNINFORMED` and `makePathBushes()` control the pacing.
 

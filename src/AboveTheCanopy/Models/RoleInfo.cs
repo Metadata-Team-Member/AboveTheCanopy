@@ -14,6 +14,8 @@ public static class Roles
             "Keeps everyone pointed at the goal when things get hard.",
             "Shares direction with the manager and checks the course.",
             "Recognises and celebrates the team's progress.",
+            "Filters competing priorities in meetings: yes to what serves the goal, \"not now\" to the rest.",
+            "Accepts unavoidable delays and reassures: safety first, the goal stays the same.",
             "Gets distracted too (magpies, \"urgent\" emails, storms) but always refocuses on the goal."
         },
         "Leaders decide where we're going. They need managers and teams to work out how to get there.");
@@ -28,6 +30,7 @@ public static class Roles
             "Communicates early and clearly, so the team is ready.",
             "Gets the team the tools they need (machetes, logs, stones, rope, a ladder).",
             "Reports progress up to the leader and answers the team's requests.",
+            "Escalates surprises from the ground to the leader, with what the team needs and the likely delay.",
             "Shakes off distractions (meeting requests, mozzies, snags) and gets back to the team."
         },
         "Managers connect vision to execution. Turn communication off and watch how much harder the team's journey gets.");
@@ -40,6 +43,7 @@ public static class Roles
             "Does the constant everyday work: hacking through bush after bush.",
             "Solves the big obstacles: bridges, stepping stones, ropes, ladders.",
             "Works together, because nobody crosses the river alone.",
+            "Spots the surprises nobody planned for (sinkholes, falling trees, snakes) and reports them up straight away.",
             "Asks for what they need (\"Need more rope!\") and feeds back what's happening on the ground."
         },
         "Teams make the vision real, one bush at a time. With good information they're fast and confident; without it they get surprises and wrong turns.");

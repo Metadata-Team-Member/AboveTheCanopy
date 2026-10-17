@@ -37,21 +37,75 @@ const OB_DEFS = [
 ];
 const defOf = type => OB_DEFS.find(o => o.type === type);
 
+// v3: unexpected events the Manager could NOT see coming. The koalas discover them and report UP the chain.
+const SURPRISE_DEFS = [
+  { type: 'sinkhole', x: 2150, w: 90, name: 'sinkhole', icon: '🕳️',
+    reveal: 'SURPRISE! The ground collapses into a sinkhole right in front of the koalas. Nobody saw it coming, not even the Manager.',
+    revSay: 'Whoa! The ground just vanished! 😱',
+    up: 'Manager! A sinkhole just opened up! 🕳️', ack: 'Stay back! I\'ll tell the boss.',
+    toLeader: 'Unplanned sinkhole. Team needs planks and a bit of time.', leaderReply: 'Safety first, take the time. Goal stays the same. 🔺',
+    down: 'Boss says take your time. Planks on the way!', teamAck: 'Thanks! On it 👍',
+    fixCap: 'Backed by the Manager and the Leader, the koalas lay planks across the sinkhole and cross safely.',
+    aloneCap: 'Alone and unsure if they\'re allowed the time, the koalas slowly rig a crossing.' },
+  { type: 'treefall', x: 3900, w: 150, name: 'fallen gum tree', icon: '🌳',
+    reveal: 'SURPRISE! CRAAACK! A huge gum tree crashes down across the track. Even the Manager didn\'t see that one coming.',
+    revSay: 'TIMBERRR! 😵',
+    up: 'Manager! A gum tree just fell across the track! 🌳', ack: 'Is everyone okay? Escalating now.',
+    toLeader: 'Tree down on the track. Team needs saws, about an hour\'s delay.', leaderReply: 'Everyone safe? Then take the hour. We\'ll adjust the plan.',
+    down: 'Delay approved. Saw it up and roll it aside, carefully!', teamAck: 'Saws out! 🪚',
+    fixCap: 'With the delay approved, the koalas saw up the trunk and roll the pieces off the track.',
+    aloneCap: 'Nobody answers, so the koalas hack at the trunk for ages.' },
+  { type: 'snake', x: 4650, w: 110, name: 'brown snake', icon: '🐍',
+    reveal: 'SURPRISE! A big brown snake slides out onto the track. Nobody could have planned for this.',
+    revSay: 'S-s-snake!! 🐍',
+    up: 'Manager! Big brown snake on the track! 🐍', ack: 'Freeze! Don\'t touch it. Telling the boss.',
+    toLeader: 'Snake on the track. Team needs to wait it out, short delay.', leaderReply: 'No rush. Let it pass safely. Goal stays the same. 🔺',
+    down: 'Boss says wait it out. Safety first!', teamAck: 'Waiting quietly... 🤫',
+    fixCap: 'The koalas wait calmly at a safe distance until the snake slithers off into the bush.',
+    aloneCap: 'Nobody tells them what to do, so the koalas panic, back off and wait nervously.' },
+];
+
+// v3: meetings above the canopy. Visiting eagles bring competing priorities; the Leader filters them.
+const MEETINGS = [
+  { atX: 1300, who: 'Finance, Marketing and Safety',
+    visitors: [
+      { label: 'FINANCE', body: '#3d6b45', head: '#d9f2c4', size: 0.82, ask: 'Budget cuts? 💸' },
+      { label: 'MARKETING', body: '#9c3f6b', head: '#ffd6e8', size: 0.74, ask: 'Urgent: rebrand! 🎨' },
+      { label: 'SAFETY', body: '#a8641e', head: '#ffe2b8', size: 0.92, ask: 'Safety gear for koalas', accept: true },
+    ],
+    yes: 'Yes to safety gear: it gets us to the pyramid. ✅', no: 'Rebrand and budget review: not now. The pyramid comes first.' },
+  { atX: 3000, who: 'the Board, Another Project and Product',
+    visitors: [
+      { label: 'BOARD', body: '#37474f', head: '#eceff1', size: 1.0, ask: 'Can you also run the picnic?' },
+      { label: 'OTHER PROJECT', body: '#5d4037', head: '#d7ccc8', size: 0.76, ask: 'Lend us two koalas?' },
+      { label: 'PRODUCT', body: '#1565c0', head: '#cfe3ff', size: 0.86, ask: 'Better map to the pyramid', accept: true },
+    ],
+    yes: 'A better map? Yes, that helps us get there. ✅', no: 'Picnic and lending koalas: parked for now. 🔺 first.' },
+  { atX: 4850, who: 'Strategy, HR and Customers',
+    visitors: [
+      { label: 'STRATEGY', body: '#6a1b9a', head: '#ead6ff', size: 0.9, ask: 'New initiative! 🚀' },
+      { label: 'HR', body: '#00796b', head: '#c8f2ea', size: 0.78, ask: 'Can you also do a survey?' },
+      { label: 'CUSTOMERS', body: '#c62828', head: '#ffd9d9', size: 0.84, ask: 'Pyramid opening: still on?', accept: true },
+    ],
+    yes: 'Yes, the pyramid opening is on. That IS the goal. ✅', no: 'New initiative and survey: after we arrive. Not now.' },
+];
+const MEETING_PHASES = { arrive: 2.0, ask: 3.0, decide: 3.0, leave: 1.8 };
+
 // Workplace distractions for the Leader and Manager, triggered by how far the team has got.
 const DISTRACTIONS = [
-  { who: 'leader', kind: 'magpie', atX: 880,
+  { who: 'leader', kind: 'magpie', atX: 790,
     say: 'Argh! Swooping magpies! 🐦', say2: 'Not the eyes, not the eyes!',
     cap: 'Distraction! A magpie swoops the Leader. (Every Aussie knows that feeling.)',
     refocus: 'Shake it off. Eyes on the pyramid. 🔺' },
-  { who: 'manager', kind: 'meeting', atX: 1450,
+  { who: 'manager', kind: 'meeting', atX: 1010,
     say: '📅 Meeting request: "Sync about the sync"', say2: 'Ugh, another meeting...',
     cap: 'Distraction! Mid-flight, the Manager gets yet another meeting request.',
     refocus: 'Declined. Back to the team. ✅' },
-  { who: 'leader', kind: 'email', atX: 2640,
+  { who: 'leader', kind: 'email', atX: 3640,
     say: '📧 URGENT!!! Reply-all chain (47 new)', say2: 'Is it actually urgent though?',
     cap: 'Distraction! An "urgent" email storm floods the Leader\'s inbox.',
     refocus: 'That can wait. Back to the vision. 🔺' },
-  { who: 'manager', kind: 'mosquito', atX: 3300,
+  { who: 'manager', kind: 'mosquito', atX: 3330,
     say: 'Bzzz! Mozzies everywhere! 🦟', say2: 'Shoo! SHOO!',
     cap: 'Distraction! A cloud of mozzies swarms the Manager.',
     refocus: 'Swatted. Back to scouting. 🔍' },
@@ -59,7 +113,7 @@ const DISTRACTIONS = [
     say: 'Whoa! What a wind gust! 🌬️', say2: 'Hold on... hold on...',
     cap: 'Distraction! A storm front blows in and a gust knocks the Leader off course.',
     refocus: 'Steady. Back on course for the pyramid. 🔺' },
-  { who: 'manager', kind: 'branch', atX: 5000,
+  { who: 'manager', kind: 'branch', atX: 2580,
     say: 'Oof! Snagged in the branches! 🌿', say2: 'Who put this vine here?!',
     cap: 'Distraction! The Manager flies into a snag of branches and vines.',
     refocus: 'Untangled. Back to guiding the team. ✅' },
@@ -104,7 +158,7 @@ const pick = (arr, i) => arr[((i % arr.length) + arr.length) % arr.length];
 function rng(seed) { let s = seed; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
 function call(method, ...args) { try { dotnet && dotnet.invokeMethodAsync(method, ...args); } catch (e) { /* ignore */ } }
 function inZone(x, pad, types) {
-  return OB_DEFS.some(o => (!types || types.includes(o.type)) && x > o.x - pad && x < o.x + o.w + pad);
+  return OB_DEFS.concat(SURPRISE_DEFS).some(o => (!types || types.includes(o.type)) && x > o.x - pad && x < o.x + o.w + pad);
 }
 
 // ---------- world ----------
@@ -182,10 +236,13 @@ function reset() {
     obstacles: makeObstacles(),
     pathBushes: makePathBushes(),
     distractions: DISTRACTIONS.map(d => Object.assign({ done: false }, d)),
+    surprises: SURPRISE_DEFS.map(d => Object.assign({}, d, { isSurprise: true, rev: 0, prog: 0, done: false, active: false, chainDone: false })),
+    meetings: MEETINGS.map(m => Object.assign({ done: false }, m)),
+    waiters: [],
     team: { x: START_X + 70, mode: 'idle', seq: null, step: 0, stepT: 0, stepStartX: 0, mood: '', m0: 0, m0y: 0,
-      wrong: 0, surprises: 0, distractions: 0, cheer: 0, bush: null, hackT: 0, bushesCut: 0, cleared: 0 },
+      wrong: 0, surprises: 0, distractions: 0, priorities: 0, reported: 0, cheer: 0, bush: null, hackT: 0, bushesCut: 0, cleared: 0 },
     mgr: { x: START_X + 140, y: MANAGER_Y, alert: 0, ready: false, ox: 0, oy: 0, rot: 0, dist: null, focusT: 0 },
-    leader: { x: START_X + 260, y: LEADER_Y, beam: null, beamT: 0, ox: 0, oy: 0, rot: 0, dist: null },
+    leader: { x: START_X + 260, y: LEADER_Y, beam: null, beamT: 0, ox: 0, oy: 0, rot: 0, dist: null, meeting: null },
     bubbles: [], queue: { leader: [], manager: [], team: [] }, pulses: [], events: [], particles: [],
     caption: '', phase: '', capT: 0, finished: false, introCam: 'start', selected: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
@@ -195,7 +252,7 @@ function reset() {
   scheduleIntro();
 }
 
-function stats() { const t = S.team; call('OnStats', t.wrong, t.surprises, t.distractions); }
+function stats() { const t = S.team; call('OnStats', t.wrong, t.surprises, t.distractions, t.priorities, t.reported); }
 function later(delay, fn) { S.events.push({ at: S.t + delay, fn }); }
 function caption(text, phase) {
   S.caption = text; S.capT = S.t; if (phase) S.phase = phase;
@@ -364,7 +421,7 @@ function runSeq(steps, obstacle) {
 }
 function startStep() {
   const tm = S.team, st = tm.seq[tm.step];
-  if (st.cap) caption(st.cap, tm.seqOb ? 'Obstacle' : S.phase);
+  if (st.cap) caption(st.cap, tm.seqOb ? (tm.seqOb.isSurprise ? 'SURPRISE' : 'Obstacle') : S.phase);
   if (st.say) bubble('team', st.say, Math.max(2, st.dur + 0.6));
   if (st.ask) {
     const [q, a] = st.ask;
@@ -387,7 +444,8 @@ function updateSeq(dt) {
   tm.m0 = st.m0 ? st.m0(p) : 0;
   tm.m0y = st.m0y ? st.m0y(p) : 0;
   if (st.prog && tm.seqOb) tm.seqOb.prog = Math.max(tm.seqOb.prog, p);
-  if (p >= 1) {
+  if (st.rev && tm.seqOb) tm.seqOb.rev = Math.max(tm.seqOb.rev, p);
+  if (p >= 1 && (!st.until || st.until())) {
     tm.step++; tm.stepT = 0; tm.stepStartX = tm.x;
     if (tm.step >= tm.seq.length) {
       const o = tm.seqOb;
@@ -400,6 +458,13 @@ function updateSeq(dt) {
 function obstacleCleared(o) {
   const tm = S.team;
   o.done = true; o.prog = 1; o.active = false;
+  if (o.isSurprise) {
+    tm.cheer = 1.0;
+    caption(`Surprise handled! The ${o.name} is sorted and the koalas are back on the path to the pyramid.`, 'Execution');
+    bubble('team', pick(CHEERS, tm.cleared + 2), 2.2);
+    if (settings.comms) later(1.0, () => say('manager', 'leader', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} sorted. Back on track!`, 'Great recovery, team! 🦅'));
+    return;
+  }
   tm.cleared++; tm.cheer = 1.0;
   caption(`${o.name[0].toUpperCase() + o.name.slice(1)} cleared! The koalas push on through the undergrowth.`, 'Execution');
   bubble('team', pick(CHEERS, tm.cleared), 2.2);
@@ -420,7 +485,7 @@ function update(dt) {
 
   // --- team ---
   if (tm.mode === 'walk') {
-    const next = S.obstacles.find(o => !o.done);
+    const next = S.obstacles.concat(S.surprises).filter(o => !o.done).sort((a, b) => a.x - b.x)[0];
     const spd = settings.comms ? WALK_SPEED_INFORMED : WALK_SPEED_UNINFORMED;
     const nx = tm.x + spd * dt;
     const stopX = next ? next.x - 28 : GOAL_X - PYR_HALF - 20;
@@ -431,7 +496,7 @@ function update(dt) {
       tm.x = bushStop; tm.mode = 'hack'; tm.bush = bush; tm.hackT = 0;
     } else if (nx >= stopX) {
       tm.x = stopX;
-      if (next) { next.active = true; runSeq(sequenceFor(next, next.informed), next); }
+      if (next) { next.active = true; runSeq(next.isSurprise ? surpriseSeq(next) : sequenceFor(next, next.informed), next); }
       else finish();
     } else tm.x = nx;
   } else if (tm.mode === 'hack') {
@@ -452,10 +517,15 @@ function update(dt) {
   if (!S.finished && (tm.mode === 'walk' || tm.mode === 'hack')) {
     for (const d of S.distractions) {
       const ag = d.who === 'leader' ? ld : mg;
-      if (!d.done && tm.x >= d.atX && !ag.dist && mg.ready) { d.done = true; startDistraction(ag, d); }
+      if (!d.done && tm.x >= d.atX && !ag.dist && !(d.who === 'leader' && ld.meeting) && mg.ready) { d.done = true; startDistraction(ag, d); }
+    }
+    for (const m of S.meetings) {
+      if (!m.done && tm.x >= m.atX && !ld.dist && !ld.meeting && !S.waiters.length && mg.ready) { m.done = true; startMeeting(m); }
     }
   }
   updateDistraction(ld, dt);
+  updateMeeting(dt);
+  if (S.waiters.length && !ld.dist && !ld.meeting) S.waiters.shift()();
   updateDistraction(mg, dt);
 
   // --- manager: flies ahead of the team, scouting ---
@@ -481,7 +551,7 @@ function update(dt) {
 
   // --- routine communication ---
   if (mg.ready && !S.finished) {
-    if (S.t > S.nextLeaderTalk && !ld.dist && !mg.dist) {
+    if (S.t > S.nextLeaderTalk && !ld.dist && !ld.meeting && !mg.dist && !S.waiters.length && !(tm.seqOb && tm.seqOb.isSurprise)) {
       S.nextLeaderTalk = S.t + 19;
       const [a, b] = pick(LEADER_TALK, S.leaderTalkI++);
       ld.beam = 'goal'; ld.beamT = 2.4;
@@ -590,7 +660,7 @@ function finish() {
   later(1.8, () => bubble('leader', 'Proud of every one of you! 🦅', 4));
   later(4.6, () => bubble('team', 'Group hug!! 🤗', 4));
   for (let i = 0; i < 80; i++) confetti(tm.x - 30 + (Math.random() - 0.5) * 60, memberY(tm.x) - 50, 1);
-  call('OnFinished', Math.round(S.t), tm.wrong, tm.surprises, tm.distractions, settings.comms);
+  call('OnFinished', Math.round(S.t), tm.wrong, tm.surprises, tm.distractions, tm.priorities, tm.reported, settings.comms);
 }
 function confetti(x, y, n) {
   const cols = ['#ff5d5d', '#ffd34d', '#5dd3ff', '#8aff5d', '#d07bff', '#ffffff'];
@@ -599,6 +669,91 @@ function confetti(x, y, n) {
 function leaf(x, y) {
   const cols = ['#4caf50', '#66bb6a', '#2e7d32', '#9ccc65'];
   S.particles.push({ kind: 'leaf', x, y, vx: 30 + Math.random() * 90, vy: -60 - Math.random() * 80, r: Math.random() * 6, vr: (Math.random() - 0.5) * 8, life: 1.1 + Math.random() * 0.6, c: cols[Math.floor(Math.random() * 4)] });
+}
+
+// ---------- v3: surprise delays (bottom-up communication) ----------
+function surpriseSeq(sp) {
+  const snake = sp.type === 'snake';
+  const first = { dur: 1.6, mood: 'stuck', cap: sp.reveal, say: sp.revSay, rev: true };
+  if (settings.comms) return [
+    first,
+    { dur: 1.0, mood: '', until: () => sp.chainDone, onStart: () => upChain(sp) },
+    { dur: snake ? 2.6 : 3.2, mood: snake ? 'sneak' : 'work', prog: true, cap: sp.fixCap },
+  ];
+  return [
+    first,
+    { dur: 2.2, mood: 'confused', cap: 'The koalas call up for help... but with communication OFF, nobody answers.', say: sp.up + ' ...hello?' },
+    { dur: 2.0, mood: 'confused', move: -70, wrong: true, say: 'Guess we\'re on our own... 😟' },
+    { dur: 1.6, mood: 'walk', move: 70 },
+    { dur: 4.4, mood: snake ? 'sneak' : 'work', prog: true, cap: sp.aloneCap },
+  ];
+}
+// Team -> Manager -> Leader, then the Leader's answer travels back down.
+function upChain(sp) {
+  caption('Bottom-up communication: the koalas report the surprise straight up to the Manager.', 'SURPRISE');
+  say('team', 'manager', sp.up, sp.ack, () => {
+    S.waiters.push(() => {
+      caption('The Manager escalates it to the Leader: what happened, what the team needs, and the likely delay.', 'SURPRISE');
+      say('manager', 'leader', sp.toLeader, sp.leaderReply, () => {
+        S.team.reported++; stats();
+        S.leader.beam = 'goal'; S.leader.beamT = 2.6;
+        caption('The Leader accepts the delay and reassures everyone: safety first, the goal stays the same.', 'SURPRISE');
+        later(0.8, () => pulse('leader', 'manager', PULSE_COL.leader, () => say('manager', 'team', sp.down, sp.teamAck, () => { sp.chainDone = true; })));
+      });
+    });
+  });
+}
+
+// ---------- v3: leader meetings (competing priorities) ----------
+function startMeeting(m) {
+  S.leader.meeting = { def: m, phase: 'arrive', t: 0, cards: m.visitors.map(() => ({ shown: false, state: 'pending' })) };
+  caption(`Meeting time! Eagles from ${m.who} fly in above the canopy, each with their own priority.`, 'Meeting');
+}
+function updateMeeting(dt) {
+  const M = S.leader.meeting; if (!M) return;
+  M.t += dt;
+  const d = M.def;
+  if (M.phase === 'ask') {
+    M.cards.forEach((c, i) => { if (!c.shown && M.t >= i * 0.8) c.shown = true; });
+  } else if (M.phase === 'decide') {
+    const yi = d.visitors.findIndex(v => v.accept);
+    if (M.t >= 0.3 && M.cards[yi].state === 'pending') { M.cards[yi].state = 'yes'; bubble('leader', d.yes, 2.4, true); }
+    if (M.t >= 1.5 && M.cards.some(c => c.state === 'pending')) {
+      let n = 0; M.cards.forEach(c => { if (c.state === 'pending') { c.state = 'parked'; n++; } });
+      S.team.priorities += n; stats();
+      bubble('leader', d.no, 2.6, true);
+    }
+  }
+  if (M.t >= MEETING_PHASES[M.phase]) {
+    M.t = 0;
+    if (M.phase === 'arrive') {
+      M.phase = 'ask';
+      caption('Everyone wants something: lots of competing priorities land on the Leader at once.', 'Meeting');
+      M.cards.forEach(c => c.shown = false);
+    } else if (M.phase === 'ask') {
+      M.phase = 'decide';
+      caption('The Leader weighs them up: yes to what supports the pyramid, "not now" to the rest.', 'Priorities');
+    } else if (M.phase === 'decide') {
+      M.phase = 'leave';
+      S.leader.beam = 'goal'; S.leader.beamT = 3.0;
+      caption('The visiting eagles fly off. The Leader keeps the beam on the goal and keeps it going. 🔺', 'Focus');
+    } else {
+      S.leader.meeting = null;
+      bubble('leader', 'Keep it going. Eyes on the pyramid. 🔺', 2.4);
+    }
+  }
+}
+const MEETING_SLOTS = [[-200, 16], [200, 16], [-420, 30]];
+function visitorPos(M, i) {
+  const L = S.leader, [sx, sy] = MEETING_SLOTS[i];
+  const bx = L.x + L.ox, by = L.y + L.oy;
+  const p = Math.min(1, M.t / MEETING_PHASES[M.phase]);
+  if (M.phase === 'arrive') { // spiral in, circling the leader
+    const q = ease(p), a = (1 - q) * 6 + i * 2.1, R = (1 - q) * 260;
+    return { x: bx + sx + Math.cos(a) * R + (1 - q) * (1 - q) * 700, y: by + sy + Math.sin(a) * R * 0.3 - (1 - q) * (1 - q) * 110 };
+  }
+  if (M.phase === 'leave') { const q = ease(p); return { x: bx + sx + q * 800, y: by + sy - q * 170 }; }
+  return { x: bx + sx + Math.sin(S.t * 1.5 + i) * 6, y: by + sy + Math.sin(S.t * 2 + i) * 5 };
 }
 
 // ---------- camera ----------
@@ -927,7 +1082,13 @@ function drawBubbles() {
     let x, y;
     ctx.globalAlpha = a;
     ctx.fillStyle = cols[b.who][0]; ctx.strokeStyle = cols[b.who][1]; ctx.lineWidth = 2;
-    if (b.who === 'leader') {
+    if (b.who === 'leader' && S.leader.meeting) {
+      // In a meeting the visiting eagles' priority cards sit beside the leader, so its bubble goes underneath.
+      x = clamp(px - w / 2, 6, viewW - w - 6); y = p.y + 84; // below the visitors' name tags too
+      rr(x, y, w, h, 10); ctx.fill(); ctx.stroke();
+      const tx = clamp(px, x + 12, x + w - 12);
+      ctx.beginPath(); ctx.moveTo(tx - 6, y + 1); ctx.lineTo(tx, y - 9); ctx.lineTo(tx + 6, y + 1); ctx.fill();
+    } else if (b.who === 'leader') {
       // The eagle flies near the top of the sky, so its bubble sits beside it instead of above.
       const right = px + 58 + w < viewW - 6;
       x = right ? px + 58 : px - 58 - w; y = clamp(p.y - h / 2 - 6, 4, H - h);
@@ -1402,6 +1563,100 @@ function drawParticles() {
   }
 }
 
+// ---------- v3 drawing: surprises, meetings ----------
+function drawSurprises(late) {
+  for (const sp of S.surprises) {
+    if ((sp.type === 'treefall' || sp.type === 'snake') !== !!late) continue; // the fallen tree lies in front of the bush row
+    const x = sp.x - camX; if (x > viewW + 220 || x + sp.w < -220) continue;
+    const gy = groundBase(sp.x + sp.w / 2);
+    if (sp.type === 'sinkhole' && sp.rev > 0) {
+      const e = ease(sp.rev), cx = x + sp.w / 2;
+      ctx.fillStyle = '#8a6a44'; ctx.beginPath(); ctx.ellipse(cx, gy + 5, sp.w / 2 * e + 6, 13 * e + 3, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#140c05'; ctx.beginPath(); ctx.ellipse(cx, gy + 6, sp.w / 2 * e, 11 * e, 0, 0, 7); ctx.fill();
+      if (sp.rev < 1 && Math.random() < 0.5) S.particles.push({ kind: 'confetti', x: sp.x + Math.random() * sp.w, y: gy, vx: (Math.random() - 0.5) * 40, vy: -30, r: 0, vr: 3, life: 0.6, c: '#7a5a3a' });
+      const n = Math.floor(sp.prog * 6 + 0.0001);
+      ctx.fillStyle = '#9a6a3a'; ctx.strokeStyle = '#5a3a1a'; ctx.lineWidth = 1;
+      for (let k = 0; k < n; k++) { const px = x - 8 + k * (sp.w + 16) / 6; ctx.fillRect(px, gy - 5, (sp.w + 16) / 6 - 2, 9); ctx.strokeRect(px, gy - 5, (sp.w + 16) / 6 - 2, 9); }
+    } else if (sp.type === 'treefall') {
+      const bx = x + sp.w + 40, Lt = 175, e = ease(sp.rev);
+      const lift = sp.prog * 24, fade = 1 - sp.prog * 0.55, shrink = 1 - sp.prog * 0.25;
+      ctx.save(); ctx.globalAlpha = fade; ctx.translate(bx, gy - lift - 26 * e); ctx.scale(shrink, shrink); ctx.rotate(-Math.PI / 2 * e);
+      ctx.fillStyle = '#8a5a34'; ctx.strokeStyle = '#3e2410'; ctx.lineWidth = 2.5; ctx.fillRect(-14, -Lt, 28, Lt); ctx.strokeRect(-14, -Lt, 28, Lt);
+      ctx.fillStyle = '#e3c08a'; ctx.beginPath(); ctx.ellipse(0, 0, 14, 5, 0, 0, 7); ctx.fill(); ctx.stroke(); // fresh broken base
+      ctx.strokeStyle = 'rgba(40,25,10,0.5)'; ctx.lineWidth = 2;
+      for (let k = 1; k < 6; k++) { ctx.beginPath(); ctx.moveTo(-8, -k * 28); ctx.lineTo(8, -k * 28 - 6); ctx.stroke(); }
+      if (sp.prog > 0) { ctx.strokeStyle = '#f2d9a8'; ctx.lineWidth = 3; for (const k of [0.33, 0.66]) { ctx.beginPath(); ctx.moveTo(-11, -Lt * k); ctx.lineTo(11, -Lt * k); ctx.stroke(); } }
+      ctx.fillStyle = '#3f8f3a';
+      for (const [cx2, cy2, r2] of [[0, -Lt - 8, 34], [-22, -Lt + 14, 24], [22, -Lt + 12, 24]]) { ctx.beginPath(); ctx.arc(cx2, cy2, r2, 0, 7); ctx.fill(); }
+      ctx.restore();
+      if (sp.rev > 0.97 && sp.rev < 1 && !sp.crashed) { sp.crashed = true; for (let i = 0; i < 16; i++) leaf(sp.x + Math.random() * 40, gy - 20); }
+    } else if (sp.type === 'snake' && sp.rev > 0) {
+      const leaving = sp.prog > 0, dir = leaving ? 1 : -1;
+      const hx = leaving ? lerp(x + sp.w * 0.35, x + sp.w + 160, ease(sp.prog)) : lerp(x + sp.w + 90, x + sp.w * 0.35, ease(sp.rev));
+      ctx.save(); ctx.globalAlpha = leaving ? 1 - sp.prog * 0.8 : 1;
+      ctx.translate(hx, gy); ctx.scale(1.7, 1.7); ctx.translate(-hx, -gy - 3); // big enough to read, in front of the bush row
+      const pts = []; for (let k = 0; k < 24; k++) pts.push([hx - dir * k * 5, gy - 4 + Math.sin(k * 0.55 - S.t * 7 * (sp.done ? 0 : 1)) * 4]);
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#7b5a2e'; ctx.lineWidth = 8; ctx.beginPath(); pts.forEach(([px, py], k) => k ? ctx.lineTo(px, py) : ctx.moveTo(px, py)); ctx.stroke();
+      ctx.strokeStyle = '#c9a06a'; ctx.lineWidth = 2.5; ctx.beginPath(); pts.forEach(([px, py], k) => k ? ctx.lineTo(px, py + 1.5) : ctx.moveTo(px, py + 1.5)); ctx.stroke();
+      ctx.fillStyle = '#6b4a22'; ctx.beginPath(); ctx.ellipse(hx + dir * 4, gy - 5, 8, 5.5, 0, 0, 7); ctx.fill();
+      ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(hx + dir * 7, gy - 7, 1.6, 0, 7); ctx.fill();
+      if (Math.sin(S.t * 9) > 0.2) { ctx.strokeStyle = '#e53935'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(hx + dir * 12, gy - 5); ctx.lineTo(hx + dir * 19, gy - 5); ctx.lineTo(hx + dir * 22, gy - 8); ctx.moveTo(hx + dir * 19, gy - 5); ctx.lineTo(hx + dir * 22, gy - 2); ctx.stroke(); }
+      ctx.restore(); ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
+    }
+  }
+}
+function drawSurpriseMarkers() {
+  for (const sp of S.surprises) {
+    if (sp.rev <= 0 || sp.done) continue;
+    const cx = sp.x + sp.w / 2 - camX; if (cx < -40 || cx > viewW + 40) continue;
+    const cy = groundBase(sp.x + sp.w / 2) - 190, k = 1 + Math.sin(S.t * 6) * 0.08;
+    ctx.save(); ctx.translate(cx, cy); ctx.scale(k, k);
+    ctx.fillStyle = 'rgba(255,87,34,0.25)'; ctx.beginPath(); ctx.arc(0, 0, 24, 0, 7); ctx.fill();
+    ctx.fillStyle = '#ff5722'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(0, 0, 16, 0, 7); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 20px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('?', 0, 7);
+    ctx.font = 'bold 10px system-ui, sans-serif'; ctx.fillStyle = '#ffccbc'; ctx.fillText('UNPLANNED', 0, -27); ctx.textAlign = 'left';
+    ctx.restore();
+  }
+}
+function drawEagleShape(x, y, s, body, head, flapSpeed, phase) {
+  const flap = Math.sin(S.t * flapSpeed + phase) * 14;
+  ctx.save(); ctx.translate(x, y); ctx.scale(s, s);
+  ctx.fillStyle = body;
+  ctx.beginPath(); ctx.moveTo(-4, 0); ctx.quadraticCurveTo(-26, -10 - flap, -52, -4 - flap * 1.4); ctx.quadraticCurveTo(-30, 4, -4, 6); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(4, 0); ctx.quadraticCurveTo(26, -10 - flap, 52, -4 - flap * 1.4); ctx.quadraticCurveTo(30, 4, 4, 6); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(0, 2, 10, 18, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = head; ctx.beginPath(); ctx.arc(0, -14, 8, 0, 7); ctx.fill();
+  ctx.fillStyle = '#f2b233'; ctx.beginPath(); ctx.moveTo(-3, -11); ctx.lineTo(0, -4); ctx.lineTo(3, -11); ctx.fill();
+  ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(-3, -16, 1.4, 0, 7); ctx.arc(3, -16, 1.4, 0, 7); ctx.fill();
+  ctx.restore();
+}
+function drawMeeting() {
+  const M = S.leader.meeting; if (!M) return;
+  const d = M.def;
+  ctx.font = '600 12px system-ui, sans-serif';
+  d.visitors.forEach((v, i) => {
+    const p = visitorPos(M, i), x = p.x - camX, y = p.y;
+    drawEagleShape(x, y, v.size, v.body, v.head, 6, i * 1.3);
+    tag(x, y + 30 * v.size + 6, v.label, v.head);
+    const c = M.cards[i];
+    if (!c.shown && M.phase !== 'decide' && M.phase !== 'leave') return;
+    const text = (c.state === 'yes' ? '✅ ' : c.state === 'parked' ? '⏸ Parked: ' : '') + v.ask;
+    const w = ctx.measureText(text).width + 18, h = 22;
+    let cx = clamp(x - w / 2, 4, viewW - w - 4), cy = Math.max(4, y - 30 * v.size - 30);
+    if (settings.view !== 'team' && settings.view !== 'manager' && cx < 356 && cy < 50) cy = 50; // keep clear of the minimap
+    let a = 1;
+    if (M.phase === 'leave') { const q = Math.min(1, M.t / MEETING_PHASES.leave); a = 1 - q; if (c.state === 'yes') { const L = S.leader; cx = lerp(cx, L.x - camX - w / 2, q); cy = lerp(cy, L.y, q); } }
+    ctx.globalAlpha = a;
+    ctx.fillStyle = c.state === 'yes' ? '#e8f5e9' : c.state === 'parked' ? '#e0e0e0' : '#fffde7';
+    ctx.strokeStyle = c.state === 'yes' ? '#2e7d32' : c.state === 'parked' ? '#9e9e9e' : '#f9a825';
+    ctx.lineWidth = 2; rr(cx, cy, w, h, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = c.state === 'parked' ? '#777' : '#222'; ctx.fillText(text, cx + 9, cy + 15);
+    if (c.state === 'parked') { ctx.strokeStyle = '#888'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(cx + 8, cy + 11); ctx.lineTo(cx + w - 8, cy + 11); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+  });
+}
+
 function drawMiniMap() {
   if (settings.view === 'team' || settings.view === 'manager') return;
   const w = 340, h = 34, x = 12, y = 12, k = (w - 20) / WORLD_W;
@@ -1411,6 +1666,7 @@ function drawMiniMap() {
   ctx.font = '11px sans-serif';
   ctx.fillText('🏁', x + 10 + START_X * k - 6, y + 17);
   for (const o of S.obstacles) { ctx.globalAlpha = o.done ? 0.35 : 1; ctx.fillText(o.icon, x + 10 + o.x * k - 6, y + 17); ctx.globalAlpha = 1; }
+  for (const o of S.surprises) { if (o.rev <= 0) continue; ctx.globalAlpha = o.done ? 0.35 : 1; ctx.fillText('❓', x + 10 + o.x * k - 6, y + 17); ctx.globalAlpha = 1; }
   ctx.fillText('🔺', x + 10 + GOAL_X * k - 6, y + 17);
   const dot = (wx, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x + 10 + wx * k, y + 22, 3.5, 0, 7); ctx.fill(); };
   dot(S.team.x, '#1f8fd0'); dot(S.mgr.x, '#9b59d0'); dot(S.leader.x, '#d4a000');
@@ -1433,15 +1689,19 @@ function render() {
   drawWall();
   drawVineThicket();
   drawBees(false);
+  drawSurprises();
   drawTeam();
+  drawSurpriseMarkers();
   drawBees(true);
   drawRiver(true);
   drawBog(true);
   drawLog();
   drawBushes();
   drawPathBushes();
+  drawSurprises(true);
   drawManager();
   drawCanopy();
+  drawMeeting();
   drawLeader();
   drawFog();
   ctx.setTransform(scale, 0, 0, scale, 0, 0);

@@ -10,11 +10,13 @@
             <h1>🌳 Above the Canopy</h1>
             <p class="tagline">An interactive story about <b class="c-leader">leadership</b> (the eagle), <b class="c-manager">management</b> (the owl) and <b class="c-team">team members</b> (the koalas). Who sees what?</p>
         </div>
-        <div class="stats" title="Surprises = obstacles the koalas hit without warning. Wrong turns = back-tracking. Distractions handled = times the Leader or Manager got distracted and refocused.">
-            <span>⏱ @(lastTime is null ? "--" : $"{lastTime}s")</span>
-            <span>😱 Surprises: @surprises</span>
-            <span>↩ Wrong turns: @wrongTurns</span>
+        <div class="stats">
+            <span title="Run time">⏱ @(lastTime is null ? "--" : $"{lastTime}s")</span>
+            <span title="Planned obstacles the koalas hit without a warning from the Manager">⚠️ Unwarned obstacles: @surprises</span>
+            <span title="Times the koalas had to back-track">↩ Wrong turns: @wrongTurns</span>
             <span title="Leader and Manager distractions shaken off">🧘 Distractions handled: @distractions</span>
+            <span title="Competing priorities the Leader parked or declined in meetings">🗂️ Priorities filtered: @priorities</span>
+            <span title="Unexpected events the koalas reported up the chain to the Leader">📣 Surprises reported up: @reported</span>
         </div>
     </header>
 
@@ -53,7 +55,7 @@
     </div>
 
     <div class="caption" aria-live="polite">
-        <span class="phase">@phase</span>
+        <span class="phase @PhaseClass">@phase</span>
         <span>@caption</span>
     </div>
 
@@ -109,7 +111,8 @@
     private string caption = "Loading the forest...";
     private string phase = "";
     private RoleInfo? selected;
-    private int wrongTurns, surprises, distractions;
+    private int wrongTurns, surprises, distractions, priorities, reported;
+    private string PhaseClass => phase switch { "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction", _ => "" };
     private int? lastTime;
     private string? finishedSummary;
 
@@ -136,7 +139,7 @@
 
     private async Task Restart()
     {
-        finishedSummary = null; wrongTurns = 0; surprises = 0; distractions = 0; lastTime = null;
+        finishedSummary = null; wrongTurns = 0; surprises = 0; distractions = 0; priorities = 0; reported = 0; lastTime = null;
         await Js("restart");
         if (!playing) { playing = true; await Js("setPlaying", true); }
     }
@@ -173,16 +176,16 @@
     [JSInvokable] public void OnAgentClicked(string role) { selected = Roles.Get(role); StateHasChanged(); }
     [JSInvokable] public void OnPlayState(bool isPlaying) { playing = isPlaying; StateHasChanged(); }
     [JSInvokable] public void OnViewChanged(string v) { view = v; StateHasChanged(); }
-    [JSInvokable] public void OnRestarted() { finishedSummary = null; wrongTurns = 0; surprises = 0; distractions = 0; lastTime = null; StateHasChanged(); }
-    [JSInvokable] public void OnStats(int wrong, int surprised, int distracted) { wrongTurns = wrong; surprises = surprised; distractions = distracted; StateHasChanged(); }
+    [JSInvokable] public void OnRestarted() { finishedSummary = null; wrongTurns = 0; surprises = 0; distractions = 0; priorities = 0; reported = 0; lastTime = null; StateHasChanged(); }
+    [JSInvokable] public void OnStats(int wrong, int surprised, int distracted, int filtered, int reportedUp) { wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; StateHasChanged(); }
 
     [JSInvokable]
-    public void OnFinished(int seconds, int wrong, int surprised, int distracted, bool withComms)
+    public void OnFinished(int seconds, int wrong, int surprised, int distracted, int filtered, int reportedUp, bool withComms)
     {
-        lastTime = seconds; wrongTurns = wrong; surprises = surprised; distractions = distracted;
+        lastTime = seconds; wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp;
         finishedSummary = withComms
-            ? $"With the Manager communicating, the koalas arrived in {seconds}s with {surprised} surprises and {wrong} wrong turns, and the Leader and Manager shook off {distracted} distractions on the way. Now try it with communication OFF and compare!"
-            : $"Without communication, the koalas took {seconds}s, hit {surprised} surprises and made {wrong} wrong turns. Same forest, same koalas: the difference is the information they had.";
+            ? $"With the Manager communicating, the koalas arrived in {seconds}s: {surprised} unwarned obstacles, {wrong} wrong turns and {reportedUp} surprises reported up and handled together. The Leader filtered {filtered} competing priorities, and the Leader and Manager shook off {distracted} distractions. Now try it with communication OFF and compare!"
+            : $"Without communication, the koalas took {seconds}s, hit {surprised} unwarned obstacles, made {wrong} wrong turns, and faced every surprise alone (0 reported up). Same forest, same koalas: the difference is the information they had.";
         StateHasChanged();
     }
 
