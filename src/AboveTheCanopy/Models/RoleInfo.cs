@@ -7,7 +7,7 @@ public static class Roles
 {
     public static readonly RoleInfo Leader = new(
         "leader", "🦅", "The Leader", "Leadership = vision, priorities, backing the team & adapting",
-        "An eagle flying above the canopy. Sees where the team started and the end goal (the pyramid), but can't see the obstacles on the forest floor.",
+        "An eagle flying above the canopy. Sees where the team is right now and the end goal (the pyramid), but can't see the obstacles on the forest floor.",
         new[]
         {
             "Sets the vision: where are we going, and why?",
@@ -61,7 +61,7 @@ public static class Roles
 
     public static readonly RoleInfo Goal = new(
         "goal", "🔺", "The Goal", "The pyramid = the shared objective",
-        "Pokes out above the canopy, so only the leader can see it from the start.",
+        "Pokes out above the canopy, so only the leader can see it from above.",
         new[]
         {
             "A clear, visible objective everyone can rally around.",

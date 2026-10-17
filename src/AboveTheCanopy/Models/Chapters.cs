@@ -11,7 +11,7 @@ public static class Chapters
     public static readonly IReadOnlyList<Chapter> All = new Chapter[]
     {
         new("start", "The vision",
-            "Only the Leader, high above the canopy, can see both where the team starts and the goal: the pyramid.",
+            "Only the Leader, high above the canopy, can see both where the team is now (already hard at work) and the goal: the pyramid.",
             new[] { "Who in your organisation can see the \"pyramid\"? How does everyone else find out about it?" }),
         new("dir", "Passing the direction down",
             "The Leader shares the vision with the Manager, who turns it into a plan and scouts the way.",
@@ -23,7 +23,7 @@ public static class Chapters
         new("ob:vines", "The vines: a warning in time",
             "Warned early, the koalas arrive with cutting tools ready and clear the vines straight away.",
             new[] { "Which warning saved your team time recently? Which one did you never get?" },
-            "Nobody warned them: the koalas get stuck in the vines and someone runs back to camp for tools."),
+            "Nobody warned them: the koalas get stuck in the vines and someone runs all the way back for tools."),
         new("coach", "Coaching Wattle",
             "Managers grow people: a minute of one-to-one coaching helps Wattle, the smallest koala, for the rest of the journey.",
             new[] { "Who in your team is quietly struggling, and who would notice?", "What is one thing you could coach someone on this week?" },

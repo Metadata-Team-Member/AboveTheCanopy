@@ -7,7 +7,7 @@ Time is measured like a real project, in **days**: the top bar counts *Day 1, Da
 
 | Role | Character | Where they are | What they can see | What they do |
 |---|---|---|---|---|
-| **Leader** | 🦅 Eagle | Flies *above* the canopy | Where the team started, and the pyramid (the goal) | **Vision, priorities, backing the team & adapting.** Sets the destination, filters competing priorities, says YES to what the team needs (and protects their time), changes the plan when better information comes up from the ground |
+| **Leader** | 🦅 Eagle | Flies *above* the canopy | Where the team is now, and the pyramid (the goal) | **Vision, priorities, backing the team & adapting.** Sets the destination, filters competing priorities, says YES to what the team needs (and protects their time), changes the plan when better information comes up from the ground |
 | **Manager** | 🦉 Owl | Flies *below* the canopy, above the team | The obstacles ahead | **Planning, removing obstacles, communication up & down, coaching & delegating.** Scouts ahead, warns the team, coaches and delegates, passes ideas up, calls breaks, recognises wins, coordinates with other managers |
 | **Team** | 🐨 Four koalas: Kip, Banjo, Matilda & Wattle | On the forest floor, cutting through the bush | Only a few metres ahead | **Execution, problem-solving & leading from the ground.** The everyday work, gathering materials, learning new skills, solving obstacles, reporting surprises, and spotting better ways to do things |
 
@@ -34,7 +34,7 @@ That's the constant day-to-day work that nobody above the canopy sees.
 
 | # | Obstacle | When the Manager warned them | When communication is OFF |
 |---|---|---|---|
-| 1 | 🌿 Tangle of vines | Arrive with cutting tools and cut straight through | Get stuck, run back to camp for better tools |
+| 1 | 🌿 Tangle of vines | Arrive with cutting tools and cut straight through | Get stuck, run all the way back for better tools |
 | 2 | 🪨 Giant boulder | **Upskill:** a quick hammer-and-chisel training session, then break the rock down together | Bonk into it, push, back-track, then teach themselves by trial and error (slowly) |
 | 3 | 🌊 Fast river | **Gather** logs from the bush and build a bridge | One koala wades in (splash!), then they scatter hunting for anything that floats |
 | 4 | 🟫 Smelly bog | **Gather** flat stones and lay stepping stones | One koala sinks to its tummy, then they wander off for rocks and test wobbly stones |
@@ -129,7 +129,7 @@ The button always shows the current chapter. **⏭** (or <kbd>N</kbd>) jumps to 
 
 | # | Chapter | Teaching point |
 |---|---|---|
-| 1 | The vision | Only the Leader can see both the start and the pyramid |
+| 1 | The vision | Only the Leader can see both where the team is now and the pyramid |
 | 2 | Passing the direction down | Leader ➜ Manager: the vision becomes a plan |
 | 3 | Everyday work | The bush hacking nobody up top sees |
 | 4 | The vines: a warning in time | Warned early, the right tools are ready |

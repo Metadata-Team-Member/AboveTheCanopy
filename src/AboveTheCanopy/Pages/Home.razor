@@ -251,7 +251,7 @@
         if (module is null) return;
         showChapters = false; teachCard = null; finishedSummary = null; showReflection = false; ResetCounters();
         chapter = await module.InvokeAsync<int>("jumpTo", i);
-        if (teach && chapter > 0 && Chapters.All[chapter].Mark != "finish")
+        if (teach && Chapters.All[chapter].Mark != "finish")
         {
             teachCard = chapter; playing = false; await Js("setPlaying", false);
         }
