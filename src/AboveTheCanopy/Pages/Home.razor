@@ -204,12 +204,12 @@
     private sealed record SoundPrefs(bool enabled, double volume);
     private string[] reflection = Array.Empty<string>();
     private int? daysOn, daysOff; // results from this session, for the ON vs OFF comparison
-    private const int TypicalDaysOn = 152, TypicalDaysOff = 198; // measured at 1x, see README
+    private const int TypicalDaysOn = 157, TypicalDaysOff = 202; // measured at 1x, see README
     private string PhaseClass => phase switch
     {
         "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction",
         "Manager meeting" => "ph-mgr", "Goal reached" => "ph-goal", "LEADER SUPPORT" => "ph-support",
-        "COACHING" or "DELEGATION" or "RECOGNITION" or "SUPPORT" or "TEAMWORK" => "ph-grow", "BUILD" => "ph-build", "VISION → REALITY" => "ph-vision", "REDO" => "ph-surprise", "TEAM IDEA" or "COURSE CORRECTION" => "ph-idea", "WELLBEING" => "ph-well", _ => ""
+        "COACHING" or "DELEGATION" or "RECOGNITION" or "SUPPORT" or "TEAMWORK" or "TEAM HUDDLE" or "SAFETY" => "ph-grow", "BUILD" => "ph-build", "VISION → REALITY" => "ph-vision", "REDO" => "ph-surprise", "TEAM IDEA" or "COURSE CORRECTION" => "ph-idea", "WELLBEING" => "ph-well", _ => ""
     };
     private string? finishedSummary;
 

@@ -23,7 +23,7 @@ Nobody can see the whole picture on their own:
 
 The journey works when vision flows down (leader ➜ manager), warnings and plans flow down to the team (manager ➜ team), and requests and progress flow back up (team ➜ manager ➜ leader).
 Use the **Perspective** buttons to see the world through each role's eyes, and turn **Manager communication OFF**
-to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 198 days instead of about 152), and even build the wrong shape.
+to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 202 days instead of about 157), and even build the wrong shape.
 
 ## What happens on the journey
 
@@ -129,6 +129,14 @@ and slides into place as the team gets closer. The Leader's beam points at it ("
 
 ![The Leader's vision: a golden blueprint on the horizon](docs/vision-blueprint.png)
 
+**Team huddle** (tag **TEAM HUDDLE**). While the Leader handles the last eagle meeting, the koalas stop at the build site and hold a stand-up:
+they gather in a little circle, scratch a stepped triangle in the dirt and take turns: *Kip: "Okay team, next steps?"*, *Matilda: "I'll shape the stone."*,
+*Banjo: "Rollers from the logs, like the bridge!"*, *Wattle: "I can haul. I've got this now!"*, then paws in: *"GO TEAM!"*.
+Caption: *"The team meets to plan their next steps: teams self-organise when they understand the goal."* With communication OFF the huddle is short and confused
+(*"What are we even building?"*, a wobbly box with a "?" in the dirt). Koalas never walk on the spot: whenever they wait, they stand and look around.
+
+![The team huddle: the koalas plan their next steps around a triangle scratched in the dirt](docs/team-huddle.png)
+
 **Building the final product** (tags **BUILD**, **SUPPORT**, **DELEGATION**, **TEAM IDEA**, **TEAMWORK**). After the rest break and the last eagle meeting,
 the koalas reach the build site under the vision and build the pyramid in **6 courses**, one block at a time, along a supply line:
 Matilda shapes stone at the pile, Banjo loads at the ramp foot, Wattle passes and hauls, and Kip sets each block. Every step calls back a skill from the journey,
@@ -155,7 +163,11 @@ Caption: *"Good managers support the work, they don't take it over."*
 
 **Vision becomes reality.** The golden capstone is passed up the line, all four koalas climb to the top and set it **together**, and the blueprint
 turns solid with a chime: the pyramid the team built fills the Leader's vision exactly. Only then does the celebration start: confetti, fanfare,
-every character, and the summary with the days.
+every character, and the summary with the days. First, though, safety (tag **SAFETY**): the koalas climb back down one at a time,
+over the top, down the ladder and the ramp, to the ground beside the pyramid. The construction gear is cleared away and the celebration happens on the ground
+(*"Safely down, now we celebrate!"*).
+
+![Safety first: the koalas climb back down one at a time](docs/climb-down.png)
 
 ![The capstone is set and the vision turns solid](docs/build-vision-solid.png)
 
@@ -196,9 +208,9 @@ The button always shows the current chapter. **⏭** (or <kbd>N</kbd>) jumps to 
 | 18 | The snake | Some delays you wait out safely |
 | 19 | The rock wall | Preparation pays off |
 | 20 | Rest break | A sustainable pace beats burnout |
-| 21 | Final priorities | New asks arrive even near the end |
+| 21 | Final priorities | New asks arrive even near the end; the team huddles to plan its own next steps |
 | 22 | Building the final product | Every skill from the journey goes into the build; the Manager supports, doesn't take over |
-| 23 | Vision becomes reality | All four set the capstone together and the vision turns solid |
+| 23 | Vision becomes reality | All four set the capstone together, the vision turns solid, then they climb down safely |
 | 24 | Celebration & reflection | Vision + planning & support + skills & hard work |
 
 With communication OFF, the chapter list and the teaching cards describe what goes wrong instead (for example *"Nobody notices Wattle struggling"*).
@@ -300,17 +312,17 @@ Project time: **1 project day = 2 seconds of animation at 1× speed.**
 
 | | Project time | Real time at 1× | Unwarned obstacles | Wrong turns | Surprises reported up | Manager syncs |
 |---|---|---|---|---|---|---|
-| Communication **ON** | **about 152 days** | about 5 min (304 s) | 0 | 0 | 3 | 3 |
-| Communication **OFF** | **about 198 days** | about 6½ min (394 s) | 8 | 13 | 0 | 3 |
+| Communication **ON** | **about 157 days** | about 5 min (312 s) | 0 | 0 | 3 | 3 |
+| Communication **OFF** | **about 202 days** | about 6¾ min (404 s) | 8 | 13 | 0 | 3 |
 
 With communication ON the run also has 1 team idea adopted (the creek route saves 4 to 6 days) and 1 rest break (about 4 days).
 With communication OFF there's no idea and no break, but the exhausted koalas slow right down.
-The build itself takes about 33 days with communication ON and about 45 days OFF (the wrong-shaped course has to be redone).
+The build itself (including the climb back down) takes about 36 days with communication ON and about 48 days OFF (the wrong-shaped course has to be redone).
 
 The finish summary shows "Pyramid built in N days" and compares it with the other mode: your own result if you've run both in this session, otherwise the typical figure.
-For example: "Without communication the same project usually takes about 198 days: 46 days lost."
+For example: "Without communication the same project usually takes about 202 days: 45 days lost."
 
-![Finish summary: pyramid built in about 152 days, compared with communication OFF](docs/finish-days.png)
+![Finish summary: pyramid built in about 157 days, compared with communication OFF](docs/finish-days.png)
 Use the speed slider (0.25× to 3×) to fit your session.
 
 ### Discussion prompts
