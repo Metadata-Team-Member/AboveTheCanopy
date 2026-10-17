@@ -7,39 +7,42 @@ public static class Roles
 {
     public static readonly RoleInfo Leader = new(
         "leader", "🦅", "The Leader", "Leadership = vision & direction",
-        "Flies above the canopy. Sees where the team started and the end goal (the pyramid), but can't see the obstacles on the forest floor.",
+        "An eagle flying above the canopy. Sees where the team started and the end goal (the pyramid), but can't see the obstacles on the forest floor.",
         new[]
         {
             "Sets the vision: where are we going, and why?",
             "Keeps everyone pointed at the goal when things get hard.",
             "Shares direction with the manager and checks the course.",
-            "Inspires and celebrates, without micromanaging the ground."
+            "Recognises and celebrates the team's progress.",
+            "Gets distracted too (magpies, \"urgent\" emails, storms) but always refocuses on the goal."
         },
         "Leaders decide where we're going. They need managers and teams to work out how to get there.");
 
     public static readonly RoleInfo Manager = new(
         "manager", "🦉", "The Manager", "Management = planning, removing obstacles, communication",
-        "Flies below the canopy and above the team. Can't see the pyramid, but can see the obstacles ahead: vines, a boulder, a river, a cliff.",
+        "An owl flying below the canopy and above the team. Can't see the pyramid, but can see the obstacles ahead: vines, a boulder, a river, a bog, a fallen log, a cliff, a bees' nest and a rock wall.",
         new[]
         {
             "Turns the leader's vision into a plan and a route.",
             "Scouts ahead and spots obstacles before the team hits them.",
             "Communicates early and clearly, so the team is ready.",
-            "Gets the team the tools they need (machetes, logs, rope)."
+            "Gets the team the tools they need (machetes, logs, stones, rope, a ladder).",
+            "Reports progress up to the leader and answers the team's requests.",
+            "Shakes off distractions (meeting requests, mozzies, snags) and gets back to the team."
         },
         "Managers connect vision to execution. Turn communication off and watch how much harder the team's journey gets.");
 
     public static readonly RoleInfo Team = new(
-        "team", "🧑‍🤝‍🧑", "The Team", "Team members = execution & problem-solving on the ground",
-        "Walks through vines and bushes on the forest floor. Can only see a few metres ahead, so they rely on the manager's heads-up.",
+        "team", "🐨", "The Team", "Team members = execution & problem-solving on the ground",
+        "Four koalas walking the forest floor, hacking through bush after bush. They can only see a few metres ahead, so they rely on the manager's heads-up.",
         new[]
         {
-            "Does the real work: cutting paths, building bridges, climbing down.",
-            "Solves problems on the spot, with real skills and grit.",
+            "Does the constant everyday work: hacking through bush after bush.",
+            "Solves the big obstacles: bridges, stepping stones, ropes, ladders.",
             "Works together, because nobody crosses the river alone.",
-            "Feeds back what's happening on the ground."
+            "Asks for what they need (\"Need more rope!\") and feeds back what's happening on the ground."
         },
-        "Teams make the vision real. With good information they're fast and confident; without it they get surprises and wrong turns.");
+        "Teams make the vision real, one bush at a time. With good information they're fast and confident; without it they get surprises and wrong turns.");
 
     public static readonly RoleInfo Goal = new(
         "goal", "🔺", "The Goal", "The pyramid = the shared objective",

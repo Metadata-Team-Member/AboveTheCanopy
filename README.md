@@ -2,15 +2,15 @@
 
 **An interactive animation about the difference between leadership, management and team members.**
 
-A large forest with a tall canopy. A pyramid pokes out of the top of the trees far to the east: that's the goal.
+A large Australian forest with a tall canopy. A pyramid pokes out of the top of the trees far to the east: that's the goal.
 
-| Role | Where they are | What they can see | What they do |
-|---|---|---|---|
-| 🦅 **Leader** | Flies *above* the canopy | Where the team started, and the pyramid (the goal) | **Vision & direction.** Sets the destination and keeps everyone pointed at it |
-| 🦉 **Manager** | Flies *below* the canopy, above the team | The obstacles ahead: vines, a boulder, a river, a cliff | **Planning, removing obstacles, communication.** Scouts ahead and warns the team |
-| 🧑‍🤝‍🧑 **Team** | Walks on the forest floor through vines and bushes | Only a few metres ahead | **Execution & problem-solving.** Cuts paths, builds bridges, climbs down cliffs |
+| Role | Character | Where they are | What they can see | What they do |
+|---|---|---|---|---|
+| **Leader** | 🦅 Eagle | Flies *above* the canopy | Where the team started, and the pyramid (the goal) | **Vision & direction.** Sets the destination, keeps everyone pointed at it, recognises progress |
+| **Manager** | 🦉 Owl | Flies *below* the canopy, above the team | The obstacles ahead | **Planning, removing obstacles, communication.** Scouts ahead, warns the team, answers requests, reports progress |
+| **Team** | 🐨 Four koalas | On the forest floor, hacking through the bush | Only a few metres ahead | **Execution & problem-solving.** The everyday work, plus solving every obstacle |
 
-![The team builds a bridge after the manager's warning](docs/screenshot-river.png)
+![The koalas hacking through the bush, the owl scouting, the eagle above the canopy](docs/koalas-hacking-bushes.png)
 
 ## The teaching idea
 
@@ -18,19 +18,56 @@ Nobody can see the whole picture on their own:
 
 - The **leader** can see the goal but not the boulders.
 - The **manager** can see the boulders but not the goal.
-- The **team** can see neither. They're down in the vines doing the work.
+- The **team** can see neither. They're down in the bush doing the work.
 
-The journey works when vision flows down (leader ➜ manager) and warnings and plans flow down to the team (manager ➜ team).
+The journey works when vision flows down (leader ➜ manager), warnings and plans flow down to the team (manager ➜ team), and requests and progress flow back up (team ➜ manager ➜ leader).
 Use the **Perspective** buttons to see the world through each role's eyes, and turn **Manager communication OFF**
-to watch the same team in the same forest get surprised, take wrong turns and take much longer.
+to watch the same koalas in the same forest get surprised, take wrong turns and take much longer.
 
-![Manager view: sees obstacles ahead, but not the far-off goal](docs/screenshot-manager-view.png)
+## What happens on the journey
+
+**The everyday work.** Between the big obstacles, the koalas keep stopping to hack through small bushes on the path: machetes swinging, leaves flying.
+That's the constant day-to-day work that nobody above the canopy sees.
+
+**Eight obstacles,** each one different, each with a warned solution and a "nobody told us" version:
+
+| # | Obstacle | When the Manager warned them | When communication is OFF |
+|---|---|---|---|
+| 1 | 🌿 Tangle of vines | Arrive with machetes and cut straight through | Get stuck, run back for a machete |
+| 2 | 🪨 Giant boulder | Veer around it early | Bonk into it, try to push it, back-track |
+| 3 | 🌊 Fast river | Bring logs and build a bridge | One koala wades in (splash!), then they hunt for logs |
+| 4 | 🟫 Smelly bog | Lay stepping stones and hop across | One koala sinks to its tummy, then they test wobbly stones |
+| 5 | 🪵 Fallen giant log | Crawl through its hollow | Try to climb over it, slide off, trek along it |
+| 6 | ⛰️ Cliff edge | Rope down at the marked spot | Wander the edge looking for a way down |
+| 7 | 🐝 Bees' nest | Tiptoe past in silence | Stomp underneath, get chased by the swarm |
+| 8 | 🧗 Rock wall | Carry a ladder and climb up | Slide down bare-pawed, lash together a wobbly ladder |
+
+**Distractions happen, so refocus.** The Leader and the Manager get distracted too, veer off course, then refocus on the goal.
+Each distraction is narrated, and the top bar counts **Distractions handled**:
+
+- 🦅 Leader: swooping magpies, an "URGENT!!!" reply-all email storm, a storm front and wind gust.
+- 🦉 Manager: a "Sync about the sync" meeting request, a cloud of mozzies, a snag of branches and vines.
+
+![A magpie swoops the eagle](docs/leader-distraction-magpie.png)
+
+**Lots of communication.** The leader checks in with the manager and gets progress reports after every obstacle.
+The manager briefs the koalas and checks on them. The koalas ask for things ("Need more rope!", "Pass more stones down the line!") and get answers.
+Wins get recognised ("Great work, koalas!") and celebrated. With communication OFF, the koalas' calls go unanswered ("Is anyone up there?").
+
+![Communication OFF: the koalas walk under the bees' nest](docs/comms-off-bees.png)
+
+### How long is a run?
+At 1× speed, a run with communication ON takes about **2½ minutes** (around 153 s). With communication OFF it takes about **3¾ minutes** (around 226 s), with 8 surprises and 9 wrong turns.
+Use the speed slider (0.25× to 3×) to fit your session.
 
 ### Discussion prompts
 1. What could the leader see that nobody else could? What couldn't they see?
-2. When communication was off, what changed for the team? Was it the team's fault?
-3. In your organisation, who is the "manager under the canopy"? How do the warnings reach the team?
-4. What happens if the leader tries to do the manager's job, or the manager tries to do the team's?
+2. When communication was off, what changed for the koalas? Was it their fault?
+3. Most of the koalas' time went on small bushes, not big obstacles. What's the "bush hacking" in your team's week?
+4. What are your magpies, meeting requests and reply-all storms? How do you get back to the goal?
+5. In your organisation, who is the "manager under the canopy"? How do the warnings reach the team, and how do requests get back up?
+
+![Team view: the koalas only see what's right in front of them](docs/team-view.png)
 
 ## Controls
 
@@ -40,10 +77,10 @@ to watch the same team in the same forest get surprised, take wrong turns and ta
 | ↻ Restart | Start the journey again (<kbd>R</kbd>) |
 | Speed slider | 0.25× to 3× |
 | Perspective: Everything / Leader / Manager / Team | Fogs out what that role **can't** see (<kbd>1</kbd> to <kbd>4</kbd>) |
-| Manager communication ON/OFF | When OFF, the manager still spots obstacles but never tells the team |
-| Click the eagle, owl, team or pyramid | Opens an info card about that role |
+| Manager communication ON/OFF | When OFF, the manager still spots obstacles but never tells the koalas |
+| Click the eagle, owl, koalas or pyramid | Opens an info card about that role |
 
-The caption bar narrates each phase, and the stats at the top count **surprises** and **wrong turns**.
+The caption bar narrates each phase, and the stats at the top count **surprises**, **wrong turns** and **distractions handled**.
 When the team reaches the pyramid, a summary lets you replay with communication flipped so you can compare.
 
 ## Run it
@@ -83,8 +120,13 @@ src/AboveTheCanopy/
 deploy/pages.yml             GitHub Pages workflow (move to .github/workflows/ to enable)
 ```
 
-Want to change the story? The obstacle scripts live in `sequenceFor()` in `canopy.js`, with an "informed" and an "uninformed" version for each obstacle.
-The captions and messages are plain strings, so they're easy to edit.
+Want to change the story? Everything is in `canopy.js`:
+- `OB_DEFS` sets the obstacle layout, and `sequenceFor()` holds the obstacle scripts, with an "informed" and an "uninformed" version of each.
+- `DISTRACTIONS` holds the leader and manager distractions (when they trigger, and what they say).
+- `LEADER_TALK`, `MANAGER_CHECKIN`, `RECOGNITION` and `CHEERS` hold the routine messages.
+- `WALK_SPEED_INFORMED` / `WALK_SPEED_UNINFORMED` and `makePathBushes()` control the pacing.
+
+Note: .NET 10 fingerprints static files at build time, so after editing `canopy.js` outside Visual Studio, rebuild (or use `dotnet watch`).
 
 ## License
 [MIT](LICENSE)

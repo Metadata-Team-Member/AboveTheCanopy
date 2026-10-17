@@ -8,12 +8,13 @@
     <header class="top">
         <div>
             <h1>🌳 Above the Canopy</h1>
-            <p class="tagline">An interactive story about <b class="c-leader">leadership</b>, <b class="c-manager">management</b> and <b class="c-team">team members</b>. Who sees what?</p>
+            <p class="tagline">An interactive story about <b class="c-leader">leadership</b> (the eagle), <b class="c-manager">management</b> (the owl) and <b class="c-team">team members</b> (the koalas). Who sees what?</p>
         </div>
-        <div class="stats" title="Surprises = obstacles the team hit without warning. Wrong turns = back-tracking.">
+        <div class="stats" title="Surprises = obstacles the koalas hit without warning. Wrong turns = back-tracking. Distractions handled = times the Leader or Manager got distracted and refocused.">
             <span>⏱ @(lastTime is null ? "--" : $"{lastTime}s")</span>
             <span>😱 Surprises: @surprises</span>
             <span>↩ Wrong turns: @wrongTurns</span>
+            <span title="Leader and Manager distractions shaken off">🧘 Distractions handled: @distractions</span>
         </div>
     </header>
 
@@ -93,7 +94,7 @@
         }
     </section>
 
-    <footer class="hint">Tip: click the eagle, the owl, the team or the pyramid to learn about each role. Keys: <kbd>Space</kbd> play/pause, <kbd>R</kbd> restart, <kbd>1</kbd>–<kbd>4</kbd> perspectives.</footer>
+    <footer class="hint">Tip: click the eagle, the owl, the koalas or the pyramid to learn about each role. Keys: <kbd>Space</kbd> play/pause, <kbd>R</kbd> restart, <kbd>1</kbd>–<kbd>4</kbd> perspectives.</footer>
 </div>
 
 @code {
@@ -108,7 +109,7 @@
     private string caption = "Loading the forest...";
     private string phase = "";
     private RoleInfo? selected;
-    private int wrongTurns, surprises;
+    private int wrongTurns, surprises, distractions;
     private int? lastTime;
     private string? finishedSummary;
 
@@ -118,7 +119,7 @@
         new("all", "👁 Everything", "Show the whole scene"),
         new("leader", "🦅 Leader", "Only what the leader can see from above the canopy"),
         new("manager", "🦉 Manager", "Only what the manager can see below the canopy"),
-        new("team", "🧑‍🤝‍🧑 Team", "Only what the team can see on the forest floor"),
+        new("team", "🐨 Team", "Only what the koalas can see on the forest floor"),
     };
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -135,7 +136,7 @@
 
     private async Task Restart()
     {
-        finishedSummary = null; wrongTurns = 0; surprises = 0; lastTime = null;
+        finishedSummary = null; wrongTurns = 0; surprises = 0; distractions = 0; lastTime = null;
         await Js("restart");
         if (!playing) { playing = true; await Js("setPlaying", true); }
     }
@@ -172,16 +173,16 @@
     [JSInvokable] public void OnAgentClicked(string role) { selected = Roles.Get(role); StateHasChanged(); }
     [JSInvokable] public void OnPlayState(bool isPlaying) { playing = isPlaying; StateHasChanged(); }
     [JSInvokable] public void OnViewChanged(string v) { view = v; StateHasChanged(); }
-    [JSInvokable] public void OnRestarted() { finishedSummary = null; wrongTurns = 0; surprises = 0; lastTime = null; StateHasChanged(); }
-    [JSInvokable] public void OnStats(int wrong, int surprised) { wrongTurns = wrong; surprises = surprised; StateHasChanged(); }
+    [JSInvokable] public void OnRestarted() { finishedSummary = null; wrongTurns = 0; surprises = 0; distractions = 0; lastTime = null; StateHasChanged(); }
+    [JSInvokable] public void OnStats(int wrong, int surprised, int distracted) { wrongTurns = wrong; surprises = surprised; distractions = distracted; StateHasChanged(); }
 
     [JSInvokable]
-    public void OnFinished(int seconds, int wrong, int surprised, bool withComms)
+    public void OnFinished(int seconds, int wrong, int surprised, int distracted, bool withComms)
     {
-        lastTime = seconds; wrongTurns = wrong; surprises = surprised;
+        lastTime = seconds; wrongTurns = wrong; surprises = surprised; distractions = distracted;
         finishedSummary = withComms
-            ? $"With the manager communicating, the team arrived in {seconds}s with {surprised} surprises and {wrong} wrong turns. Now try it with communication OFF and compare!"
-            : $"Without communication, the team took {seconds}s, hit {surprised} surprises and made {wrong} wrong turns. Same forest, same team: the difference is the information they had.";
+            ? $"With the Manager communicating, the koalas arrived in {seconds}s with {surprised} surprises and {wrong} wrong turns, and the Leader and Manager shook off {distracted} distractions on the way. Now try it with communication OFF and compare!"
+            : $"Without communication, the koalas took {seconds}s, hit {surprised} surprises and made {wrong} wrong turns. Same forest, same koalas: the difference is the information they had.";
         StateHasChanged();
     }
 
