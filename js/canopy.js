@@ -1,4 +1,4 @@
-// Above the Canopy v7.6 - animation engine (plain canvas 2D, no dependencies).
+// Above the Canopy v7.7 - animation engine (plain canvas 2D, no dependencies).
 // v6: procedural Web Audio sound (sound.js), chapters with deterministic jumps, and a teaching mode.
 // v7: the pyramid is the Leader's VISION (a golden blueprint above the canopy) until the koalas BUILD it themselves at the end.
 import * as snd from './sound.js';
@@ -357,7 +357,7 @@ function reset() {
     idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [], capBy: {}, capShown: null, huddle: { on: false, done: false, t: 0, spk: -1, wrapT: -1, capLater: false },
     coachDone: false, breakDone: false, marks: new Set(['start']), chapter: 0, silent: false, quiet: false, tapT: 0, tapN: 0, finArgs: null, teachAt: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
-    todo: [], water: null, visit: null, vests: false, gifts: { logs: null, ropeDeal: false, ladderDeal: false, ropeTaken: false, visitQueued: false, ladder: false }, // v7.6
+    todo: [], handing: false, water: null, visit: null, vests: false, gifts: { logs: null, ropeDeal: false, ladderDeal: false, ropeTaken: false, visitQueued: false, ladder: false }, // v7.6
     busy: { idleT: 0, next: 0, n: 0, rings: [], marks: {}, bubble: null, cap: null, capI: 0, log: [], capLog: [] }, // v7.4: the Leader's outreach
     build: { on: false, t0: 0, c: [0, 0, 0, 0, 0, 0], wrongP: 0, wrongShow: false, pl: [0, 0, 0, 0, 0, 0, 0], doneK: [], rampL: -1, rampG: 0, ladder: 0,
       rollers: false, cap: null, capSet: false, solid: 0, stock: 0, shaped: 0, rejects: 0, skills: [], kp: null, kpOn: false, tgt: null, mt: null, mcarry: false, check: 0, climbR: null, downR: null, clearT: null },
@@ -409,6 +409,7 @@ const CAP_RULES = [
   [/^SHARING$/, null, 'MT'], // v7.6: managers sharing resources, seen arriving with the team
   [/^LEADER SUPPORT$/, /supply drop/, 'LT', { T: 'Help from above: saws and safety gear float down through a gap in the canopy. 🪂' }],
   [/^(Meeting|Priorities|Focus|LEADER SUPPORT)$/, null, 'L'],
+  [/^Distraction$/, /accepts a meeting/, 'MT', { T: 'The owl has gone off to a meeting, so the koalas carry on without guidance, a little slower and unsure.' }], // v7.7
   [/^(Distraction|Refocus)$/, /Leader/, 'L'],
   [/^(Distraction|Refocus)$/, null, 'M'],
   [/^COACHING$/, /struggling|Wattle cuts/, 'MT'],
@@ -749,13 +750,14 @@ function drawGiftLogs() {
 function meetingFollowUp(d) {
   const idx = S.meetings.indexOf(d);
   const free = () => mgFree() && !S.pulses.length && !S.leader.meeting && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager') && S.team.mode === 'walk' && clearAhead(300);
-  if (idx === 0) whenReady(free, () => say('leader', 'manager', 'Safety gear for the koalas: approved! 🦺 It\'s on its way.', 'Brilliant, thanks boss! 🦺', () => {
-    if (!settings.comms) { later(1.2, () => bubble('manager', '(...keeps it to themselves 🤐)', 2.4)); return; }
-    later(1.4, () => say('manager', 'team', 'New safety vests for everyone, from the boss! 🦺', 'Ooh, safety first! Thanks! 🦺', () => {
+  if (idx === 0) whenReady(free, () => (S.handing = true, say('leader', 'manager', 'Safety gear for the koalas: approved! 🦺 It\'s on its way.', 'Brilliant, thanks boss! 🦺', () => {
+    if (!settings.comms) { later(1.2, () => { S.handing = false; bubble('manager', '(...keeps it to themselves 🤐)', 2.4); }); return; }
+    later(1.4, () => whenReady(() => mgFree() && !S.pulses.length && !S.queue.manager.length && !S.queue.team.length && !S.bubbles.some(b => b.who === 'manager'), () => say('manager', 'team', 'New safety vests for everyone, from the boss! 🦺', 'Ooh, safety first! Thanks! 🦺', () => {
       S.vests = true; kbadge(2, '🦺 New safety vests', 4.5, '#ffcc80');
       caption('Leaders back the team: the safety gear the Leader said yes to reaches the koalas, and on go the new hi-vis vests. 🦺', 'LEADER SUPPORT', { prio: 2 });
-    }));
-  }));
+      later(2.0, () => { S.handing = false; }); // v7.7: no distraction for the owl in the middle of the hand-out
+    })));
+  })));
   if (idx === 1) whenReady(free, () => say('leader', 'manager', 'Here\'s Product\'s better map for you! 🗺️', 'Thanks! That makes scouting much easier. 🗺️'));
 }
 
@@ -873,7 +875,7 @@ function update(dt) {
   if (S.gifts.logs) { const L = S.gifts.logs; L.t += dt; if (L.t >= 1.1 && !L.landed) { L.landed = true; sfx('thud'); } if (ob('river').prog >= 1) L.fade += dt * 0.8; }
   if (tm.mode === 'walk') {
     const next = S.obstacles.concat(S.surprises).filter(o => !o.done).sort((a, b) => a.x - b.x)[0];
-    const spd = (settings.comms ? WALK_SPEED_INFORMED : WALK_SPEED_UNINFORMED) * (tm.tired ? 0.68 : 1);
+    const spd = (settings.comms ? WALK_SPEED_INFORMED : WALK_SPEED_UNINFORMED) * (tm.tired ? 0.68 : 1) * (mg.dist && mg.dist.phase === 'away' ? 0.75 : 1); // v7.7: unsure without the owl
     const nx = tm.x + spd * dt;
     const stopX = next ? next.x - 28 : BUILD_X;
     const bush = S.pathBushes.find(b => !b.cut && !(b.shrub && S.idea.go) && b.x - 22 > tm.x - 1);
@@ -913,7 +915,7 @@ function update(dt) {
   if (!S.finished && (tm.mode === 'walk' || tm.mode === 'hack')) {
     for (const d of S.distractions) {
       const ag = d.who === 'leader' ? ld : mg;
-      if (!d.done && tm.x >= d.atX && !ag.dist && !(d.who === 'leader' && ld.meeting) && !(d.who === 'manager' && (mg.meeting || mg.task || mg.busy)) && mg.ready) { d.done = true; startDistraction(ag, d); }
+      if (!d.done && tm.x >= d.atX && !ag.dist && !(d.who === 'leader' && ld.meeting) && !(d.who === 'manager' && (mg.meeting || mg.task || mg.busy || S.handing)) && mg.ready) { d.done = true; startDistraction(ag, d); }
     }
     for (const m of S.meetings) {
       if (!m.done && tm.x >= m.atX && !ld.dist && !ld.meeting && !mg.meeting && !S.waiters.length && mg.ready) { m.done = true; startMeeting(m); }
@@ -1074,7 +1076,7 @@ function startDistraction(ag, d) {
   bubble(d.who, d.say, 2.4, true);
   later(1.8, () => bubble(d.who, d.say2, 1.9, true));
 }
-const D_DISTRACT = 3.6, D_REFOCUS = 2.0;
+const D_DISTRACT = 3.6, D_REFOCUS = 2.0, D_AWAY = 4.5;
 function updateDistraction(ag, dt) {
   const d = ag.dist;
   if (!d) { ag.ox = 0; ag.oy = 0; ag.rot = 0; return; }
@@ -1092,7 +1094,13 @@ function updateDistraction(ag, dt) {
       case 'branch': ox = -26 * env; oy = 16 * env; rot = Math.sin(t * 6) * 0.5 * env; break;
     }
     ag.ox = ox; ag.oy = oy; ag.rot = rot; d.last = { ox, oy, rot };
-    if (d.t >= D_DISTRACT) {
+    if (d.t >= D_DISTRACT && d.def.kind === 'meeting' && !settings.comms) {
+      // v7.7: with communication OFF there's no clear focus to say no from, so the owl accepts the meeting and is away for a while
+      d.phase = 'away'; d.t = 0;
+      bubble('manager', 'Sure, I\'ll be there... 📅 Accepted.', 2.6, true);
+      caption('Without a clear focus, the Manager accepts a meeting that doesn\'t help the project, and the team loses some guidance time.', 'Distraction', { hold: 3.4 });
+      later(1.6, () => bubble('team', 'Where did the owl go? 🤔', 2.4));
+    } else if (d.t >= D_DISTRACT) {
       d.phase = 'refocus'; d.t = 0;
       bubble(d.def.who, d.def.refocus, 2.6, true);
       if (d.def.who === 'leader') {
@@ -1103,6 +1111,13 @@ function updateDistraction(ag, dt) {
         S.mgr.focusT = 2.0;
         caption('The Manager shakes off the distraction and gets back to planning and guiding the team.', 'Refocus');
       }
+    }
+  } else if (d.phase === 'away') { // sitting in the meeting, eyes on the calendar
+    ag.ox = d.last.ox; ag.oy = d.last.oy + Math.sin(S.t * 1.5) * 2; ag.rot = d.last.rot;
+    if (d.t >= D_AWAY) {
+      d.phase = 'refocus'; d.t = 0; S.mgr.focusT = 2.0;
+      bubble('manager', 'Back from the meeting. Now, where were we? 🦉', 2.6, true);
+      caption('The meeting ends and the Manager heads back to the koalas, a little later than they needed.', 'Refocus');
     }
   } else {
     const q = ease(Math.min(1, d.t / D_REFOCUS));
@@ -2714,7 +2729,7 @@ function drawWall() {
     ctx.beginPath(); ctx.moveTo(bx + nx, byy + ny); ctx.lineTo(ex + nx, ey + ny); ctx.moveTo(bx - nx, byy - ny); ctx.lineTo(ex - nx, ey - ny); ctx.stroke();
     ctx.lineWidth = 2;
     for (let s = 0.1; s < 1; s += 0.12) { const px = lerp(bx, ex, s), py = lerp(byy, ey, s); ctx.beginPath(); ctx.moveTo(px + nx, py + ny); ctx.lineTo(px - nx, py - ny); ctx.stroke(); }
-    if (S.gifts.ladder && !w.done) tag(x - 30, LOW_GROUND - 112, '🪜 FROM PROJECT MANAGER B', '#ffe3c4');
+    if (S.gifts.ladder && !w.done) tag(x + w.w + 120, GROUND - 64, '🪜 FROM PROJECT MANAGER B', '#ffe3c4');
   }
 }
 
@@ -2845,10 +2860,18 @@ function drawMgrMeeting() {
   tag(x, y + 34, d.label, d.belly);
 }
 function drawManagerFX(M, x, y) {
-  const d = M.dist, t = S.t, fade = d.phase === 'distract' ? 1 : Math.max(0, 1 - d.t / 0.8);
+  const d = M.dist, t = S.t, fade = d.phase === 'distract' || d.phase === 'away' ? 1 : Math.max(0, 1 - d.t / 0.8);
   if (fade <= 0) return;
   ctx.save(); ctx.globalAlpha = fade;
-  if (d.def.kind === 'meeting') {
+  if (d.def.kind === 'meeting' && d.phase === 'away') { // v7.7: in the meeting: a calendar and a little table
+    const cx = x + 30, cy = y - 44 + Math.sin(t * 2) * 2;
+    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#555'; ctx.lineWidth = 1.5; rr(cx, cy, 36, 34, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e53935'; ctx.fillRect(cx, cy, 36, 9);
+    ctx.fillStyle = '#333'; ctx.font = 'bold 11px sans-serif'; ctx.fillText('9:00', cx + 6, cy + 25);
+    ctx.fillStyle = '#5d4037'; ctx.fillRect(cx + 8, cy - 3, 3, 6); ctx.fillRect(cx + 25, cy - 3, 3, 6);
+    ctx.fillStyle = '#8d6e63'; ctx.fillRect(x - 26, y + 24, 52, 4); ctx.fillRect(x - 20, y + 28, 3, 10); ctx.fillRect(x + 17, y + 28, 3, 10);
+    tag(x, y + 50, '📅 IN A MEETING', '#ffe0b2');
+  } else if (d.def.kind === 'meeting') {
     for (let k = 0; k < 3; k++) {
       const cx = x + 34 + k * 20, cy = y - 18 + Math.sin(t * 4 + k) * 6 - k * 8;
       ctx.fillStyle = '#fff'; ctx.fillRect(cx - 8, cy - 8, 16, 16);
