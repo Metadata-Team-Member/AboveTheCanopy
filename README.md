@@ -121,6 +121,29 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
 
+## New in v7.4: the Leader leads more than one team
+
+Watching the Leader view, it could look as if the eagle spends a lot of time just flying. It doesn't: a leader is
+responsible for many teams and projects at once. Now, in every stretch where the eagle has no meeting, distraction,
+escalation, supply drop or message to the Manager, it sends **gold communication rings out in other directions** to
+faint markers just beyond the edge of the screen: **🌲 Team North**, **📁 Project B**, **🧭 Strategy**, **🤝 Partners**,
+**💰 Budget** and **🏗️ Project C**. Every few seconds a ring goes out (sometimes two at once, in different directions),
+and some come back as a paler return ring with a decision or feedback, and the marker ticks ✅.
+
+Now and then the eagle says what it's doing (*"Approving the budget for Team North ✅"*, *"Aligning Project B with the strategy 🧭"*,
+*"Steering the bigger picture 🔭"*, *"Keeping our partners on board 🤝"*, *"Balancing the budget across all teams ⚖️"*,
+*"Green light for Project C ✅"*), and the caption bar adds short **Big picture** notes, for example
+*"High-level decisions: the Leader approves budgets and priorities for several teams at once, not just this one."*
+
+- Shown in the 👁️ Everything and 🦅 Leader views; the Manager and Team views don't show them (they can't see above the canopy).
+  In the Everything view the Big picture notes only appear while the caption bar is quiet, so they never hold up the story's own captions.
+- The eagle meetings, distractions, escalations, supply drop and course correction always take over: any rings in flight fade out.
+- It works with Manager communication OFF too: the Leader is still busy with the other teams.
+- A very soft two-note chime goes with each ring (respects the sound toggle and volume).
+- Purely presentational: the story, its timing, the day counts (about 157 days ON / 202 days OFF) and chapter jumps are exactly as before.
+
+![The Leader sending rings to Strategy and Project B](docs/leader-outreach.png)
+
 ## New in v7.3: narration by perspective
 
 The caption (narration) bar follows the perspective too. Every caption is tagged with the role(s) it's about:

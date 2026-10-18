@@ -209,7 +209,7 @@
     // In a single-role perspective the pill takes that role's colour; in Everything it's coloured by the kind of moment.
     private string PhaseClass => captionRole != "" ? $"ph-role-{captionRole}" : phase switch
     {
-        "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction",
+        "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" or "Big picture" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction",
         "Manager meeting" => "ph-mgr", "Goal reached" => "ph-goal", "LEADER SUPPORT" => "ph-support",
         "COACHING" or "DELEGATION" or "RECOGNITION" or "SUPPORT" or "TEAMWORK" or "TEAM HUDDLE" or "SAFETY" => "ph-grow", "BUILD" => "ph-build", "VISION → REALITY" => "ph-vision", "REDO" => "ph-surprise", "TEAM IDEA" or "COURSE CORRECTION" => "ph-idea", "WELLBEING" => "ph-well", _ => ""
     };

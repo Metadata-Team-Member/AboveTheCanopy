@@ -13,6 +13,7 @@ public static class Roles
             "Sets the vision: where are we going, and why?",
             "Keeps everyone pointed at the goal when things get hard.",
             "Shares direction with the manager and checks the course.",
+            "Leads more than one team: between check-ins the gold rings go out to other teams and projects (Team North, Project B, Partners, Budget, Strategy), and decisions and feedback come back.",
             "Recognises and celebrates the team's progress.",
             "Measures the project in days delivered, and accepts that surprises cost days.",
             "Filters competing priorities in meetings: yes to what serves the goal, \"not now\" to the rest.",
