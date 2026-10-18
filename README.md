@@ -91,11 +91,11 @@ Kip carries a ⭐ pennant and directs the gathering ("Kip: Spread out, grab logs
 
 ![A supply drop through a gap in the canopy](docs/leader-support-supply-drop.png)
 
-**Team members lead too, and leaders adapt** (tags **TEAM IDEA** and **COURSE CORRECTION**). Hacking through thick lantana, Banjo spots a dry creek bed
+**Team members lead too, and leaders adapt** (tags **TEAM IDEA** and **COURSE CORRECTION**). Hacking through thick shrubbery, Banjo spots a dry creek bed
 running alongside: *"There's a shortcut along the creek bed! 💡"*. The owl takes it up to the eagle, and the eagle changes the plan from ground information:
 the beam re-aims at the creek, the minimap shows the new dashed route, and the eagle says *"New info from the ground. We'll take the creek route; it saves N days."*
-(N is worked out from the lantana still left, usually 4 to 6 days.) Credit flows back down: *"Creek route approved! Great idea, Banjo! 🌟"*.
-The top bar counts **💡 Team ideas adopted**. With communication OFF, Banjo's idea goes nowhere ("Should we tell someone?") and the koalas hack through every lantana bush.
+(N is worked out from the shrubbery still left, usually 4 to 6 days.) Credit flows back down: *"Creek route approved! Great idea, Banjo! 🌟"*.
+The top bar counts **💡 Team ideas adopted**. With communication OFF, Banjo's idea goes nowhere ("Should we tell someone?") and the koalas hack through every shrub.
 
 ![The Leader adopts Banjo's creek route: the beam re-aims and the minimap updates](docs/course-correction-creek.png)
 
@@ -120,6 +120,21 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 (meetings, surprises, coaching, course corrections) are never cut off by routine narration.
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
+
+## New in v7.5: a spotlight that keeps everyone in view, and "shrubs"
+
+**Manager and Team spotlights follow the characters.** In the 🦉 Manager and 🐨 Team perspectives the circle of focus
+used to be a fixed size, so at the pyramid (the huddle, the build, the climb down and the celebration) koalas walked out
+of it. Now the spotlight is worked out from where everyone it's about actually is: all four koalas in the Team view
+(including when they fan out into the bush for materials), and the owl, any visiting owl and the koalas it's guiding in the
+Manager view. It grows and moves smoothly (it grows quickly so nobody walks out of the light, and shrinks slowly so it
+doesn't "breathe"), and never gets bigger than the screen. On the normal walk it looks as before. Leader and Everything
+views are unchanged, and so is the story (timing, days and chapter jumps).
+
+**"Shrubs" instead of "lantana".** The thick patch Banjo's creek route skips is now called shrubs / shrubbery everywhere
+(captions, dialogue, the chapter notes and this README), since not every audience knows lantana.
+
+![The Team view mid-build: the spotlight takes in all four koalas](docs/team-spotlight-build.png)
 
 ## New in v7.4: the Leader leads more than one team
 
@@ -400,7 +415,7 @@ Use the speed slider (0.25× to 3×) to fit your session.
 10. When did a leader last say YES to something your team needed, or push back to protect your time? What difference did it make?
 11. Wattle was struggling and the owl coached her. Who in your team is quietly struggling, and who notices?
 12. Kip led the bridge build. What could you delegate this month, not just a task but the lead?
-13. Banjo saw the creek bed because he was in the lantana. How do ideas from the ground reach your leaders, and do they get credit?
+13. Banjo saw the creek bed because he was in the shrubbery. How do ideas from the ground reach your leaders, and do they get credit?
 14. When did your plan last change because of new information? Was that seen as a failure or as good leadership?
 15. The break cost 4 days; skipping it cost more. Where is your team running without a break?
 16. Who would you give the gum leaf to this week, and why?
@@ -482,7 +497,7 @@ Want to change the story? Everything is in `canopy.js`:
 - `SURPRISE_DEFS` holds the unplanned events and the full up-the-chain conversation for each one. `surpriseSeq()` and `upChain()` run them.
 - `LEADER_TALK`, `MANAGER_CHECKIN`, `RECOGNITION` and `CHEERS` hold the routine messages.
 - `WALK_SPEED_INFORMED` / `WALK_SPEED_UNINFORMED` and `makePathBushes()` control the pacing.
-- `KOALAS` holds the koalas' names, colours and hats. `COACH_X`, `LANTANA`, `CREEK` and `BREAK_X` place the coaching moment, the lantana patch, the creek route and the rest break.
+- `KOALAS` holds the koalas' names, colours and hats. `COACH_X`, `SHRUBS`, `CREEK` and `BREAK_X` place the coaching moment, the shrubbery patch, the creek route and the rest break.
 - `coachSeq()`, `startIdea()` / `adoptIdea()`, `startRecognition()` and `startBreak()` run the v5 moments. `whenFree()` waits until the Manager is free (no meeting, distraction or task) before starting one, so they never talk over each other.
 - `mark()` records story moments; a chapter starts at the first moment named in `Models/Chapters.cs`. `jumpTo()` restarts and fast-forwards (fixed 1/60 s steps, seeded randomness) to a chapter.
 - `sound.js` holds every sound as a small synth recipe (`SFX`), the ambient forest bed (`buildAmbience()`, `tick()`), the per-sound rate limits (`RATE`) and the saved on/off and volume settings. `audioTick()` and `ambLevels()` in `canopy.js` connect it to the story.

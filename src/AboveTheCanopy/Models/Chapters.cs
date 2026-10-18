@@ -60,7 +60,7 @@ public static class Chapters
         new("idea", "Banjo's idea & course correction",
             "Team members lead too: Banjo spots a creek-bed shortcut, it travels up the chain, the Leader changes the plan, and Banjo gets the credit.",
             new[] { "How do ideas from the ground reach decision-makers where you work?", "Is changing the plan seen as a failure, or as good leadership?" },
-            "Banjo spots a shortcut, but with no one to pass it up to, the idea goes nowhere and the koalas hack through all the lantana."),
+            "Banjo spots a shortcut, but with no one to pass it up to, the idea goes nowhere and the koalas hack through all the shrubbery."),
         new("ob:cliff", "The cliff",
             "The Manager found the safe spot, so the koalas know to braid a vine rope and abseil down.",
             new[] { "Which risks does your manager scout ahead for you?" },

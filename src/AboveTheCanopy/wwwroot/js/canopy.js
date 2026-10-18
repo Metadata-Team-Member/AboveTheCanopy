@@ -1,4 +1,4 @@
-// Above the Canopy v7.4 - animation engine (plain canvas 2D, no dependencies).
+// Above the Canopy v7.5 - animation engine (plain canvas 2D, no dependencies).
 // v6: procedural Web Audio sound (sound.js), chapters with deterministic jumps, and a teaching mode.
 // v7: the pyramid is the Leader's VISION (a golden blueprint above the canopy) until the koalas BUILD it themselves at the end.
 import * as snd from './sound.js';
@@ -39,9 +39,9 @@ const KOALAS = [
 ];
 const KOALA_SIZE = [1, 1, 1, 0.86];
 const COACH_X = 1000;                         // the thick bush where Wattle struggles (and gets coached)
-const LANTANA = { x0: 3190, x1: 3470, n: 8 }; // thick lantana scrub on the planned route
+const SHRUBS = { x0: 3190, x1: 3470, n: 8 }; // thick shrubbery on the planned route
 const CREEK = { x0: 3150, x1: 3525 };         // the dry creek bed alongside it (Banjo's shortcut)
-const LANTANA_HACK = { on: 2.2, off: 2.8 };
+const SHRUB_HACK = { on: 2.2, off: 2.8 };
 const BREAK_X = 4900;                         // top of the rock wall: time for a break
 // v7: the build site. The pyramid rises in six stepped courses inside the Leader's blueprint, then the capstone.
 const PYR_BY = GROUND + 2;
@@ -291,11 +291,11 @@ function makePathBushes() {
   const r = rng(99), list = [];
   for (let x = 360; x < BUILD_X - 60; x += 115 + r() * 80) {
     if (inZone(x, 110)) continue;
-    if ((x > LANTANA.x0 - 70 && x < LANTANA.x1 + 60) || Math.abs(x - COACH_X) < 90 || (x > BREAK_X - 20 && x < BREAK_X + 150)) continue;
+    if ((x > SHRUBS.x0 - 70 && x < SHRUBS.x1 + 60) || Math.abs(x - COACH_X) < 90 || (x > BREAK_X - 20 && x < BREAK_X + 150)) continue;
     list.push({ x, hp: 1, cut: false, s: 0.85 + r() * 0.3 });
   }
   list.push({ x: COACH_X, hp: 1, cut: false, s: 1.15, coach: true });
-  for (let k = 0; k < LANTANA.n; k++) list.push({ x: LANTANA.x0 + k * (LANTANA.x1 - LANTANA.x0) / (LANTANA.n - 1), hp: 1, cut: false, s: 1.1 + (k % 3) * 0.08, lantana: true });
+  for (let k = 0; k < SHRUBS.n; k++) list.push({ x: SHRUBS.x0 + k * (SHRUBS.x1 - SHRUBS.x0) / (SHRUBS.n - 1), hp: 1, cut: false, s: 1.1 + (k % 3) * 0.08, shrub: true });
   return list.sort((a, b) => a.x - b.x);
 }
 
@@ -323,7 +323,7 @@ function laneOffset(x) {
   let off = 0;
   const b = ob('boulder');
   if (b.route) { const a = b.x - 70, z = b.x + b.w + 70; if (x > a && x < z) off += Math.sin(Math.PI * (x - a) / (z - a)) * 34; }
-  // v5: Banjo's creek route runs in the foreground lane, beside the lantana
+  // v5: Banjo's creek route runs in the foreground lane, beside the shrubs
   if (S.idea && S.idea.go && x > CREEK.x0 && x < CREEK.x1) off += Math.pow(Math.sin(Math.PI * (x - CREEK.x0) / (CREEK.x1 - CREEK.x0)), 0.5) * 30 * Math.min(1, S.idea.goT / 1.2);
   return off;
 }
@@ -439,10 +439,13 @@ function emitCaption(force) {
   if (!force && key === S.capShown) return;
   S.capShown = key; call('OnCaption', text, phase, role);
 }
+// v7.5: an optional trace of everything shown (speech, captions, cards, badges) for the script export; null in normal use.
+let TRACE = null;
 function showCaption(it) {
   it.shown = S.t; S.cap = it; S.caption = it.text; S.capT = S.t; S.phase = it.phase;
   const ci = capInfo(it.text, it.phase); it.roles = ci.roles;
   for (const r of ci.roles) S.capBy[r] = { text: ci.alt[r] || it.text, phase: it.phase, t: S.t };
+  if (TRACE) TRACE('caption', it.text, it.phase, ci.roles, ci.alt);
   emitCaption();
 }
 function pumpCaptions() {
@@ -454,7 +457,7 @@ function pumpCaptions() {
   S.capQ.splice(S.capQ.indexOf(best), 1); showCaption(best);
 }
 // A badge shown under one koala's feet (name + what they did), so it never collides with the speech bubbles.
-function kbadge(i, text, dur, col = '#ffd34d') { sfx('sparkle'); S.kb = S.kb.filter(b => b.i !== i); S.kb.push({ i, text, t: dur, dur, col }); }
+function kbadge(i, text, dur, col = '#ffd34d') { if (TRACE) TRACE('badge', KOALAS[i].name, text); sfx('sparkle'); S.kb = S.kb.filter(b => b.i !== i); S.kb.push({ i, text, t: dur, dur, col }); }
 // Speech bubbles: one per speaker on screen at a time; extra lines queue up so nothing overlaps or gets lost.
 const MIN_SHOW = 1.6;
 function bubble(who, text, dur = 3.2, priority = false) {
@@ -470,6 +473,7 @@ function bubble(who, text, dur = 3.2, priority = false) {
   showBubble(who, text, dur);
 }
 function showBubble(who, text, dur) {
+  if (TRACE) TRACE('bubble', who, text, who === 'visitor' && S.mgr.meeting ? S.mgr.meeting.def.label : null);
   S.bubbles = S.bubbles.filter(b => b.who !== who);
   S.bubbles.push({ who, text, t: 0, dur });
 }
@@ -739,7 +743,7 @@ function update(dt) {
     const spd = (settings.comms ? WALK_SPEED_INFORMED : WALK_SPEED_UNINFORMED) * (tm.tired ? 0.68 : 1);
     const nx = tm.x + spd * dt;
     const stopX = next ? next.x - 28 : BUILD_X;
-    const bush = S.pathBushes.find(b => !b.cut && !(b.lantana && S.idea.go) && b.x - 22 > tm.x - 1);
+    const bush = S.pathBushes.find(b => !b.cut && !(b.shrub && S.idea.go) && b.x - 22 > tm.x - 1);
     const bushStop = bush ? bush.x - 22 : Infinity;
     tm.mood = '';
     if (bush && bushStop < stopX && nx >= bushStop) {
@@ -754,11 +758,11 @@ function update(dt) {
     } else tm.x = nx;
   } else if (tm.mode === 'hack') {
     const b = tm.bush;
-    let dur = b.lantana ? (settings.comms ? LANTANA_HACK.on : LANTANA_HACK.off) : (settings.comms ? 0.9 : 1.3);
+    let dur = b.shrub ? (settings.comms ? SHRUB_HACK.on : SHRUB_HACK.off) : (settings.comms ? 0.9 : 1.3);
     if (tm.tired) dur *= 1.6;
     tm.hackT += dt; tm.mood = 'hack';
-    if (b.lantana && !S.idea.started) startIdea();
-    if (b.lantana && S.idea.go) { tm.mode = 'walk'; tm.bush = null; } // leave the lantana for the creek route
+    if (b.shrub && !S.idea.started) startIdea();
+    if (b.shrub && S.idea.go) { tm.mode = 'walk'; tm.bush = null; } // leave the shrubs for the creek route
     else {
     b.hp = Math.max(0, 1 - tm.hackT / dur);
     if (rand() < dt * 22) leaf(b.x - 4, groundBase(b.x) - 14 - rand() * 14);
@@ -766,7 +770,7 @@ function update(dt) {
       b.cut = true; tm.bush = null; tm.mode = 'walk'; tm.bushesCut++;
       for (let i = 0; i < 6; i++) leaf(b.x, groundBase(b.x) - 12);
       if (tm.bushesCut === 1 || (tm.bushesCut % 4 === 0 && S.t - S.capT > 7)) caption(pick(BUSH_LINES, tm.bushesCut >> 2), 'Everyday work');
-      if (tm.bushesCut % 3 === 0 && !S.bubbles.some(x => x.who === 'team') && !b.lantana && !S.team.tired) bubble('team', pick(['Hack! 🌿', 'Another one...', 'Chop chop!', 'Snip snip!', 'Next!'], tm.bushesCut), 1.4);
+      if (tm.bushesCut % 3 === 0 && !S.bubbles.some(x => x.who === 'team') && !b.shrub && !S.team.tired) bubble('team', pick(['Hack! 🌿', 'Another one...', 'Chop chop!', 'Snip snip!', 'Next!'], tm.bushesCut), 1.4);
     }
     }
   } else if (tm.mode === 'seq') updateSeq(dt);
@@ -874,7 +878,7 @@ function outreach(ti, withBubble) {
   B.rings.push({ ti, P, t: 0, dur: OUT.out, back: false, fade: null, ret: B.n % 2 === 0 });
   B.marks[ti] = { P, t0: S.t, until: S.t + OUT.out + OUT.hold + OUT.back + 1.2, ok: 0 };
   if (outreachSeen()) sfx('outreach');
-  if (withBubble) B.bubble = { who: 'leader', text: T.say, t: 0, dur: OUT.bubble, busy: true };
+  if (withBubble) { B.bubble = { who: 'leader', text: T.say, t: 0, dur: OUT.bubble, busy: true }; if (TRACE) TRACE('outreachBubble', T.label, T.say); }
   B.log.push([+S.t.toFixed(2), T.label]);
 }
 const outreachSeen = () => settings.view === 'all' || settings.view === 'leader';
@@ -884,14 +888,16 @@ function updateOutreach(dt) {
   B.idleT = free ? B.idleT + dt : 0;
   if (free && B.idleT >= OUT.first && S.t >= B.next) {
     const i = B.n++; B.next = S.t + OUT.gap;
-    outreach(OUTREACH_ORDER[i % OUTREACH_ORDER.length], i % 2 === 1);
-    if (i % 3 === 2) outreach(OUTREACH_ORDER[(i + 4) % OUTREACH_ORDER.length], false); // now and then two at once, in other directions
+    const k = i % 2 ? (i - 1) / 2 : i / 2 + 3, nO = OUTREACH_ORDER.length; // v7.5: the speaking ones cycle through all six targets
+    outreach(OUTREACH_ORDER[k % nO], i % 2 === 1);
+    if (i % 3 === 2) outreach(OUTREACH_ORDER[(k + 1) % nO], false); // now and then two at once, in other directions
     // A short Leader caption now and then. The Leader view gets it once its own last caption is a few seconds old; the
     // Everything view only while the caption bar is quiet. Either way it never queues, so the story's own captions are never delayed.
     const lc = S.capBy.leader;
     if (i % 2 === 1 && (!lc || S.t - lc.t > 5)) {
       const text = OUTREACH_CAPS[B.capI++ % OUTREACH_CAPS.length];
       S.capBy.leader = { text, phase: 'Big picture', t: S.t };
+      if (TRACE) TRACE('outreachCaption', text);
       if (!S.capQ.length && !capHeld(1) && (!S.cap || S.t - S.cap.shown > 4)) B.cap = { text, phase: 'Big picture', t: S.t };
       B.capLog.push([+S.t.toFixed(1), !!(B.cap && B.cap.t === S.t)]);
       emitCaption();
@@ -1042,23 +1048,23 @@ function coachDone(bush) {
   for (let i = 0; i < 6; i++) leaf(bush.x, groundBase(bush.x) - 12);
   if (S.mgr.task && S.mgr.task.kind === 'coach') { S.mgr.task = null; S.mgr.focusT = 1.6; }
 }
-// Banjo spots a dry creek bed beside the lantana. ON: the idea goes up, the Leader adopts it and changes course.
+// Banjo spots a dry creek bed beside the shrubs. ON: the idea goes up, the Leader adopts it and changes course.
 function startIdea() {
   const I = S.idea; I.started = true; I.bulb = true;
   if (!settings.comms) mark('idea');
   if (settings.comms) whenFree(() => mgFree() && !S.bubbles.some(b => b.who !== 'visitor') && !S.queue.team.length && !S.queue.manager.length, () => {
     mark('idea');
-    caption('Team members lead too: hacking through thick lantana, Banjo spots a dry creek bed running alongside. A better route, seen from the ground!', 'TEAM IDEA', { hold: 3.2 });
+    caption('Team members lead too: hacking through thick shrubbery, Banjo spots a dry creek bed running alongside. A better route, seen from the ground!', 'TEAM IDEA', { hold: 3.2 });
     bubble('team', 'Banjo: There\'s a shortcut along the creek bed! 💡', 2.8, true); sfx('idea');
     whenFree(mgFree, () => {
       S.mgr.busy = true;
-      later(0.4, () => say('team', 'manager', 'Banjo: A dry creek bed skips all this lantana!', 'Smart! Taking it to the boss. 🦉', () => {
+      later(0.4, () => say('team', 'manager', 'Banjo: A dry creek bed skips all these shrubs!', 'Smart! Taking it to the boss. 🦉', () => {
         caption('Ideas travel up too: the Manager passes Banjo\'s idea straight to the Leader.', 'TEAM IDEA');
-        S.waiters.push(() => say('manager', 'leader', 'The team found a creek route that skips the lantana.', null, adoptIdea));
+        S.waiters.push(() => say('manager', 'leader', 'The team found a creek route that skips the shrubs.', null, adoptIdea));
       }));
     });
   }); else {
-    caption('Banjo spots a dry creek bed that would skip the lantana, but with communication OFF the idea goes nowhere.', 'No communication', { hold: 3 });
+    caption('Banjo spots a dry creek bed that would skip the shrubs, but with communication OFF the idea goes nowhere.', 'No communication', { hold: 3 });
     bubble('team', 'Banjo: Psst... a creek bed! Should we tell someone? 🤔', 3, true); sfx('idea');
     later(3.4, () => bubble('team', 'Banjo: ...hello? Guess we keep hacking. 😕', 2.6));
     later(6.2, () => { I.bulb = false; });
@@ -1066,8 +1072,8 @@ function startIdea() {
 }
 function adoptIdea() {
   const I = S.idea, tm = S.team;
-  const left = S.pathBushes.filter(b => b.lantana && !b.cut).length;
-  const days = Math.max(1, Math.round((left - 1.3) * LANTANA_HACK.on / SEC_PER_DAY));
+  const left = S.pathBushes.filter(b => b.shrub && !b.cut).length;
+  const days = Math.max(1, Math.round((left - 1.3) * SHRUB_HACK.on / SEC_PER_DAY));
   I.adopted = true; I.saved = days; tm.ideas++; stats();
   S.leader.beam = 'creek'; S.leader.beamT = 5.5; sfx('yes');
   bubble('leader', `New info from the ground. We'll take the creek route; it saves ${days} days.`, 3.6, true);
@@ -1075,7 +1081,7 @@ function adoptIdea() {
   later(2.0, () => pulse('leader', 'manager', PULSE_COL.leader, () => say('manager', 'team', 'Creek route approved! Great idea, Banjo! 🌟', 'Banjo: Woohoo! Follow me! 🐨', () => {
     I.go = true; I.bulb = false; S.mgr.busy = false;
     kbadge(1, '💡 Banjo: idea adopted!', 5, '#b3e5fc');
-    caption('Credit flows back down: the koalas leave the lantana behind and follow Banjo along the creek bed.', 'COURSE CORRECTION');
+    caption('Credit flows back down: the koalas leave the shrubs behind and follow Banjo along the creek bed.', 'COURSE CORRECTION');
   })));
 }
 // Small wins: Matilda gets a gum leaf, "Koala of the week".
@@ -1518,7 +1524,7 @@ function updateMeeting(dt) {
   M.t += dt;
   const d = M.def;
   if (M.phase === 'ask') {
-    M.cards.forEach((c, i) => { if (!c.shown && M.t >= i * 0.8) c.shown = true; });
+    M.cards.forEach((c, i) => { if (!c.shown && M.t >= i * 0.8) { c.shown = true; if (TRACE) TRACE('card', d.visitors[i].label, d.visitors[i].ask); } });
   } else if (M.phase === 'decide') {
     const yi = d.visitors.findIndex(v => v.accept);
     if (yi >= 0 && M.t >= 0.3 && M.cards[yi].state === 'pending') { M.cards[yi].state = 'yes'; bubble('leader', d.yes, 2.4, true); sfx('yes'); }
@@ -1756,7 +1762,7 @@ function drawRubble() {
     ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.beginPath(); ctx.ellipse(rx - rs * 0.3, ry - rs * 0.7, rs * 0.4, rs * 0.25, 0, 0, 7); ctx.fill();
   }
 }
-// v5: a dry creek bed runs beside the lantana. It was always there; only the koalas could see it.
+// v5: a dry creek bed runs beside the shrubs. It was always there; only the koalas could see it.
 function drawCreek() {
   const x0 = CREEK.x0 - camX, x1 = CREEK.x1 - camX; if (x1 < -40 || x0 > viewW + 40) return;
   const top = GROUND + 14, w = x1 - x0;
@@ -1772,10 +1778,10 @@ function drawCreek() {
   for (let k = 0; k < 22; k++) { const px = x0 + 30 + r() * (w - 60), py = top + 6 + r() * 18, rs = 2 + r() * 3; ctx.fillStyle = k % 2 ? '#9e8a68' : '#b8a27e'; ctx.beginPath(); ctx.ellipse(px, py, rs, rs * 0.7, 0, 0, 7); ctx.fill(); }
   if (S.idea.adopted && !S.finished) { ctx.font = 'bold 10px system-ui, sans-serif'; tag(x0 + 70, top + 40, 'CREEK ROUTE', '#b3e5fc'); }
 }
-// Thick lantana scrub (an invasive weed, very Australian) on the planned route.
-function drawLantana() {
+// Thick shrubbery on the planned route.
+function drawShrubs() {
   for (const b of S.pathBushes) {
-    if (!b.lantana) continue;
+    if (!b.shrub) continue;
     const x = b.x - camX; if (x < -50 || x > viewW + 50) continue;
     const gy = GROUND + 3;
     if (b.cut) { ctx.fillStyle = '#6d4c2f'; ctx.fillRect(x - 6, gy - 10, 4, 10); ctx.fillRect(x + 3, gy - 12, 4, 12); continue; }
@@ -2086,19 +2092,70 @@ function drawFog() {
     const g = fctx.createLinearGradient(0, CANOPY_BOTTOM - 70, 0, CANOPY_BOTTOM + 10);
     g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
     fctx.fillStyle = g; fctx.fillRect(0, 0, viewW, CANOPY_BOTTOM + 10);
-  } else if (v === 'manager') {
-    const cx = S.mgr.x - camX + 120, cy = 400;
-    fctx.save(); fctx.translate(cx, cy); fctx.scale(2.3, 1);
-    const g = fctx.createRadialGradient(0, 0, 60, 0, 0, 230);
-    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.75, 'rgba(0,0,0,0.95)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    fctx.fillStyle = g; fctx.beginPath(); fctx.arc(0, 0, 230, 0, 7); fctx.fill(); fctx.restore();
-  } else if (v === 'team') {
-    const p = agentPos('team');
-    const g = fctx.createRadialGradient(p.x - camX, p.y + 10, 40, p.x - camX, p.y + 10, 190);
-    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.6, 'rgba(0,0,0,0.9)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    fctx.fillStyle = g; fctx.beginPath(); fctx.arc(p.x - camX, p.y + 10, 190, 0, 7); fctx.fill();
+  } else {
+    // v7.5: the focus spotlight follows everyone it's about (see focusTarget), easing so it never jumps
+    const F = focusEase(v);
+    const g = fctx.createRadialGradient(0, 0, F.r0, 0, 0, F.ry);
+    if (v === 'manager') { g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.75, 'rgba(0,0,0,0.95)'); g.addColorStop(1, 'rgba(0,0,0,0)'); }
+    else { g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.6, 'rgba(0,0,0,0.9)'); g.addColorStop(1, 'rgba(0,0,0,0)'); }
+    fctx.save(); fctx.translate(F.cx - camX, F.cy); fctx.scale(F.rx / F.ry, 1);
+    fctx.fillStyle = g; fctx.beginPath(); fctx.arc(0, 0, F.ry, 0, 7); fctx.fill(); fctx.restore();
   }
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(fog, 0, 0); ctx.restore();
+}
+
+// v7.5: the Manager and Team spotlights. Each starts from its v7 shape (Team: a circle of radius 190 around the koalas;
+// Manager: a wide ellipse just ahead of the owl) and grows / moves just enough to keep every character it's about well
+// inside the clear part: all four koalas (gathering materials in the bush, the huddle, the build, the climb down and the
+// celebration) and, for the Manager, the owl, any visiting owl and the koalas it's guiding. Render-only (world units):
+// nothing here touches the simulation.
+const FOCUS = {
+  team: { r0: 40, rx: 190, ry: 190, clear: 0.62, pad: 26 },   // clear part ~ where the gradient is still 90% open
+  manager: { r0: 60, rx: 529, ry: 230, clear: 0.76, pad: 30 },
+};
+let focusS = null;
+function focusPoints(v) {
+  const pts = [];
+  for (const P of S.kpos) if (P) { const h = 58 * P.s; pts.push([P.x - 16 * P.s, P.y + 6], [P.x + 16 * P.s, P.y + 6], [P.x, P.y - h]); }
+  if (v === 'manager') {
+    const M = S.mgr, mx = M.x + M.ox, my = M.y + M.oy;
+    pts.push([mx - 34, my - 34], [mx + 34, my + 30]);
+    if (M.meeting && M.meeting.phase === 'talk') { const q = mgrVisitorPos(); pts.push([q.x - 34, q.y - 34], [q.x + 34, q.y + 30]); }
+  }
+  return pts;
+}
+function focusTarget(v) {
+  const C = FOCUS[v], pts = focusPoints(v);
+  let cx, cy;
+  if (v === 'manager') { // the v7 ellipse sits ahead of the owl; shift it only as far as needed to take in the koalas too
+    const M = S.mgr; cx = M.x + M.ox + 120; cy = 400;
+    if (pts.length) { const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+      const x0 = Math.min(...xs, cx - C.rx * 0.5), x1 = Math.max(...xs, cx + C.rx * 0.5), y0 = Math.min(...ys, cy - C.ry * 0.4), y1 = Math.max(...ys, cy + C.ry * 0.4);
+      cx = (x0 + x1) / 2; cy = (y0 + y1) / 2; }
+  } else {
+    if (!pts.length) { const p = agentPos('team'); return { cx: p.x, cy: p.y + 10, rx: C.rx, ry: C.ry, r0: C.r0 }; }
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    cx = (Math.min(...xs) + Math.max(...xs)) / 2; cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+  }
+  let rx = C.rx, ry = C.ry;
+  for (const [x, y] of pts) { rx = Math.max(rx, (Math.abs(x - cx) + C.pad) / C.clear); ry = Math.max(ry, (Math.abs(y - cy) + C.pad) / C.clear); }
+  let k = 1; // per-axis growth alone can leave a corner outside: scale both until every point is in the clear part
+  for (const [x, y] of pts) { const dx = Math.abs(x - cx) + C.pad, dy = Math.abs(y - cy) + C.pad; k = Math.max(k, Math.hypot(dx / rx, dy / ry) / C.clear); }
+  rx *= k; ry *= k;
+  rx = Math.min(rx, viewW * 0.9); ry = Math.min(ry, H * 0.85); // never more than (roughly) the whole screen
+  return { cx, cy, rx, ry, r0: C.r0 * ry / C.ry };
+}
+// Ease towards the target: grow and move quickly (nobody walks out of the light), shrink slowly (no breathing).
+let focusClock = 0;
+function focusEase(v) {
+  const T = focusTarget(v), now = performance.now(), dt = clamp((now - focusClock) / 1000, 0, 0.1); focusClock = now;
+  const F = focusS; // paused, jumped or first frame: just snap
+  if (!F || F.v !== v || F.S !== S || Math.abs(F.cx - T.cx) > viewW * 0.8 || !settings.playing || dt >= 0.1) { focusS = Object.assign({ v, S }, T); return focusS; }
+  const mv = 1 - Math.exp(-dt * 6), grow = 1 - Math.exp(-dt * 7), shrink = 1 - Math.exp(-dt * 1.2);
+  F.cx += (T.cx - F.cx) * mv; F.cy += (T.cy - F.cy) * mv;
+  F.rx += (T.rx - F.rx) * (T.rx > F.rx ? grow : shrink); F.ry += (T.ry - F.ry) * (T.ry > F.ry ? grow : shrink);
+  F.r0 = FOCUS[v].r0 * F.ry / FOCUS[v].ry;
+  return F;
 }
 
 function drawViewBanner() {
@@ -2370,7 +2427,7 @@ function drawSkills() {
 
 function drawPathBushes() {
   for (const b of S.pathBushes) {
-    if (b.lantana) continue;
+    if (b.shrub) continue;
     const x = b.x - camX; if (x < -40 || x > viewW + 40) continue;
     const gy = groundBase(b.x) + 3;
     if (b.cut) {
@@ -3078,8 +3135,8 @@ function drawMiniMap() {
   ctx.fillStyle = 'rgba(255,255,255,0.75)'; rr(x, y, w, h, 8); ctx.fill();
   ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineWidth = 1; ctx.stroke();
   ctx.fillStyle = '#2e7d32'; ctx.fillRect(x + 10, y + 20, w - 20, 4);
-  const lx0 = x + 10 + LANTANA.x0 * k, lx1 = x + 10 + LANTANA.x1 * k;
-  ctx.fillStyle = S.idea.adopted ? 'rgba(120,80,40,0.35)' : '#8d6e3f'; ctx.fillRect(lx0, y + 19, lx1 - lx0, 6); // lantana on the planned route
+  const lx0 = x + 10 + SHRUBS.x0 * k, lx1 = x + 10 + SHRUBS.x1 * k;
+  ctx.fillStyle = S.idea.adopted ? 'rgba(120,80,40,0.35)' : '#8d6e3f'; ctx.fillRect(lx0, y + 19, lx1 - lx0, 6); // shrubbery on the planned route
   if (S.idea.adopted) { // the new route, via the creek
     ctx.save(); ctx.strokeStyle = '#1e88e5'; ctx.lineWidth = 2.5; ctx.setLineDash([3, 2]);
     ctx.beginPath(); ctx.moveTo(x + 10 + CREEK.x0 * k, y + 22); ctx.quadraticCurveTo((lx0 + lx1) / 2, y + 33, x + 10 + CREEK.x1 * k, y + 22); ctx.stroke(); ctx.restore();
@@ -3109,7 +3166,7 @@ function render() {
   drawBees(false);
   drawSurprises();
   drawCreek();
-  drawLantana();
+  drawShrubs();
   // v7.2: once the build starts, the pyramid and everyone working on it are drawn after the canopy (see below),
   // so no leaves, trunks or light shafts ever cut across it.
   const site = S.build.on;
@@ -3191,7 +3248,7 @@ export function init(canvasEl, dotnetRef) {
   window.addEventListener('keydown', onKey);
   snd.init();
   lastT = 0; raf = requestAnimationFrame(frame);
-  window.aboveTheCanopy = { settings, get state() { return S; }, get cam() { return { camX, scale, viewW }; }, fastForward, restart, runToEnd, jumpTo, chapters: () => CH_MARKS.slice(), capInfo, setView: v => setView(v), shownCaption: () => S.capShown, sound: () => snd.debug(), soundTestAll: () => snd.testAll() };
+  window.aboveTheCanopy = { settings, get state() { return S; }, get cam() { return { camX, scale, viewW }; }, fastForward, restart, runToEnd, jumpTo, chapters: () => CH_MARKS.slice(), capInfo, setView: v => setView(v), shownCaption: () => S.capShown, focus: () => focusS && Object.assign({}, focusS, { S: undefined }), focusPoints: v => focusPoints(v), setTrace: fn => { TRACE = typeof fn === 'function' ? fn : null; }, sound: () => snd.debug(), soundTestAll: () => snd.testAll() };
 }
 export function setPlaying(p) { settings.playing = !!p; snd.setPaused(!settings.playing); }
 export function restart() { reset(); }
