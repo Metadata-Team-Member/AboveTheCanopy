@@ -17,7 +17,7 @@
             <span title="Leader and Manager distractions shaken off">🧘 Distractions handled: @distractions</span>
             <span title="Competing priorities the Leader parked or declined in meetings">🗂️ Priorities filtered: @priorities</span>
             <span title="Unexpected events the koalas reported up the chain to the Leader">📣 Surprises reported up: @reported</span>
-            <span title="Manager-to-manager meetings under the canopy: sharing resources, status syncs, coordinating teams">🤝 Manager syncs: @syncs</span>
+            <span title="Manager-to-manager meetings under the canopy: sharing resources, status updates, coordinating teams">🤝 Manager meetings: @syncs</span>
             <span title="Ideas from the koalas that travelled up the chain and were adopted by the Leader">💡 Team ideas adopted: @ideas</span>
         </div>
     </header>
@@ -210,7 +210,7 @@
     private string PhaseClass => captionRole != "" ? $"ph-role-{captionRole}" : phase switch
     {
         "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" or "Big picture" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction",
-        "Manager meeting" => "ph-mgr", "Goal reached" => "ph-goal", "LEADER SUPPORT" => "ph-support",
+        "Manager meeting" or "SHARING" => "ph-mgr", "Goal reached" => "ph-goal", "LEADER SUPPORT" => "ph-support",
         "COACHING" or "DELEGATION" or "RECOGNITION" or "SUPPORT" or "TEAMWORK" or "TEAM HUDDLE" or "SAFETY" => "ph-grow", "BUILD" => "ph-build", "VISION → REALITY" => "ph-vision", "REDO" => "ph-surprise", "TEAM IDEA" or "COURSE CORRECTION" => "ph-idea", "WELLBEING" => "ph-well", _ => ""
     };
     private string? finishedSummary;
@@ -359,7 +359,7 @@
         }
         var people = withComms
             ? $" Kip led the bridge build, Wattle was coached, Matilda was Koala of the week, Banjo's creek idea was adopted ({teamIdeas} team idea{(teamIdeas == 1 ? "" : "s")}), and {breaks} short break{(breaks == 1 ? "" : "s")} kept the pace sustainable. At the build site they used every skill from the journey, the owl supported without taking over, and the Leader's vision became the real pyramid."
-            : " Banjo's ideas never reached anyone, nobody coached Wattle, and with no break the koalas finished exhausted. Nobody shared the vision, so a whole course of the pyramid had to be torn down and rebuilt.";
+            : " Banjo's ideas never reached anyone, nobody coached Wattle, and with no break the koalas finished exhausted. Nobody shared the vision, so a whole layer of the pyramid had to be torn down and rebuilt.";
         finishedSummary = withComms
             ? $"With the Manager communicating, the koalas built the pyramid and delivered on day {days} {runTime}: {surprised} unwarned obstacles, {wrong} wrong turns and {reportedUp} surprises reported up and handled together. The Leader filtered {filtered} competing priorities, the Manager held {managerSyncs} manager syncs, and they shook off {distracted} distractions.{people}{compare}"
             : $"Without communication, the koalas took {days} days {runTime}, hit {surprised} unwarned obstacles, made {wrong} wrong turns, and faced every surprise alone (0 reported up).{people}{compare} Same forest, same koalas: the difference is the information they had.";
@@ -372,7 +372,7 @@
             }
             : new[]
             {
-                "Nobody shared the vision, so the koalas built a whole course the wrong shape and had to redo it (\"Wait, was it meant to be pointy?\"). Where has your team rebuilt something because the end product wasn't clear?",
+                "Nobody shared the vision, so the koalas built a whole layer the wrong shape and had to redo it (\"Wait, was it meant to be pointy?\"). Where has your team rebuilt something because the end product wasn't clear?",
                 "Nobody coached Wattle, Banjo's ideas went nowhere, and nobody organised the build. What happens in your team when no one supports the work?",
                 "The koalas never got a break and slowed right down. Where is your team running without breaks, and what is it costing?"
             };

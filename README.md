@@ -2,7 +2,7 @@
 
 **An interactive animation about the difference between leadership, management and team members.**
 
-A large Australian forest with a tall canopy. Far to the east, a glowing golden pyramid shimmers above the trees: that's the **Leader's vision** of the goal. It isn't built yet. At the end of the journey the koalas **build the pyramid themselves**, course by course, until it fills the vision and turns solid.
+A large Australian forest with a tall canopy. Far to the east, a glowing golden pyramid shimmers above the trees: that's the **Leader's vision** of the goal. It isn't built yet. At the end of the journey the koalas **build the pyramid themselves**, layer by layer, until it fills the vision and turns solid.
 Time is measured like a real project, in **days**: the top bar counts *Day 1, Day 2...* until the koalas deliver.
 
 | Role | Character | Where they are | What they can see | What they do |
@@ -121,6 +121,39 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
 
+## New in v7.6: promises that happen, and a warmer tone
+
+Every offer, promise or plan in the story now visibly happens, and the leader and manager lines are warmer and more encouraging.
+The Australian flavour stays: *Easy as*, *Too easy*, *Legend*, mozzies, gum trees, brown snakes and magpies are all still there.
+
+- **The Ops manager's logs arrive.** "Yes please! Can you drop them by the river?" The spare logs float down to the bank with a
+  *🤝 Spare logs from the Ops team* tag. Kip thanks them, and the logs go into the bridge (tag **SHARING**).
+- **Project Manager B keeps their word.** Once the koalas are down the cliff, Project Manager B comes back for the shared rope
+  ("Kip: Here's our rope, all yours!" · "Got the rope, thanks! Your ladder's waiting at the rock wall."). At the rock wall the ladder is already standing
+  (*🪜 From Project Manager B*): "Thanks to Project Manager B's ladder!" Kip studies how it's lashed together, and at the build the koalas lash their own
+  ladder, copying the one Project Manager B lent them. "Yes please! Could you leave it by the wall?"
+- **The water break happens.** "Water break at the next clearing! 💧" · "Yes please! 💧". At the next clear stretch of track the koalas stop and drink:
+  *Water break: rest and rehydrate keeps the team going 💧*.
+- **Answers follow questions.** The Leader and the Manager now finish one conversation before starting the next, so every reply comes straight after its question.
+  "Any blockers I can help with?" · "All clear for now, thanks! I'll shout if anything comes up 🦉" · "Good to hear. I'm here if you need me! 🦅"
+- **Warmer leader lines.** "Remember why we're doing this!" is now "Look how far we've come, the goal's worth it! 🌟", and later
+  "You're doing great, team, the pyramid's getting closer! 🌟". The Manager passes it on to the koalas ("Aww, thanks boss! 😊").
+  "We're over halfway. Stay focused!" is now "Great headway, everyone. Proud of you all!" and later "We're well over halfway. Brilliant effort!".
+  Short or bossy lines are softer too, for example "Kip, would you like to lead the bridge build? ⭐" and "Rebrand and budget review: let's park those for now."
+- **What the Leader said yes to reaches the team.** After the first eagle meeting the approved safety gear arrives and the koalas wear hi-vis vests.
+  After the second, the Leader hands the Manager Product's better map.
+- **Plainer words.** "Sync about the sync" is now an **"Irrelevant meeting"**, the PMO asks for a "quick status update", and the top bar counts
+  **🤝 Manager meetings**. The pyramid is built **layer by layer** ("Layer 1 of 6", "the whole layer comes down").
+- **Communication OFF stays coherent.** Without communication the Manager can't commit to anything in the manager meetings
+  ("Logs? Not sure what my team needs, to be honest... 🤷"), so no logs arrive, no ladder is waiting and the koalas lash their own wobbly one.
+  Good news from the Leader stays with the Manager "(...keeps it to themselves 🤐)", so there are no vests and no water break.
+
+![The Ops team's spare logs land by the river](docs/ops-logs-by-the-river.png)
+
+![Project Manager B's ladder at the rock wall, in use](docs/pm-b-ladder-at-the-wall.png)
+
+![The water break: the koalas stop and drink](docs/water-break.png)
+
 ## New in v7.5: a spotlight that keeps everyone in view, and "shrubs"
 
 **Manager and Team spotlights follow the characters.** In the 🦉 Manager and 🐨 Team perspectives the circle of focus
@@ -215,7 +248,7 @@ Caption: *"The team meets to plan their next steps: teams self-organise when the
 ![The team huddle: the koalas plan their next steps around a triangle scratched in the dirt](docs/team-huddle.png)
 
 **Building the final product** (tags **BUILD**, **SUPPORT**, **DELEGATION**, **TEAM IDEA**, **TEAMWORK**). After the rest break and the last eagle meeting,
-the koalas reach the build site under the vision and build the pyramid in **6 courses**, one block at a time, along a supply line:
+the koalas reach the build site under the vision and build the pyramid in **6 layers**, one block at a time, along a supply line:
 Matilda shapes stone at the pile, Banjo loads at the ramp foot, Wattle passes and hauls, and Kip sets each block. Every step calls back a skill from the journey,
 shown as badges in the **🧰 Skills from the journey** panel:
 
@@ -226,8 +259,8 @@ shown as badges in the **🧰 Skills from the journey** panel:
 | 🪵 Planks & a ramp | The sinkhole crossing | A ramp up the side of the pyramid |
 | 🤝 Teamwork & delegation | Kip's bridge, Wattle's coaching | Kip leads a section; Wattle sets the corner stones with confidence |
 | 💡 Log rollers | Banjo's idea (logs, like the bridge) | Blocks ride up the ramp on rollers |
-| 🪢 Ropes | The cliff | Hauling blocks up the steeper courses |
-| 🪜 Ladder | The rock wall | Reaching the top course |
+| 🪢 Ropes | The cliff | Hauling blocks up the steeper layers |
+| 🪜 Ladder | Project Manager B's ladder at the rock wall | Reaching the top layer |
 
 **The Manager supports, it doesn't take over.** The owl (tag *MANAGER · SUPPORTING*) organises the build sequence, flies stone to wherever Kip is working,
 checks the work against the vision ("📐 Checked against the vision: the angles match!") and relays progress up ("Layer 3 done, halfway!", "Layer 4 done, two to go!").
@@ -250,11 +283,11 @@ over the top, down the ladder and the ramp, to the ground beside the pyramid. Th
 
 **With communication OFF** the build is slower and messier: nobody says what size, so blocks come out uneven and some are thrown away;
 there's no owl bringing stone; Banjo's rollers never get passed on, so every block is dragged; and because the vision never reached the koalas,
-they build course 3 as wide as the one below. *"Wait... was it meant to be pointy?!"* They tear the whole course down and build it again (tag **REDO**).
+they build layer 3 as wide as the one below. *"Wait... was it meant to be pointy?!"* They tear the whole layer down and build it again (tag **REDO**).
 
-![Communication OFF: the wrong-shaped course comes down](docs/comms-off-redo.png)
+![Communication OFF: the wrong-shaped layer comes down](docs/comms-off-redo.png)
 
-**Sound.** Stone thunks as blocks go down, chisel taps at the pile, rope creaks on the hauled courses, a rising motif as each course is completed,
+**Sound.** Stone thunks as blocks go down, chisel taps at the pile, rope creaks on the hauled layers, a rising motif as each layer is completed,
 a special chime when the vision turns solid, then the fanfare.
 
 ## New in v6: chapters, teaching mode and sound
@@ -332,19 +365,19 @@ The mix is deliberately gentle for a classroom: soft envelopes, a compressor and
 Each distraction is narrated, and the top bar counts **Distractions handled**:
 
 - 🦅 Leader: swooping magpies, an "URGENT!!!" reply-all email storm, a storm front and wind gust.
-- 🦉 Manager: a "Sync about the sync" meeting request, a cloud of mozzies, a snag of branches and vines.
+- 🦉 Manager: an "Irrelevant meeting" request, a cloud of mozzies, a snag of branches and vines.
 
 ![A magpie swoops the eagle](docs/leader-distraction-magpie.png)
 
 **Manager meetings: sideways coordination.** Three times, while the koalas are busy gathering materials, another owl flies in under the canopy
 for a short manager-level meeting (caption tag **MANAGER MEETING**). A dashed 🤝 link joins the two owls while they talk, then the visitor flies off
-and the Manager refocuses on the team (a green line re-locks onto the koalas). The top bar counts **🤝 Manager syncs**.
+and the Manager refocuses on the team (a green line re-locks onto the koalas). The top bar counts **🤝 Manager meetings**.
 
 | Visiting owl | Topic | The conversation |
 |---|---|---|
-| 🟢 Ops manager | Sharing resources | "Your team needs logs? We have spare!" · "Yes please! Drop them by the river." |
-| ⚪ PMO | Status sync | "Status sync?" · "River done, bog in progress. On track." · "Great, I'll update the roadmap." |
-| 🟠 Project manager B | Coordinating between teams | "Can we share your rope after?" · "Sure, once my koalas are down the cliff." · "Need a ladder later?" |
+| 🟢 Ops manager | Sharing resources | "Your team needs logs? We have spare!" · "Yes please! Can you drop them by the river?" · the logs land on the bank and go into the bridge |
+| ⚪ PMO | Status update | "Quick status update?" · "River done, bog in progress. On track." · "Great, I'll update the roadmap." |
+| 🟠 Project manager B | Coordinating between teams | "Can we share your rope after?" · "Sure, once my koalas are down the cliff." · "Need a ladder later?" · "Yes please! Could you leave it by the wall?" · later collects the rope and leaves the ladder at the wall |
 
 **Lots of communication.** The leader checks in with the manager and gets progress reports after every obstacle.
 The manager briefs the koalas and checks on them. The koalas ask for things ("Need more rope!", "Pass more stones down the line!") and get answers.
@@ -387,14 +420,14 @@ With communication OFF, the koalas' calls go unanswered ("...hello?"). They hand
 ### How long is a run? (days and minutes)
 Project time: **1 project day = 2 seconds of animation at 1× speed.**
 
-| | Project time | Real time at 1× | Unwarned obstacles | Wrong turns | Surprises reported up | Manager syncs |
+| | Project time | Real time at 1× | Unwarned obstacles | Wrong turns | Surprises reported up | Manager meetings |
 |---|---|---|---|---|---|---|
-| Communication **ON** | **about 157 days** | about 5 min (312 s) | 0 | 0 | 3 | 3 |
+| Communication **ON** | **about 159 days** | about 5¼ min (317 s) | 0 | 0 | 3 | 3 |
 | Communication **OFF** | **about 202 days** | about 6¾ min (404 s) | 8 | 13 | 0 | 3 |
 
 With communication ON the run also has 1 team idea adopted (the creek route saves 4 to 6 days) and 1 rest break (about 4 days).
 With communication OFF there's no idea and no break, but the exhausted koalas slow right down.
-The build itself (including the climb back down) takes about 36 days with communication ON and about 48 days OFF (the wrong-shaped course has to be redone).
+The build itself (including the climb back down) takes about 36 days with communication ON and about 48 days OFF (the wrong-shaped layer has to be redone).
 
 The finish summary shows "Pyramid built in N days" and compares it with the other mode: your own result if you've run both in this session, otherwise the typical figure.
 For example: "Without communication the same project usually takes about 202 days: 45 days lost."
@@ -443,7 +476,7 @@ Use the speed slider (0.25× to 3×) to fit your session.
 
 The caption bar narrates each phase (with a red **SURPRISE** tag for unplanned events and an amber tag for meetings). The stats at the top count:
 **📅 Day** (project time), **⚠️ Unwarned obstacles** (planned obstacles the koalas hit with no warning), **↩ Wrong turns**, **🧘 Distractions handled**,
-**🗂️ Priorities filtered** (asks the Leader parked or declined), **📣 Surprises reported up**, **🤝 Manager syncs** and **💡 Team ideas adopted**.
+**🗂️ Priorities filtered** (asks the Leader parked or declined), **📣 Surprises reported up**, **🤝 Manager meetings** and **💡 Team ideas adopted**.
 The info cards scroll (with a visible scrollbar), so all the text is readable in a small window.
 
 ![An info card scrolling in a small window](docs/info-card-scroll.png)

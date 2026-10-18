@@ -92,7 +92,7 @@ public static class Chapters
         new("build", "Building the final product",
             "The journey was a string of milestones where the team built knowledge and skills. Now they use them all: gathering materials, hammer and chisel, planks for a ramp, Banjo's log rollers, ropes, a ladder, Kip leading a section and a confident Wattle. The owl organises, brings stone and relays progress up, but never takes over: the koalas build.",
             new[] { "Which skills that your team built along the way make the final delivery possible?", "Does your manager support the work or take it over? What does good support look like?" },
-            "Nobody told the koalas what the final product looks like: the blocks come out all different sizes, there's no owl bringing materials, and a whole course has to be torn down and rebuilt (\"Wait, was it meant to be pointy?\")."),
+            "Nobody told the koalas what the final product looks like: the blocks come out all different sizes, there's no owl bringing materials, and a whole layer has to be torn down and rebuilt (\"Wait, was it meant to be pointy?\")."),
         new("reality", "Vision becomes reality",
             "All four koalas set the capstone together, and the Leader's golden blueprint turns solid: the Leader held the vision, the team made it real. Then, safety first, they climb back down one at a time before anyone celebrates.",
             new[] { "Is your team's picture of the final product clear enough to build it without you?", "Who gets the credit when the vision becomes real?" },

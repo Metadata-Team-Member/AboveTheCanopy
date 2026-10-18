@@ -35,7 +35,7 @@ public static class Roles
             "Scouts ahead and spots obstacles before the team hits them.",
             "Communicates early and clearly, so the team is ready.",
             "Gets the team the tools and skills they need (cutting tools, hammer-and-chisel training, rope).",
-            "Coordinates sideways with other managers: sharing resources, status syncs, lending kit.",
+            "Coordinates sideways with other managers: sharing resources, status updates, lending kit.",
             "Communicates both ways: warnings and plans down, progress, problems and ideas up (Banjo's creek route).",
             "Grows people: coaches one-to-one (Wattle and her saw) and delegates real responsibility (Kip leads the bridge build).",
             "Looks after wellbeing and morale: calls a break after the toughest stretch, and celebrates small wins (Matilda, Koala of the week).",
@@ -59,13 +59,13 @@ public static class Roles
             "Asks for what they need (\"Need more rope!\") and feeds back what's happening on the ground.",
             "Leads from the ground: spots better routes and fixes (Banjo's dry creek bed) and passes them up.",
             "Steps up when trusted with the lead (Kip and the bridge build), and keeps a sustainable pace (breaks, water, gum leaves).",
-            "Builds the final product: uses every skill from the journey (gathering materials, hammer and chisel, planks, ropes, a ladder, log rollers, teamwork) to raise the pyramid course by course, then sets the capstone together."
+            "Builds the final product: uses every skill from the journey (gathering materials, hammer and chisel, planks, ropes, a ladder, log rollers, teamwork) to raise the pyramid layer by layer, then sets the capstone together."
         },
         "Teams make the vision real, one bush at a time. With good information they're fast and confident; without it they get surprises and wrong turns.");
 
     public static readonly RoleInfo Goal = new(
         "goal", "🔺", "The Goal", "The pyramid = the shared objective (the final product)",
-        "Starts as the leader's vision: a golden blueprint shining above the canopy that only the leader can see. At the end the team builds the real pyramid inside it, course by course, and the outline turns solid.",
+        "Starts as the leader's vision: a golden blueprint shining above the canopy that only the leader can see. At the end the team builds the real pyramid inside it, layer by layer, and the outline turns solid.",
         new[]
         {
             "A clear, visible objective everyone can rally around.",
