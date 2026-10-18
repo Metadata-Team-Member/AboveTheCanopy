@@ -183,6 +183,13 @@ kbd { background: #24442d; border: 1px solid #3a6345; border-radius: 4px; paddin
 .caption .phase.ph-grow { background: #6a3fb0; }
 .caption .phase.ph-idea { background: #1565c0; }
 .caption .phase.ph-well { background: #00838f; }
+/* v7.3: single-role perspectives: the caption shows that role's narration, pill and edge in the role colour */
+.caption .phase.ph-role-leader { background: #b08a00; }
+.caption .phase.ph-role-manager { background: #7b3fb0; }
+.caption .phase.ph-role-team { background: #1f6f9f; }
+.caption.cap-leader { box-shadow: inset 4px 0 0 #ffd34d; }
+.caption.cap-manager { box-shadow: inset 4px 0 0 #c792ff; }
+.caption.cap-team { box-shadow: inset 4px 0 0 #5dd3ff; }
 .summary::-webkit-scrollbar { width: 8px; }
 .summary::-webkit-scrollbar-thumb { background: #66bb6a; border-radius: 8px; }
 .summary .reflect { background: #1565c0; border-color: #1565c0; color: #fff; }
