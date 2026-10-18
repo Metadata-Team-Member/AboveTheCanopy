@@ -23,7 +23,7 @@ Nobody can see the whole picture on their own:
 
 The journey works when vision flows down (leader ➜ manager), warnings and plans flow down to the team (manager ➜ team), and requests and progress flow back up (team ➜ manager ➜ leader).
 Use the **Perspective** buttons to see the world through each role's eyes (each view also shows only that role's speech bubbles and narration, so you can rewatch with one perspective to focus on that role's communication), and turn **Manager communication OFF**
-to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 203 days instead of about 158), and even build the wrong shape.
+to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 204 days instead of about 166), and even build the wrong shape.
 
 ## What happens on the journey
 
@@ -120,6 +120,26 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 (meetings, surprises, coaching, course corrections) are never cut off by routine narration.
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
+
+## New in v7.8: room to breathe in the cliff chapter
+
+Chapter 15 (*The cliff*) had too much going on at once with communication ON, so it has been spread out:
+
+- **Mozzies moved to the boulder.** The Manager's cloud of mozzies now arrives in chapter 6, while the koalas chip away at the boulder
+  (a quiet stretch for the owl), in both modes. Same lines, same caption, same count in the summary.
+- **The email storm moved to the break.** The Leader's "URGENT!!!" reply-all chain now lands after the rock wall, while the koalas take their break
+  (with communication OFF, as they trudge on without one). It no longer crowds the Project Manager B visit, the bees' warning or the fallen gum tree.
+- **Warnings in the right order.** The owl's "🐝 Bees' nest ahead!" comes first, then the radio warning and its *Communication* caption,
+  and only then do the koalas whisper "(whispering) Okay... 🤫". A question always shows before its answer.
+- **No reports mid-meeting.** "Cliff edge cleared! ✅" no longer interrupts the chat with Project Manager B; a report that would only talk over the next moment is left out.
+- **The ladder is promised, then waiting.** As soon as Project Manager B offers the ladder, the rock wall warning says
+  "Project Manager B's ladder is waiting for you there!" instead of asking the koalas to gather poles, and "You're a legend, thanks! 🤝" stays up for its full time.
+- **Vests, then thanks.** The safety vests now arrive while the koalas gather planks for the sinkhole, and "Ooh, safety first! Thanks! 🦺" follows straight away.
+- A full rescan of both runs finds no bubble shown for under a second and no reply before its question.
+
+The extra breathing room makes the communication ON run a little longer: about 166 days (331 s) instead of 158; OFF is about 204 days (407 s).
+
+![Chapter 15: the bees warning, then the whisper](docs/v78-ch15-bees-warning.png)
 
 ## New in v7.7: without communication, the owl says yes to the "Irrelevant meeting"
 
@@ -377,8 +397,10 @@ The mix is deliberately gentle for a classroom: soft envelopes, a compressor and
 **Distractions happen, so refocus.** The Leader and the Manager get distracted too, veer off course, then refocus on the goal.
 Each distraction is narrated, and the top bar counts **Distractions handled**:
 
-- 🦅 Leader: swooping magpies, an "URGENT!!!" reply-all email storm, a storm front and wind gust.
-- 🦉 Manager: an "Irrelevant meeting" request, a cloud of mozzies, a snag of branches and vines.
+- 🦅 Leader: swooping magpies, an "URGENT!!!" reply-all email storm (after the rock wall, while the koalas take their break), a storm front and wind gust.
+- 🦉 Manager: an "Irrelevant meeting" request, a cloud of mozzies (while the koalas chip away at the boulder), a snag of branches and vines.
+
+A distraction waits for a quiet moment, so it never talks over a meeting, a surprise or a conversation that's still going.
 
 ![A magpie swoops the eagle](docs/leader-distraction-magpie.png)
 
@@ -435,15 +457,15 @@ Project time: **1 project day = 2 seconds of animation at 1× speed.**
 
 | | Project time | Real time at 1× | Unwarned obstacles | Wrong turns | Surprises reported up | Manager meetings |
 |---|---|---|---|---|---|---|
-| Communication **ON** | **about 158 days** | about 5¼ min (316 s) | 0 | 0 | 3 | 3 |
-| Communication **OFF** | **about 203 days** | about 6¾ min (405 s) | 8 | 13 | 0 | 3 |
+| Communication **ON** | **about 166 days** | about 5½ min (331 s) | 0 | 0 | 3 | 3 |
+| Communication **OFF** | **about 204 days** | about 6¾ min (407 s) | 8 | 13 | 0 | 3 |
 
 With communication ON the run also has 1 team idea adopted (the creek route saves 4 to 6 days) and 1 rest break (about 4 days).
 With communication OFF there's no idea and no break, but the exhausted koalas slow right down.
 The build itself (including the climb back down) takes about 36 days with communication ON and about 48 days OFF (the wrong-shaped layer has to be redone).
 
 The finish summary shows "Pyramid built in N days" and compares it with the other mode: your own result if you've run both in this session, otherwise the typical figure.
-For example: "Without communication the same project usually takes about 203 days: 45 days lost."
+For example: "Without communication the same project usually takes about 204 days: 38 days lost."
 
 ![Finish summary: pyramid built in about 157 days, compared with communication OFF](docs/finish-days.png)
 Use the speed slider (0.25× to 3×) to fit your session.

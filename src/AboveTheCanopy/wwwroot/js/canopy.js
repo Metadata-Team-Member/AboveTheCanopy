@@ -1,4 +1,4 @@
-// Above the Canopy v7.7 - animation engine (plain canvas 2D, no dependencies).
+// Above the Canopy v7.8 - animation engine (plain canvas 2D, no dependencies).
 // v6: procedural Web Audio sound (sound.js), chapters with deterministic jumps, and a teaching mode.
 // v7: the pyramid is the Leader's VISION (a golden blueprint above the canopy) until the koalas BUILD it themselves at the end.
 import * as snd from './sound.js';
@@ -162,11 +162,13 @@ const DISTRACTIONS = [
     say: '📅 Meeting request: "Irrelevant meeting"', say2: 'Ugh, another meeting...',
     cap: 'Distraction! Mid-flight, the Manager gets yet another meeting request.',
     refocus: 'Politely declined. Back to the team. ✅' },
-  { who: 'leader', kind: 'email', atX: 3700,
+  { who: 'leader', kind: 'email', atX: 4880, calm: true, // v7.8: moved out of the busy cliff chapter to the calm after the rock wall (the koalas' break, comms ON)
+    when: () => { const tm = S.team, st = tm.seq && tm.seq[tm.step]; return tm.mode === 'walk' || tm.mode === 'hack' || !!(st && st.rest && tm.stepT > 0.3); },
     say: '📧 URGENT!!! Reply-all chain (47 new)', say2: 'Is it actually urgent though?',
     cap: 'Distraction! An "urgent" email storm floods the Leader\'s inbox.',
     refocus: 'That can wait. Back to the vision. 🔺' },
-  { who: 'manager', kind: 'mosquito', atX: 3330,
+  { who: 'manager', kind: 'mosquito', atX: 1100, // v7.8: during the boulder training, a quiet stretch for the owl
+    when: () => { const tm = S.team, st = tm.seq && tm.seq[tm.step]; return tm.seqOb && tm.seqOb.type === 'boulder' && st && st.mood === 'chisel' && tm.stepT > 0.6; },
     say: 'Bzzz! Mozzies everywhere! 🦟', say2: 'Shoo! SHOO!',
     cap: 'Distraction! A cloud of mozzies swarms the Manager.',
     refocus: 'Swatted. Back to scouting. 🔍' },
@@ -472,17 +474,17 @@ function pumpCaptions() {
 function kbadge(i, text, dur, col = '#ffd34d') { if (TRACE) TRACE('badge', KOALAS[i].name, text); sfx('sparkle'); S.kb = S.kb.filter(b => b.i !== i); S.kb.push({ i, text, t: dur, dur, col }); }
 // Speech bubbles: one per speaker on screen at a time; extra lines queue up so nothing overlaps or gets lost.
 const MIN_SHOW = 1.6;
-function bubble(who, text, dur = 3.2, priority = false) {
+function bubble(who, text, dur = 3.2, priority = false, onShow = null) {
   if (who === 'team' && !settings.comms && /hello\?|anyone up there|tell someone/i.test(text)) sfx('echo');
-  if (priority) { S.queue[who] = []; showBubble(who, text, dur); return; }
-  const cur = S.bubbles.find(b => b.who === who);
-  if (cur && cur.t < MIN_SHOW) {
-    const q = S.queue[who];
-    if (q.length >= 3) q.shift();
-    q.push({ text, dur });
+  const cur = S.bubbles.find(b => b.who === who), q = S.queue[who];
+  // v7.8: a priority line jumps the queue but no longer cuts the current bubble short or wipes what's waiting
+  if (priority) { if (cur && cur.t < MIN_SHOW) q.unshift({ text, dur, onShow }); else { showBubble(who, text, dur); onShow && onShow(); } return; }
+  if (cur && cur.t < MIN_SHOW || q.length) {
+    if (q.length >= 4) { const d = q.shift(); if (TRACE) TRACE('bubbleDrop', who, d.text); if (d.onShow) d.onShow(); }
+    q.push({ text, dur, onShow });
     return;
   }
-  showBubble(who, text, dur);
+  showBubble(who, text, dur); onShow && onShow();
 }
 function showBubble(who, text, dur) {
   if (TRACE) TRACE('bubble', who, text, who === 'visitor' && (S.visit || S.mgr.meeting) ? (S.visit || S.mgr.meeting).def.label : null);
@@ -494,8 +496,9 @@ function pulse(from, to, color, onArrive, dur = 1.3) {
 const PULSE_COL = { leader: '#ffd34d', manager: '#c792ff', team: '#5dd3ff' };
 // A message that travels: speaker says it, a pulse carries it, the listener replies.
 function say(from, to, text, reply, onArrive) {
-  bubble(from, text, 3);
-  pulse(from, to, PULSE_COL[from], () => { if (reply) bubble(to, reply, 2.8); onArrive && onArrive(); });
+  // v7.8: the message sets off once its bubble is actually showing, so the reply always comes after the question
+  if (TRACE) TRACE('say', from, to, text, reply || null);
+  bubble(from, text, 3, true, () => pulse(from, to, PULSE_COL[from], () => { if (reply) bubble(to, reply, 2.8); onArrive && onArrive(); }));
 }
 
 function agentPos(who) {
@@ -631,8 +634,8 @@ function sequenceFor(o, informed) {
       { dur: 1.6, mood: 'walk', move: 90 },
       { dur: 4.0, mood: 'sneak', move: o.w + 90, cap: 'Lesson learned the hard way: they sneak past quietly.' },
     ];
-    case 'wall': return informed && S.gifts.ladder ? [ // v7.6: Project Manager B kept their word
-      { dur: 0.8, mood: 'work', cap: 'Project Manager B kept their word: the promised ladder is waiting at the rock wall. 🪜', say: 'Thanks to Project Manager B\'s ladder! 🪜' },
+    case 'wall': return informed && (S.gifts.ladder || S.gifts.ladderDeal) ? [ // v7.6: Project Manager B kept their word
+      { dur: 0.8, mood: 'work', until: () => S.gifts.ladder, cap: 'Project Manager B kept their word: the promised ladder is waiting at the rock wall. 🪜', say: 'Thanks to Project Manager B\'s ladder! 🪜' },
       { dur: 1.6, mood: 'work', cap: 'Kip has a good look at how it\'s lashed together. Handy to know for later!', onStart: () => kbadge(0, '🪜 Kip studies the lashing', 6) },
       { dur: 2.2, mood: 'work', prog: true, cap: 'Sharing pays off: no poles to gather, so up the borrowed ladder they go!' },
     ] : informed ? [
@@ -701,10 +704,10 @@ function updateVisit(dt) {
   }
   if (V.t >= VISIT_PH[V.phase]) {
     V.t = 0;
-    if (V.phase === 'in') V.phase = 'talk';
+    if (V.phase === 'in') { V.phase = 'talk'; if (G.ladderDeal) G.ladder = true; } // v7.8: the ladder is at the wall by the time PM B says so
     else if (V.phase === 'talk') {
       V.phase = 'out';
-      if (G.ladderDeal) { G.ladder = true; caption('Managers keep their promises: Project Manager B collects the shared rope and leaves a ladder at the rock wall. 🪜', 'SHARING', { prio: 2 }); }
+      if (G.ladderDeal) { caption('Managers keep their promises: Project Manager B collects the shared rope and leaves a ladder at the rock wall. 🪜', 'SHARING', { prio: 2 }); }
     } else S.visit = null;
   }
 }
@@ -806,7 +809,7 @@ function updateSeq(dt) {
     tm.step++; tm.stepT = 0; tm.stepStartX = tm.x;
     if (tm.step >= tm.seq.length) {
       const o = tm.seqOb, done = tm.onDone;
-      tm.seq = null; tm.seqOb = null; tm.onDone = null; tm.mode = 'walk'; tm.mood = ''; tm.m0 = 0; tm.m0y = 0;
+      tm.seq = null; tm.seqOb = null; tm.onDone = null; tm.seqEnd = S.t; tm.mode = 'walk'; tm.mood = ''; tm.m0 = 0; tm.m0y = 0;
       if (done) done();
       else if (o) obstacleCleared(o);
       else caption('Eventually the koalas pick a direction and head off, unsure if it\'s right.', 'Execution');
@@ -835,14 +838,16 @@ function obstacleCleared(o) {
     caption(`${Name} cleared, but going in blind took ${dd(days)} instead of about ${dd(plan)}.`, 'Execution');
   }
   bubble('team', pick(CHEERS, tm.cleared), 2.2);
-  if (o.type === 'bees' && settings.comms) { later(0.8, () => whenFree(mgFree, startRecognition)); return; }
+  if (o.type === 'bees' && settings.comms) { later(0.8, () => whenFree(() => mgFree() && !S.visit && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager'), startRecognition)); return; }
   // Manager reports progress up; the Leader recognises the team.
-  later(1.0, () => say('manager', 'leader', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} cleared! ✅`, null, () => {
+  const due = S.t + 1.0;
+  later(1.0, () => whenReady(() => S.t - due > 5 || mgFree() && !S.visit && !S.waiters.length && !(tm.seqOb && tm.seqOb.isSurprise) && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager'),
+    () => S.t - due > 5 ? null : say('manager', 'leader', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} cleared! ✅`, null, () => { // v7.8: never mid-meeting
     if (tm.cleared % 2 === 1 || !settings.comms) bubble('leader', pick(RECOGNITION, tm.cleared >> 1), 2.8);
     else bubble('leader', 'Good progress. Keep going!', 2.4);
     if (settings.comms && o.type === 'river' && tm.lead === 0) whenFree(mgFree, () => say('manager', 'team', 'Great leading, Kip! The boss noticed. ⭐', 'Kip: Thanks! Team effort! 😊', () => { tm.lead = -1; }));
     else if (settings.comms && tm.cleared % 2 === 1) later(0.6, () => say('manager', 'team', 'The boss says great work! 🌟', 'Thanks boss! 😊'));
-  }));
+  })));
 }
 
 // ---------- update ----------
@@ -911,11 +916,12 @@ function update(dt) {
   } else if (tm.mode === 'seq') updateSeq(dt);
   if (S.build.on) updateBuild(dt);
 
-  // --- distractions (triggered by team progress, only between obstacles) ---
-  if (!S.finished && (tm.mode === 'walk' || tm.mode === 'hack')) {
+  // --- distractions (triggered by team progress, between obstacles; v7.8: or at a chosen quiet moment via d.when) ---
+  if (!S.finished) {
+    const between = tm.mode === 'walk' || tm.mode === 'hack';
     for (const d of S.distractions) {
       const ag = d.who === 'leader' ? ld : mg;
-      if (!d.done && tm.x >= d.atX && !ag.dist && !(d.who === 'leader' && ld.meeting) && !(d.who === 'manager' && (mg.meeting || mg.task || mg.busy || S.handing)) && mg.ready) { d.done = true; startDistraction(ag, d); }
+      if (!d.done && (between || d.when) && tm.x >= d.atX && !ag.dist && !(d.who === 'leader' && ld.meeting) && !(d.who === 'manager' && (mg.meeting || mg.task || mg.busy || S.handing)) && mg.ready && distQuiet(d)) { d.done = true; startDistraction(ag, d); }
     }
     for (const m of S.meetings) {
       if (!m.done && tm.x >= m.atX && !ld.dist && !ld.meeting && !mg.meeting && !S.waiters.length && mg.ready) { m.done = true; startMeeting(m); }
@@ -996,7 +1002,7 @@ function update(dt) {
   for (const who of ['leader', 'manager', 'team', 'visitor']) {
     const q = S.queue[who]; if (!q.length) continue;
     const cur = S.bubbles.find(b => b.who === who);
-    if (!cur || cur.t >= MIN_SHOW) { const n = q.shift(); showBubble(who, n.text, n.dur); }
+    if (!cur || cur.t >= MIN_SHOW) { const n = q.shift(); showBubble(who, n.text, n.dur); if (n.onShow) n.onShow(); }
   }
   for (const p of S.pulses.slice()) {
     p.t += dt;
@@ -1068,6 +1074,15 @@ function updateOutreach(dt) {
   if (B.bubble) { B.bubble.t += dt; if (B.bubble.t >= B.bubble.dur || big) B.bubble = null; }
 }
 
+// v7.8: a distraction waits for a quiet moment: nobody mid-conversation, no surprise unfolding, a little room after a meeting
+function distQuiet(d) {
+  const tm = S.team, w = d.who;
+  if (d.when && !d.when()) return false;
+  if (S.pulses.some(p => p.from === w || p.to === w) || S.queue[w].length || S.bubbles.some(b => b.who === w)) return false;
+  if (d.calm && tm.x < d.atX + 400 && (S.mgr.meeting || S.visit || S.t - (S.mgMeetEnd || -99) < 3 || S.t - (tm.seqEnd || -99) < 4 || S.waiters.length || (tm.seqOb && tm.seqOb.isSurprise)
+    || S.pulses.length || S.pend.length || S.todo.length || S.queue.manager.length || S.bubbles.some(b => b.who === 'manager'))) return false;
+  return true;
+}
 function startDistraction(ag, d) {
   ag.dist = { def: d, t: 0, phase: 'distract', last: { ox: 0, oy: 0, rot: 0 } };
   sfx({ magpie: 'magpie', email: 'emailStorm', storm: 'thunder', meeting: 'ding', mosquito: 'mozzie', branch: 'branch' }[d.def ? d.def.kind : d.kind]);
@@ -1129,7 +1144,8 @@ function updateDistraction(ag, dt) {
 function spot(o) {
   o.spotted = true;
   S.mgr.alert = 2.2; sfx('hoot');
-  bubble('manager', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} ahead!`, 2.6);
+  let shown = null; // v7.8: the radio warning follows the "... ahead!" bubble, never before it
+  bubble('manager', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} ahead!`, 2.6, false, () => { shown = S.t; });
   if (settings.comms) {
     caption(`The Manager spots a ${o.name} ahead and radios a warning down to the koalas.`, 'Communication');
     const advice = {
@@ -1140,9 +1156,9 @@ function spot(o) {
       log: ['Big log ahead: there\'s a hollow you can crawl through!', 'Ooh, a tunnel! 🐨'],
       cliff: ['Cliff ahead: braid a rope and climb down at the marked spot!', 'Vine rope it is! 🪢'],
       bees: ['Bees\' nest ahead: tiptoe quietly!', '(whispering) Okay... 🤫'],
-      wall: S.gifts.ladder ? ['Rock wall ahead: Project Manager B\'s ladder is waiting for you there! 🪜', 'A ladder, ready to go? Yay! 🪜'] : ['Rock wall ahead: gather poles for a ladder!', 'Poles it is! 🪜'],
+      wall: S.gifts.ladder || S.gifts.ladderDeal ? ['Rock wall ahead: Project Manager B\'s ladder is waiting for you there! 🪜', 'A ladder, ready to go? Yay! 🪜'] : ['Rock wall ahead: gather poles for a ladder!', 'Poles it is! 🪜'],
     }[o.type];
-    later(0.8, () => say('manager', 'team', '📻 ' + advice[0], advice[1], () => { o.informed = true; }));
+    whenReady(() => shown != null && S.t - shown >= 0.8, () => say('manager', 'team', '📻 ' + advice[0], advice[1], () => { o.informed = true; }));
   } else {
     caption(`The Manager spots a ${o.name}, but communication is OFF, so the koalas never hear about it.`, 'No communication');
     later(1.2, () => bubble('manager', '(...keeps it to themselves 🤐)', 2.4));
@@ -1214,7 +1230,7 @@ function coachDone(bush) {
 function startIdea() {
   const I = S.idea; I.started = true; I.bulb = true;
   if (!settings.comms) mark('idea');
-  if (settings.comms) whenFree(() => mgFree() && !S.bubbles.some(b => b.who !== 'visitor') && !S.queue.team.length && !S.queue.manager.length, () => {
+  if (settings.comms) whenFree(() => mgFree() && !S.bubbles.some(b => b.who !== 'visitor') && !S.queue.team.length && !S.queue.manager.length && !S.pulses.length && !S.handing, () => {
     mark('idea');
     caption('Team members lead too: hacking through thick shrubbery, Banjo spots a dry creek bed running alongside. A better route, seen from the ground!', 'TEAM IDEA', { hold: 3.2 });
     bubble('team', 'Banjo: There\'s a shortcut along the creek bed! 💡', 2.8, true); sfx('idea');
@@ -1665,7 +1681,7 @@ function updateMgrMeeting(dt) {
       S.team.syncs++; stats();
       S.mgr.focusT = 2.0;
       caption('The visiting owl flies off, and the Manager refocuses on the koalas. 🐨', 'Refocus');
-    } else { S.mgr.meeting = null; ropeVisitCheck(); }
+    } else { S.mgr.meeting = null; S.mgMeetEnd = S.t; ropeVisitCheck(); }
   }
 }
 function mgrVisitorPos() {
