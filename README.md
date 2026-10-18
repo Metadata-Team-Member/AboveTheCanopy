@@ -23,7 +23,7 @@ Nobody can see the whole picture on their own:
 
 The journey works when vision flows down (leader ➜ manager), warnings and plans flow down to the team (manager ➜ team), and requests and progress flow back up (team ➜ manager ➜ leader).
 Use the **Perspective** buttons to see the world through each role's eyes (each view also shows only that role's speech bubbles and narration, so you can rewatch with one perspective to focus on that role's communication), and turn **Manager communication OFF**
-to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 202 days instead of about 157), and even build the wrong shape.
+to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 203 days instead of about 158), and even build the wrong shape.
 
 ## What happens on the journey
 
@@ -120,6 +120,19 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 (meetings, surprises, coaching, course corrections) are never cut off by routine narration.
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
+
+## New in v7.7: without communication, the owl says yes to the "Irrelevant meeting"
+
+With communication **OFF** the Manager has no clear focus to say no from, so instead of declining the "Irrelevant meeting" request the owl accepts it:
+"Sure, I'll be there... 📅 Accepted." For a short while the owl sits in the meeting (a calendar and a *📅 In a meeting* tag) while the koalas carry on
+without guidance, a little slower and unsure ("Where did the owl go? 🤔"). Caption (Manager + Team): *Without a clear focus, the Manager accepts a meeting
+that doesn't help the project, and the team loses some guidance time.* Then: "Back from the meeting. Now, where were we? 🦉".
+With communication **ON** the owl still politely declines. The comms OFF run is about a second longer.
+
+Also: the safety-vest hand-out no longer overlaps the Manager's branch-snag distraction, and the *🪜 From Project Manager B* tag sits on top of the rock wall,
+clear of the koalas' speech bubble.
+
+![Communication OFF: the owl accepts the Irrelevant meeting](docs/off-accepts-irrelevant-meeting.png)
 
 ## New in v7.6: promises that happen, and a warmer tone
 
@@ -422,15 +435,15 @@ Project time: **1 project day = 2 seconds of animation at 1× speed.**
 
 | | Project time | Real time at 1× | Unwarned obstacles | Wrong turns | Surprises reported up | Manager meetings |
 |---|---|---|---|---|---|---|
-| Communication **ON** | **about 159 days** | about 5¼ min (317 s) | 0 | 0 | 3 | 3 |
-| Communication **OFF** | **about 202 days** | about 6¾ min (404 s) | 8 | 13 | 0 | 3 |
+| Communication **ON** | **about 158 days** | about 5¼ min (316 s) | 0 | 0 | 3 | 3 |
+| Communication **OFF** | **about 203 days** | about 6¾ min (405 s) | 8 | 13 | 0 | 3 |
 
 With communication ON the run also has 1 team idea adopted (the creek route saves 4 to 6 days) and 1 rest break (about 4 days).
 With communication OFF there's no idea and no break, but the exhausted koalas slow right down.
 The build itself (including the climb back down) takes about 36 days with communication ON and about 48 days OFF (the wrong-shaped layer has to be redone).
 
 The finish summary shows "Pyramid built in N days" and compares it with the other mode: your own result if you've run both in this session, otherwise the typical figure.
-For example: "Without communication the same project usually takes about 202 days: 45 days lost."
+For example: "Without communication the same project usually takes about 203 days: 45 days lost."
 
 ![Finish summary: pyramid built in about 157 days, compared with communication OFF](docs/finish-days.png)
 Use the speed slider (0.25× to 3×) to fit your session.
