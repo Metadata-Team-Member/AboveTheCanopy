@@ -1761,7 +1761,7 @@ function drawCanopy() {
   const cols = ['rgba(46,125,50,0.88)', 'rgba(67,160,71,0.86)', 'rgba(30,100,40,0.9)', 'rgba(102,187,106,0.82)'];
   const thinK = S.build.on ? clamp((S.t - S.build.t0) / 2, 0, 1) : 0;
   // over the build site the leaves thin out (most of all around the top, where the koalas end up) so the build stays visible
-  const thinA = bx => { if (!thinK) return 1; const d = Math.abs(bx - GOAL_X); return d < 110 ? lerp(1, 0.14, thinK) : d < PYR_HALF + 60 ? lerp(1, 0.4, thinK) : 1; };
+  const thinA = bx => { if (!thinK) return 1; const d = Math.abs(bx - GOAL_X); return d < PYR_HALF + 60 ? lerp(1, 0.85, thinK) : 1; }; // v7.2: just a light thinning now; layering keeps the pyramid in front
   for (const b of deco.blobs) {
     const x = b.x - camX; if (x < -80 || x > viewW + 80) continue;
     ctx.globalAlpha = thinA(b.x);
@@ -1840,11 +1840,16 @@ function drawPulses() {
   }
 }
 
+// Which speakers' bubbles each perspective shows ('visitor' is the visiting owl in a manager meeting; the visiting
+// eagles in the Leader's meetings speak through their priority cards, which stay visible).
+const BUBBLE_VIEW = { all: null, leader: ['leader'], manager: ['manager', 'visitor'], team: ['team'] };
 function drawBubbles() {
   const cols = { leader: ['#fff7d6', '#b08a00'], manager: ['#f3e8ff', '#7b3fb0'], team: ['#e3f6ff', '#1f6f9f'],
     visitor: S.mgr.meeting ? [S.mgr.meeting.def.belly, S.mgr.meeting.def.body] : ['#eee', '#777'] };
   ctx.font = '600 13px system-ui, sans-serif';
+  const only = BUBBLE_VIEW[settings.view]; // v7.2: each perspective shows only that role's dialogue
   for (const b of S.bubbles) {
+    if (only && !only.includes(b.who)) continue;
     const p = agentPos(b.who);
     if (p.x - camX < -30 || p.x - camX > viewW + 30) continue; // speaker is off-screen
     const a = Math.min(1, b.t * 4, (b.dur - b.t) * 3);
@@ -1915,10 +1920,14 @@ function drawViewBanner() {
     manager: '🦉 MANAGER VIEW: sees the obstacles ahead, but not the far-off goal',
     team: '🐨 TEAM VIEW: the koalas see only what\'s right in front of them',
   }[v];
+  const hint = { leader: '💬 Showing only the Leader\'s dialogue', manager: '💬 Showing only the Manager\'s dialogue', team: '💬 Showing only the koalas\' dialogue' }[v];
   ctx.font = 'bold 14px system-ui, sans-serif';
-  const w = ctx.measureText(text).width + 24;
-  ctx.fillStyle = 'rgba(0,0,0,0.6)'; rr(12, H - 40, w, 28, 14); ctx.fill();
-  ctx.fillStyle = '#fff'; ctx.fillText(text, 24, H - 21);
+  const w1 = ctx.measureText(text).width;
+  ctx.font = '600 12px system-ui, sans-serif';
+  const w = Math.max(w1, ctx.measureText(hint).width) + 24;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)'; rr(12, H - 58, w, 46, 14); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 14px system-ui, sans-serif'; ctx.fillText(text, 24, H - 39);
+  ctx.fillStyle = '#ffe082'; ctx.font = '600 12px system-ui, sans-serif'; ctx.fillText(hint, 24, H - 20);
 }
 
 function frame(ts) {
@@ -2901,7 +2910,6 @@ function render() {
   drawSky();
   drawUnderstory();
   drawTrunks();
-  drawBuild();
   drawHangingVines();
   drawRiver(false);
   drawGround();
@@ -2914,8 +2922,10 @@ function render() {
   drawSurprises();
   drawCreek();
   drawLantana();
-  drawTeam();
-  drawBuildFront();
+  // v7.2: once the build starts, the pyramid and everyone working on it are drawn after the canopy (see below),
+  // so no leaves, trunks or light shafts ever cut across it.
+  const site = S.build.on;
+  if (!site) drawTeam();
   drawSurpriseMarkers();
   drawBees(true);
   drawRiver(true);
@@ -2925,11 +2935,15 @@ function render() {
   drawPathBushes();
   drawRubble();
   drawSurprises(true);
-  drawKoalaLabels();
+  if (!site) drawKoalaLabels();
   drawDrop('gap');
-  drawManager();
+  if (!site) drawManager();
   drawMgrMeeting();
   drawCanopy();
+  // The build site, in front of the canopy behind it: pyramid (courses, casing, cap, ramp, ladder, pile), then the koalas
+  // and the gear they're carrying, then the owl helping out. The vision outline goes on top, like a blueprint overlay.
+  drawBuild();
+  if (site) { drawTeam(); drawBuildFront(); drawKoalaLabels(); drawManager(); }
   drawVision();
   drawDrop('crate');
   drawLeafFly();
