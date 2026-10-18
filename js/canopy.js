@@ -1,4 +1,4 @@
-// Above the Canopy v7.8 - animation engine (plain canvas 2D, no dependencies).
+// Above the Canopy v7.9 - animation engine (plain canvas 2D, no dependencies).
 // v6: procedural Web Audio sound (sound.js), chapters with deterministic jumps, and a teaching mode.
 // v7: the pyramid is the Leader's VISION (a golden blueprint above the canopy) until the koalas BUILD it themselves at the end.
 import * as snd from './sound.js';
@@ -236,7 +236,7 @@ let fog, fctx;
 let scale = 1, viewW = 1200, camX = 0, camTarget = 0;
 let deco = null;
 let S = null;
-const settings = { speed: 1, playing: true, view: 'all', comms: true, teach: false };
+const settings = { speed: 1, playing: false, view: 'all', comms: true, teach: false };
 // v6 chapters: each chapter starts when its mark is first hit in the story (see mark()). Blazor passes the same list (Models/Chapters.cs).
 let CH_MARKS = ['start', 'dir', 'go', 'ob:vines', 'coach', 'ob:boulder', 'meet:0', 'ob:river', 'mm:0', 'sp:sinkhole', 'ob:bog', 'meet:1', 'ob:log', 'idea', 'ob:cliff', 'sp:treefall', 'ob:bees', 'sp:snake', 'ob:wall', 'break', 'meet:2', 'build', 'reality', 'finish'];
 const JUMP_STEP = 1 / 60, TEACH_DELAY = 0.4;
@@ -2383,7 +2383,7 @@ function resize() {
 function onKey(e) {
   if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
-  if (e.code === 'Space') { e.preventDefault(); settings.playing = !settings.playing; snd.setPaused(!settings.playing); call('OnPlayState', settings.playing); }
+  if (e.code === 'Space') { e.preventDefault(); settings.playing = !settings.playing; if (settings.playing) everPlayed = true; snd.setPaused(!settings.playing); call('OnPlayState', settings.playing); }
   else if (e.key === 'r' || e.key === 'R') { reset(); call('OnRestarted'); }
   else if (e.key === 'c' || e.key === 'C') call('OnShortcut', 'chapters');
   else if (e.key === 'n' || e.key === 'N') call('OnShortcut', 'next');
@@ -3403,6 +3403,24 @@ function render() {
   drawMiniMap();
   drawSkills();
   drawViewBanner();
+  drawStartHint();
+}
+
+// v7.9: the app opens paused on the opening scene; a gentle hint until the first Play.
+let everPlayed = false;
+function drawStartHint() {
+  if (everPlayed || settings.playing) return;
+  const a = 0.86 + 0.14 * Math.sin(performance.now() / 600);
+  const t1 = 'Press ▶ Play to begin', t2 = 'G\'day! The koalas are ready when you are 🐨';
+  ctx.save(); ctx.globalAlpha = a; ctx.textAlign = 'center';
+  ctx.font = 'bold 22px system-ui, sans-serif'; const w1 = ctx.measureText(t1).width;
+  ctx.font = '600 13px system-ui, sans-serif'; const w = Math.max(w1, ctx.measureText(t2).width) + 48;
+  const cx = viewW / 2, y = 210;
+  ctx.fillStyle = 'rgba(12,32,20,0.72)'; rr(cx - w / 2, y, w, 66, 18); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,224,130,0.7)'; ctx.lineWidth = 1.5; rr(cx - w / 2, y, w, 66, 18); ctx.stroke();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold 22px system-ui, sans-serif'; ctx.fillText(t1, cx, y + 30);
+  ctx.fillStyle = '#ffe082'; ctx.font = '600 13px system-ui, sans-serif'; ctx.fillText(t2, cx, y + 52);
+  ctx.restore();
 }
 
 function onClick(ev) {
@@ -3445,11 +3463,11 @@ export function init(canvasEl, dotnetRef) {
   canvas.addEventListener('click', onClick);
   canvas.addEventListener('mousemove', onMove);
   window.addEventListener('keydown', onKey);
-  snd.init();
+  snd.setPaused(true); snd.init(); // v7.9: sound starts with the first Play
   lastT = 0; raf = requestAnimationFrame(frame);
-  window.aboveTheCanopy = { settings, get state() { return S; }, get cam() { return { camX, scale, viewW }; }, fastForward, restart, runToEnd, jumpTo, chapters: () => CH_MARKS.slice(), capInfo, setView: v => setView(v), shownCaption: () => S.capShown, focus: () => focusS && Object.assign({}, focusS, { S: undefined }), focusPoints: v => focusPoints(v), setTrace: fn => { TRACE = typeof fn === 'function' ? fn : null; }, sound: () => snd.debug(), soundTestAll: () => snd.testAll() };
+  window.aboveTheCanopy = { settings, get state() { return S; }, get everPlayed() { return everPlayed; }, get cam() { return { camX, scale, viewW }; }, fastForward, restart, runToEnd, jumpTo, chapters: () => CH_MARKS.slice(), capInfo, setView: v => setView(v), shownCaption: () => S.capShown, focus: () => focusS && Object.assign({}, focusS, { S: undefined }), focusPoints: v => focusPoints(v), setTrace: fn => { TRACE = typeof fn === 'function' ? fn : null; }, sound: () => snd.debug(), soundTestAll: () => snd.testAll() };
 }
-export function setPlaying(p) { settings.playing = !!p; snd.setPaused(!settings.playing); }
+export function setPlaying(p) { settings.playing = !!p; if (settings.playing) everPlayed = true; snd.setPaused(!settings.playing); }
 export function restart() { reset(); }
 export function setSpeed(v) { settings.speed = clamp(+v || 1, 0.1, 5); snd.setSpeed(settings.speed); }
 export function setView(v) { settings.view = v; if (S) emitCaption(true); }
