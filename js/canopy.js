@@ -1,4 +1,4 @@
-// Above the Canopy v7.5 - animation engine (plain canvas 2D, no dependencies).
+// Above the Canopy v7.6 - animation engine (plain canvas 2D, no dependencies).
 // v6: procedural Web Audio sound (sound.js), chapters with deterministic jumps, and a teaching mode.
 // v7: the pyramid is the Leader's VISION (a golden blueprint above the canopy) until the koalas BUILD it themselves at the end.
 import * as snd from './sound.js';
@@ -76,9 +76,9 @@ const SURPRISE_DEFS = [
   { type: 'sinkhole', x: 2150, w: 90, name: 'sinkhole', icon: '🕳️',
     reveal: 'SURPRISE! The ground collapses into a sinkhole right in front of the koalas. Nobody saw it coming, not even the Manager.',
     revSay: 'Whoa! The ground just vanished! 😱',
-    up: 'Manager! A sinkhole just opened up! 🕳️', ack: 'Stay back! I\'ll tell the boss.',
+    up: 'Manager! A sinkhole just opened up! 🕳️', ack: 'Everyone okay? Stay back, I\'ll tell the boss.',
     toLeader: 'Unplanned sinkhole. Team needs planks, about a week.', leaderReply: 'Safety first, take the week. Goal stays the same. 🔺',
-    down: 'Boss says take the time. Gather planks!', teamAck: 'Thanks! On it 👍',
+    down: 'The boss says take the time you need. Let\'s gather planks!', teamAck: 'Thanks! On it 👍',
     gatherCap: 'Gathering materials: the koalas fan out into the bush and carry planks back to the sinkhole.',
     fixCap: 'Backed by the Manager and the Leader, the koalas lay planks across the sinkhole and cross safely.',
     aloneCap: 'Alone and unsure if they\'re allowed the time, the koalas slowly rig a crossing.' },
@@ -87,15 +87,15 @@ const SURPRISE_DEFS = [
     revSay: 'TIMBERRR! 😵',
     up: 'Manager! A gum tree just fell across the track! 🌳', ack: 'Is everyone okay? Escalating now.',
     toLeader: 'Tree down on the track. Team needs saws and safety gear, about 5 or 6 days.', leaderReply: 'Yes! Sending saws and safety gear down now. 🪂',
-    down: 'The gear is down. Saw it up and roll it aside, carefully!', teamAck: 'Thanks, boss! Saws out! 🪚', support: true,
+    down: 'The gear is down! Take your time and saw it up safely. 🪚', teamAck: 'Thanks, boss! Saws out! 🪚', support: true,
     fixCap: 'With the delay approved and the new saws, the koalas cut up the trunk and roll the pieces off the track.',
     aloneCap: 'Nobody answers, so the koalas hack at the trunk for ages.' },
   { type: 'snake', x: 4650, w: 110, name: 'brown snake', icon: '🐍',
     reveal: 'SURPRISE! A big brown snake slides out onto the track. Nobody could have planned for this.',
     revSay: 'S-s-snake!! 🐍',
-    up: 'Manager! Big brown snake on the track! 🐍', ack: 'Freeze! Don\'t touch it. Telling the boss.',
+    up: 'Manager! Big brown snake on the track! 🐍', ack: 'Stay still and keep back! I\'ll tell the boss.',
     toLeader: 'Snake on the track. Team needs to wait it out, a few days.', leaderReply: 'No rush. Let it pass safely. Goal stays the same. 🔺',
-    down: 'Boss says wait it out. Safety first!', teamAck: 'Waiting quietly... 🤫',
+    down: 'The boss says no rush: wait it out, safety first!', teamAck: 'Waiting quietly... 🤫',
     fixCap: 'The koalas wait calmly at a safe distance until the snake slithers off into the bush.',
     aloneCap: 'Nobody tells them what to do, so the koalas panic, back off and wait nervously.' },
 ];
@@ -108,7 +108,7 @@ const MEETINGS = [
       { label: 'MARKETING', body: '#9c3f6b', head: '#ffd6e8', size: 0.74, ask: 'Urgent: rebrand! 🎨' },
       { label: 'SAFETY', body: '#a8641e', head: '#ffe2b8', size: 0.92, ask: 'Safety gear for koalas', accept: true },
     ],
-    yes: 'Yes to safety gear: it gets us to the pyramid. ✅', no: 'Rebrand and budget review: not now. The pyramid comes first.' },
+    yes: 'Yes to safety gear: it gets us to the pyramid. ✅', no: 'Rebrand and budget review: let\'s park those for now. The pyramid comes first.' },
   { atX: 2560, who: 'the Board, Another Project and Product',
     visitors: [
       { label: 'BOARD', body: '#37474f', head: '#eceff1', size: 1.0, ask: 'Can you also run the picnic?' },
@@ -123,7 +123,7 @@ const MEETINGS = [
       { label: 'HR', body: '#00796b', head: '#c8f2ea', size: 0.78, ask: 'Can you also do a survey?' },
       { label: 'CUSTOMERS', body: '#c62828', head: '#ffd9d9', size: 0.84, ask: 'Pyramid opening: still on?', accept: true },
     ],
-    yes: 'Yes, the pyramid opening is on. That IS the goal. ✅', no: 'New initiative and survey: after the launch. Not now.' },
+    yes: 'Yes, the pyramid opening is on. That IS the goal. ✅', no: 'New initiative and survey: great ideas, let\'s do them after the launch.' },
   // v7: one last request, mid-build (started from the build sequence, never by distance)
   { atX: Infinity, who: 'Sales',
     visitors: [{ label: 'SALES', body: '#ef6c00', head: '#ffe0b2', size: 0.86, ask: 'Add a gift shop to the pyramid? 🛍️' }],
@@ -139,11 +139,15 @@ const MEETING_PHASES = { arrive: 2.0, ask: 3.0, decide: 3.0, leave: 1.8 };
 // koalas are busy gathering materials, then flies off and the Manager refocuses on the team.
 const MGR_MEETINGS = [
   { ob: 'river', label: 'OPS MANAGER', body: '#2e7d6f', wing: '#1f5a50', belly: '#d3f0e8', who: 'An Ops manager', topic: 'to share resources',
-    lines: [['visitor', 'Your team needs logs? We have spare! 🪵'], ['manager', 'Yes please! Drop them by the river.'], ['visitor', 'Done. Shout if you need more.'], ['manager', 'Legend, thanks! 🤝']] },
-  { ob: 'bog', label: 'PMO', body: '#5c6b7a', wing: '#3e4a56', belly: '#e3e9ef', who: 'The PMO', topic: 'for a quick status sync',
-    lines: [['visitor', 'Status sync? 📋'], ['manager', 'River done, bog in progress. On track.'], ['visitor', 'Great, I\'ll update the roadmap.'], ['manager', 'Thanks! Back to my koalas.']] },
+    lines: [['visitor', 'Your team needs logs? We have spare! 🪵'], ['manager', 'Yes please! Can you drop them by the river?'], ['visitor', 'Done. Shout if you need more.'], ['manager', 'Legend, thanks! 🤝']],
+    // v7.6: with communication OFF the Manager is out of the loop, so offers of help go nowhere
+    offLines: [['visitor', 'Your team needs logs? We have spare! 🪵'], ['manager', 'Logs? Not sure what my team needs, to be honest... 🤷'], ['visitor', 'No worries. The offer stands!'], ['manager', 'Thanks... 😬']] },
+  { ob: 'bog', label: 'PMO', body: '#5c6b7a', wing: '#3e4a56', belly: '#e3e9ef', who: 'The PMO', topic: 'for a quick status update',
+    lines: [['visitor', 'Quick status update? 📋'], ['manager', 'River done, bog in progress. On track.'], ['visitor', 'Great, I\'ll update the roadmap.'], ['manager', 'Thanks! Back to my koalas.']],
+    offLines: [['visitor', 'Quick status update? 📋'], ['manager', 'Um... not sure. I haven\'t checked in with the team. 😬'], ['visitor', 'Oh. Let me know when you know?'], ['manager', 'Will do... 😬']] },
   { ob: 'cliff', label: 'PROJECT MANAGER B', body: '#b8621b', wing: '#8a4510', belly: '#ffe3c4', who: 'Project manager B', topic: 'to coordinate between teams',
-    lines: [['visitor', 'Can we share your rope after? 🪢'], ['manager', 'Sure, once my koalas are down the cliff.'], ['visitor', 'Thanks! Need a ladder later? 🪜'], ['manager', 'Yes please! Leave it by the wall.']] },
+    lines: [['visitor', 'Can we share your rope after? 🪢'], ['manager', 'Sure, once my koalas are down the cliff.'], ['visitor', 'Thanks! Need a ladder later? 🪜'], ['manager', 'Yes please! Could you leave it by the wall?']],
+    offLines: [['visitor', 'Can we share your rope after? 🪢'], ['manager', 'Um... I\'m not sure what rope they\'ve got. 🤷'], ['visitor', 'Okay. Need a ladder later? 🪜'], ['manager', 'No idea, sorry. 😬']] },
 ];
 const MM_PHASES = { arrive: 1.5, talk: 6.8, leave: 1.5 };
 const MM_LINE_GAP = 1.7;
@@ -155,9 +159,9 @@ const DISTRACTIONS = [
     cap: 'Distraction! A magpie swoops the Leader. (Every Aussie knows that feeling.)',
     refocus: 'Shake it off. Eyes on the pyramid. 🔺' },
   { who: 'manager', kind: 'meeting', atX: 380,
-    say: '📅 Meeting request: "Sync about the sync"', say2: 'Ugh, another meeting...',
+    say: '📅 Meeting request: "Irrelevant meeting"', say2: 'Ugh, another meeting...',
     cap: 'Distraction! Mid-flight, the Manager gets yet another meeting request.',
-    refocus: 'Declined. Back to the team. ✅' },
+    refocus: 'Politely declined. Back to the team. ✅' },
   { who: 'leader', kind: 'email', atX: 3700,
     say: '📧 URGENT!!! Reply-all chain (47 new)', say2: 'Is it actually urgent though?',
     cap: 'Distraction! An "urgent" email storm floods the Leader\'s inbox.',
@@ -176,12 +180,15 @@ const DISTRACTIONS = [
     refocus: 'Untangled. Back to guiding the team. ✅' },
 ];
 
+// v7.6: warmer, encouraging lines. A second round (a2/b2) uses different wording; 'relay' is passed down to the team,
+// 'ack' is the Leader's reply to the Manager's answer.
 const LEADER_TALK = [
-  ['Keep heading for the build site! 🔺', 'On it, still bearing east. 👍'],
-  ['How are the koalas going?', 'Steady progress, boss. Hacking through!'],
-  ['Remember why we\'re doing this!', 'I\'ll remind the team. 📣'],
-  ['Any blockers I can help with?', 'All handled for now, thanks!'],
-  ['We\'re over halfway. Stay focused!', 'Copy that. 🧭'],
+  { a: 'Still bearing east for the build site? Lovely work! 🔺', b: 'Yes, still bearing east. 👍' },
+  { a: 'How are the koalas going?', b: 'Steady progress, boss. Hacking through!' },
+  { a: 'Look how far we\'ve come, the goal\'s worth it! 🌟', b: 'I\'ll pass that on, they\'ll love it! 📣', relay: ['The boss says: look how far we\'ve come! 🌟', 'Aww, thanks boss! 😊'],
+    a2: 'You\'re doing great, team, the pyramid\'s getting closer! 🌟', b2: 'Passing that on right now! 📣', relay2: ['The boss says the pyramid\'s getting closer! 🌟', 'Woohoo! Let\'s go! 🎉'] },
+  { a: 'Any blockers I can help with?', b: 'All clear for now, thanks! I\'ll shout if anything comes up 🦉', ack: 'Good to hear. I\'m here if you need me! 🦅' },
+  { a: 'Great headway, everyone. Proud of you all! 🧭', b: 'Thanks, boss! They\'ve earned it. 🧭', a2: 'We\'re well over halfway. Brilliant effort! 🧭' },
 ];
 // v7.4: the Leader is never idle. In the stretches between meetings, check-ins and escalations, the eagle sends
 // communication rings out to OTHER teams and projects (just off-screen) and gets decisions and feedback back.
@@ -207,10 +214,10 @@ const OUTREACH_CAPS = [
 const OUT = { first: 1.2, gap: 3.6, out: 1.5, hold: 0.5, back: 1.2, bubble: 2.6 };
 const MANAGER_CHECKIN = [
   ['How\'s everyone going down there?', 'Hacking away! 🌿'],
-  ['Water break at the next clearing!', 'Yes please! 💧'],
+  ['Water break at the next clearing! 💧', 'Yes please! 💧', () => { S.water = { pending: true }; }],
   ['Great pace, team. Keep it up!', 'Cheers! 😊'],
   ['Watch your footing, it\'s slippery.', 'Thanks for the heads-up!'],
-  ['Path bends right past the big gum tree.', 'Got it, right at the gum! 🌳'],
+  ['Nice shady stretch of track coming up! 🌳', 'Ooh, lovely! 🌳'],
 ];
 const LONELY = ['Is anyone up there? 😕', 'Are we even going the right way?', 'Which way now? 🤔', 'Nobody tells us anything...'];
 const RECOGNITION = ['Great work, koalas! 🦅', 'Brilliant teamwork!', 'That\'s how it\'s done!', 'So proud of this team!'];
@@ -350,6 +357,7 @@ function reset() {
     idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [], capBy: {}, capShown: null, huddle: { on: false, done: false, t: 0, spk: -1, wrapT: -1, capLater: false },
     coachDone: false, breakDone: false, marks: new Set(['start']), chapter: 0, silent: false, quiet: false, tapT: 0, tapN: 0, finArgs: null, teachAt: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
+    todo: [], water: null, visit: null, vests: false, gifts: { logs: null, ropeDeal: false, ladderDeal: false, ropeTaken: false, visitQueued: false, ladder: false }, // v7.6
     busy: { idleT: 0, next: 0, n: 0, rings: [], marks: {}, bubble: null, cap: null, capI: 0, log: [], capLog: [] }, // v7.4: the Leader's outreach
     build: { on: false, t0: 0, c: [0, 0, 0, 0, 0, 0], wrongP: 0, wrongShow: false, pl: [0, 0, 0, 0, 0, 0, 0], doneK: [], rampL: -1, rampG: 0, ladder: 0,
       rollers: false, cap: null, capSet: false, solid: 0, stock: 0, shaped: 0, rejects: 0, skills: [], kp: null, kpOn: false, tgt: null, mt: null, mcarry: false, check: 0, climbR: null, downR: null, clearT: null },
@@ -363,6 +371,7 @@ function reset() {
 function stats() { const t = S.team; call('OnStats', t.wrong, t.surprises, t.distractions, t.priorities, t.reported, t.syncs, t.ideas); }
 function later(delay, fn) { S.events.push({ at: S.t + delay, fn }); }
 function whenFree(cond, fn) { S.pend.push({ cond, fn }); }
+function whenReady(cond, fn) { S.todo.push({ cond, fn }); } // v7.6: follow-ups that wait without holding up routine talk
 const mgFree = () => { const m = S.mgr; return m.ready && !m.dist && !m.meeting && !m.task && !m.busy; };
 // v5: captions queue instead of cutting each other off. Every caption stays up for at least CAP_MIN seconds;
 // a caption can also hold the bar (for seconds, or while a predicate is true), e.g. for the length of a meeting.
@@ -396,6 +405,8 @@ const CAP_RULES = [
   [/^Direction$/, null, 'LM'],
   [/^Planning$/, /koalas argue/, 'T'],
   [/^(Planning|Communication|Manager meeting|SUPPORT)$/, null, 'M'],
+  [/^LEADER SUPPORT$/, /safety gear the Leader said yes to/, 'LMT'], // v7.6
+  [/^SHARING$/, null, 'MT'], // v7.6: managers sharing resources, seen arriving with the team
   [/^LEADER SUPPORT$/, /supply drop/, 'LT', { T: 'Help from above: saws and safety gear float down through a gap in the canopy. 🪂' }],
   [/^(Meeting|Priorities|Focus|LEADER SUPPORT)$/, null, 'L'],
   [/^(Distraction|Refocus)$/, /Leader/, 'L'],
@@ -403,7 +414,7 @@ const CAP_RULES = [
   [/^COACHING$/, /struggling|Wattle cuts/, 'MT'],
   [/^COACHING$/, null, 'M'],
   [/^(DELEGATION|RECOGNITION)$/, null, 'MT'],
-  [/^WELLBEING$/, /owl calls|Nobody calls/, 'MT'],
+  [/^WELLBEING$/, /owl calls|Nobody calls|Water break/, 'MT'],
   [/^COURSE CORRECTION$/, /Credit flows/, 'LT'],
   [/^COURSE CORRECTION$/, null, 'L'],
   [/^SURPRISE$/, /report the surprise straight up/, 'TM', { M: 'The koalas report a surprise up to the Manager: the owl listens, then takes it up the chain.' }],
@@ -412,7 +423,7 @@ const CAP_RULES = [
   [/^No communication$/, /^The Manager spots/, 'M'],
   [/^No communication$/, /final product/, 'TL'],
   [/^No communication$/, /coach/, 'TM'],
-  [/^BUILD$/, /owl relays progress/, 'MLT', { T: 'Course 5 of 6: the koalas keep the blocks coming, one after another.', L: 'Progress comes up from the build: "Layer 4 done, two to go!" The Leader always knows where things stand.' }],
+  [/^BUILD$/, /owl relays progress/, 'MLT', { T: 'Layer 5 of 6: the koalas keep the blocks coming, one after another.', L: 'Progress comes up from the build: "Layer 4 done, two to go!" The Leader always knows where things stand.' }],
   [/^BUILD$/, /nobody up top knows/, 'TL'],
   [/^BUILD$/, /Leader's vision/, 'TL'],
   [/^BUILD$/, /No owl|nobody organising/i, 'TM'],
@@ -473,7 +484,7 @@ function bubble(who, text, dur = 3.2, priority = false) {
   showBubble(who, text, dur);
 }
 function showBubble(who, text, dur) {
-  if (TRACE) TRACE('bubble', who, text, who === 'visitor' && S.mgr.meeting ? S.mgr.meeting.def.label : null);
+  if (TRACE) TRACE('bubble', who, text, who === 'visitor' && (S.visit || S.mgr.meeting) ? (S.visit || S.mgr.meeting).def.label : null);
   S.bubbles = S.bubbles.filter(b => b.who !== who);
   S.bubbles.push({ who, text, t: 0, dur });
 }
@@ -489,7 +500,7 @@ function say(from, to, text, reply, onArrive) {
 function agentPos(who) {
   if (who === 'leader') return { x: S.leader.x + S.leader.ox, y: S.leader.y + S.leader.oy };
   if (who === 'manager') return { x: S.mgr.x + S.mgr.ox, y: S.mgr.y + S.mgr.oy };
-  if (who === 'visitor') return S.mgr.meeting ? mgrVisitorPos() : { x: -9999, y: 0 };
+  if (who === 'visitor') return S.visit ? visitPos() : S.mgr.meeting ? mgrVisitorPos() : { x: -9999, y: 0 };
   const B = S.build, Hd = S.huddle;
   if (Hd.on && Hd.spk >= 0 && S.kpos[Hd.spk]) { const K = S.kpos[Hd.spk]; return { x: K.x, y: K.y - 60 * K.s / KOALA_SCALE }; }
   if (B.on && B.kpOn) { const ax = B.kp.reduce((a, P) => a + P.x, 0) / 4, ay = B.kp.reduce((a, P) => a + P.y, 0) / 4; return { x: ax, y: ay - 62 }; }
@@ -521,7 +532,7 @@ function scheduleIntro() {
 function kickOffTeam() {
   mark('go');
   if (settings.comms) {
-    say('manager', 'team', 'Koalas: east to the build site! I\'ll warn you about hazards.', 'East it is! Tools out! 🐨💪', () => {
+    say('manager', 'team', 'Koalas, we\'re heading east to the build site! I\'ll warn you about hazards. 🧭', 'East it is! Tools out! 🐨💪', () => {
       S.team.mode = 'walk';
       caption('The koalas set off on the forest floor. Down here they can only see a few metres ahead.', 'Execution');
     });
@@ -567,8 +578,10 @@ function sequenceFor(o, informed) {
     case 'river': return informed ? [
       { dur: 0.6, mood: 'work', cap: 'The Manager spotted the river early, so the koalas know exactly what they need: logs for a bridge.' },
       { dur: 2.8, mood: '', phase: 'DELEGATION', cap: 'Delegation: the Manager hands Kip the lead on the bridge build. Growing people means trusting them with real responsibility.',
-        onStart: () => { S.team.lead = 0; kbadge(0, '⭐ Kip leads the build', 9); say('manager', 'team', 'Kip, you lead the bridge build! ⭐', 'Kip: On it! Follow me, team! 🌟'); } },
+        onStart: () => { S.team.lead = 0; kbadge(0, '⭐ Kip leads the build', 9); say('manager', 'team', 'Kip, would you like to lead the bridge build? ⭐', 'Kip: On it! Follow me, team! 🌟'); } },
       { dur: 4.2, gather: 'logs', cap: 'Gathering materials: Kip sends the koalas into the bush to pick up logs and carry them back to the bank.', say: 'Kip: Spread out, grab logs! 🪵' },
+      // v7.6: the Ops manager's spare logs go into the bridge too, so the build starts once they've landed
+      { dur: 0.4, mood: 'work', until: () => !settings.comms || (S.gifts.logs && S.gifts.logs.t > 1.3) || (S.mgrMeetings[0].done && !S.mgr.meeting) },
       { dur: 3.4, mood: 'work', prog: true, cap: 'Logs gathered, Kip directs the build and the bridge goes up.' },
     ] : [
       { dur: 1.0, mood: 'confused', cap: 'A river! Nobody saw it coming.', say: 'A river?! 😮', surprise: true },
@@ -617,7 +630,11 @@ function sequenceFor(o, informed) {
       { dur: 1.6, mood: 'walk', move: 90 },
       { dur: 4.0, mood: 'sneak', move: o.w + 90, cap: 'Lesson learned the hard way: they sneak past quietly.' },
     ];
-    case 'wall': return informed ? [
+    case 'wall': return informed && S.gifts.ladder ? [ // v7.6: Project Manager B kept their word
+      { dur: 0.8, mood: 'work', cap: 'Project Manager B kept their word: the promised ladder is waiting at the rock wall. 🪜', say: 'Thanks to Project Manager B\'s ladder! 🪜' },
+      { dur: 1.6, mood: 'work', cap: 'Kip has a good look at how it\'s lashed together. Handy to know for later!', onStart: () => kbadge(0, '🪜 Kip studies the lashing', 6) },
+      { dur: 2.2, mood: 'work', prog: true, cap: 'Sharing pays off: no poles to gather, so up the borrowed ladder they go!' },
+    ] : informed ? [
       { dur: 0.6, mood: 'work', cap: 'Warned about the rock wall, the koalas know they need a ladder.', say: 'Poles for a ladder! 🪜' },
       { dur: 4.0, gather: 'poles', cap: 'Gathering materials: the koalas collect straight poles from the bush to lash into a ladder.' },
       { dur: 2.2, mood: 'work', prog: true, cap: 'Ladder lashed together, and up it goes!' },
@@ -629,6 +646,117 @@ function sequenceFor(o, informed) {
     ];
   }
   return [];
+}
+
+// ---------- v7.6: promises that visibly happen ----------
+// The Manager's "Water break at the next clearing!" check-in: at the next stretch of clear track the koalas stop and drink.
+function waterBreakCheck() {
+  const tm = S.team;
+  if (S.build.on || tm.x > BUILD_X - 300) { S.water = null; return; }
+  if (!waterSpot(70)) return;
+  S.water.pending = false;
+  runSeq([
+    { dur: 0.7, mood: '', phase: 'WELLBEING', cap: 'Water break: rest and rehydrate keeps the team going 💧', capPrio: 2,
+      onStart: () => bubble('manager', 'Here\'s the clearing. Drink up, team! 💧', 2.4, true) },
+    { dur: 2.8, mood: 'drink', phase: 'WELLBEING', onStart: () => later(0.6, () => bubble('team', 'Ahh, that hits the spot! 💧', 2.4)) },
+    { dur: 0.4, mood: '', phase: 'WELLBEING', onStart: () => { tm.fresh = 1.6; } },
+  ], null, () => { S.water = null; });
+}
+function waterSpot(d) {
+  const tm = S.team, bush = S.pathBushes.find(b => !b.cut && !(b.shrub && S.idea.go) && b.x > tm.x - 10);
+  return tm.x < BUILD_X - 400 && clearAhead(d) && !(bush && bush.x - tm.x < 60) && !(tm.x > SHRUBS.x0 - 80 && tm.x < SHRUBS.x1 + 60);
+}
+function clearAhead(d) { const tm = S.team, n = S.obstacles.concat(S.surprises).filter(o => !o.done && o.x > tm.x).sort((a, b) => a.x - b.x)[0]; return !n || n.x - tm.x > d; }
+// Lines in a manager meeting that commit to something (comms ON only: with comms OFF the Manager can't commit).
+function mmLine(M, i) {
+  if (!settings.comms) return;
+  const d = M.def, G = S.gifts;
+  if (d.ob === 'river' && i === 2) { // "Done." The Ops manager's spare logs drop by the river
+    const v = mgrVisitorPos(), r = ob('river');
+    G.logs = { t: 0, x: r.x - 24, fx: v.x, fy: v.y, p0: r.prog, fade: 0 }; sfx('flap');
+    later(1.2, () => caption('Managers sharing resources: the Ops team\'s spare logs land by the river, and the koalas build them into the bridge. 🪵', 'SHARING', { force: true, hold: 2.6 }));
+    later(1.5, () => bubble('team', 'Kip: Spare logs from the Ops team? Thanks! 🪵', 2.6));
+  }
+  if (d.ob === 'cliff' && i === 1) G.ropeDeal = true;
+  if (d.ob === 'cliff' && i === 3) G.ladderDeal = true;
+}
+// Project Manager B comes back for the shared rope once the koalas are down the cliff, and leaves the ladder at the wall.
+function ropeVisitCheck() {
+  const G = S.gifts;
+  if (!settings.comms || !G.ropeDeal || G.visitQueued || !ob('cliff').done || S.mgr.meeting) return;
+  G.visitQueued = true;
+  whenReady(() => mgFree() && !S.pulses.length && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager') && !(S.team.seqOb && S.team.seqOb.isSurprise) && !S.surprises.some(o => o.active && !o.done), () => {
+    S.visit = { def: S.mgrMeetings.find(m => m.ob === 'cliff'), phase: 'in', t: 0, said: 0 }; sfx('hoot', { visitor: true });
+  });
+}
+const VISIT_PH = { in: 1.8, talk: 5.4, out: 1.8 };
+function updateVisit(dt) {
+  const V = S.visit, G = S.gifts; V.t += dt;
+  if (V.phase === 'talk') {
+    if (V.said === 0 && V.t >= 0.2) { V.said = 1; bubble('team', 'Kip: Here\'s our rope, all yours! 🪢', 2.4); }
+    if (V.said === 1 && V.t >= 1.5) { V.said = 2; G.ropeTaken = true; sfx('chirp'); }
+    if (V.said === 2 && V.t >= 1.7) { V.said = 3; bubble('visitor', 'Got the rope, thanks! 🪢 Your ladder\'s waiting at the rock wall. 🪜', 2.6); }
+    if (V.said === 3 && V.t >= 3.4) { V.said = 4; bubble('manager', 'You\'re a legend, thanks! 🤝', 2.4); }
+  }
+  if (V.t >= VISIT_PH[V.phase]) {
+    V.t = 0;
+    if (V.phase === 'in') V.phase = 'talk';
+    else if (V.phase === 'talk') {
+      V.phase = 'out';
+      if (G.ladderDeal) { G.ladder = true; caption('Managers keep their promises: Project Manager B collects the shared rope and leaves a ladder at the rock wall. 🪜', 'SHARING', { prio: 2 }); }
+    } else S.visit = null;
+  }
+}
+function visitPos() {
+  const V = S.visit, bx = S.mgr.x + S.mgr.ox + 190, by = MANAGER_Y + 70 + Math.sin(S.t * 2.4) * 4; // beside the Manager, above the koalas
+  const p = Math.min(1, V.t / VISIT_PH[V.phase]), q = ease(p);
+  if (V.phase === 'in') return { x: bx + (1 - q) * 520, y: by - (1 - q) * (1 - q) * 260 };
+  if (V.phase === 'out') return { x: bx + q * 900, y: by - q * q * 240 };
+  return { x: bx, y: by };
+}
+function drawVisit() {
+  const V = S.visit; if (!V) return;
+  const v = visitPos(), x = v.x - camX, y = v.y, d = V.def;
+  if (x < -80 || x > viewW + 80) return;
+  if (V.phase === 'talk' && !S.gifts.ropeTaken && V.t > 0.5) { // the koalas pass the coiled rope up to Project Manager B
+    const tp = agentPos('team'), q = ease(clamp((V.t - 0.5) / 1.0, 0, 1));
+    drawItem('vines', lerp(tp.x - camX, x - 2, q), lerp(tp.y + 30, y + 26, q) - Math.sin(Math.PI * q) * 30, 0.9);
+  }
+  if (S.gifts.ropeTaken) drawItem('vines', x - 2, y + 26, 0.9);
+  if (V.phase === 'out' && S.gifts.ladderDeal) drawItem('poles', x + 4, y + 30, 0.9);
+  drawOwlShape(x, y, d.body, d.wing, d.belly, V.phase === 'talk' ? 8 : 14);
+  tag(x, y + 34 + (S.gifts.ropeTaken ? 14 : 0), d.label, d.belly);
+}
+// The Ops logs: they arc down from the visiting owl, land in a pile by the river and get used up as the bridge goes in.
+function drawGiftLogs() {
+  const L = S.gifts.logs; if (!L) return;
+  const r = ob('river'), gy = groundBase(L.x) - 4;
+  const left = r.prog >= 1 ? 0 : Math.ceil(3 * clamp((1 - r.prog) / Math.max(0.05, 1 - L.p0), 0, 1));
+  const a = r.prog >= 1 ? Math.max(0, 1 - L.fade / 3) : 1;
+  if (a <= 0) return;
+  const x = L.x - camX; if (x < -120 || x > viewW + 120) return;
+  ctx.save(); ctx.globalAlpha = a;
+  if (L.t < 1.1) { // falling
+    const q = ease(L.t / 1.1);
+    for (let k = 0; k < 3; k++) drawItem('logs', lerp(L.fx - camX, x + (k - 1) * 20, q), lerp(L.fy + 20, gy - (k === 2 ? 9 : 0), q) - Math.sin(Math.PI * q) * 40, 1.4);
+  } else {
+    for (let k = 0; k < left; k++) drawItem('logs', x + (k === 2 ? 0 : (k - 0.5) * 20), gy - (k === 2 ? 9 : 0), 1.4);
+    tag(x, gy - 30, left > 0 ? '🤝 SPARE LOGS FROM THE OPS TEAM' : '🤝 OPS LOGS: IN THE BRIDGE ✅', '#d3f0e8');
+  }
+  ctx.restore();
+}
+// Leader meeting follow-through: what the Leader said yes to reaches the team.
+function meetingFollowUp(d) {
+  const idx = S.meetings.indexOf(d);
+  const free = () => mgFree() && !S.pulses.length && !S.leader.meeting && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager') && S.team.mode === 'walk' && clearAhead(300);
+  if (idx === 0) whenReady(free, () => say('leader', 'manager', 'Safety gear for the koalas: approved! 🦺 It\'s on its way.', 'Brilliant, thanks boss! 🦺', () => {
+    if (!settings.comms) { later(1.2, () => bubble('manager', '(...keeps it to themselves 🤐)', 2.4)); return; }
+    later(1.4, () => say('manager', 'team', 'New safety vests for everyone, from the boss! 🦺', 'Ooh, safety first! Thanks! 🦺', () => {
+      S.vests = true; kbadge(2, '🦺 New safety vests', 4.5, '#ffcc80');
+      caption('Leaders back the team: the safety gear the Leader said yes to reaches the koalas, and on go the new hi-vis vests. 🦺', 'LEADER SUPPORT', { prio: 2 });
+    }));
+  }));
+  if (idx === 1) whenReady(free, () => say('leader', 'manager', 'Here\'s Product\'s better map for you! 🗺️', 'Thanks! That makes scouting much easier. 🗺️'));
 }
 
 function runSeq(steps, obstacle, onDone = null) {
@@ -686,6 +814,7 @@ function updateSeq(dt) {
 function obstacleCleared(o) {
   const tm = S.team;
   o.done = true; o.prog = 1; o.active = false;
+  if (o.type === 'cliff') later(1.0, ropeVisitCheck); // v7.6
   const days = Math.max(1, Math.round((S.t - tm.seqStart) / SEC_PER_DAY));
   const Name = o.name[0].toUpperCase() + o.name.slice(1);
   if (o.isSurprise) {
@@ -719,6 +848,7 @@ function update(dt) {
   S.t += dt;
   for (const e of S.events.slice()) if (S.t >= e.at) { S.events.splice(S.events.indexOf(e), 1); e.fn(); }
   for (const w of S.pend.slice()) if (w.cond()) { S.pend.splice(S.pend.indexOf(w), 1); w.fn(); }
+  for (const w of S.todo.slice()) if (w.cond()) { S.todo.splice(S.todo.indexOf(w), 1); w.fn(); }
   pumpCaptions();
   const tm = S.team, mg = S.mgr, ld = S.leader;
   tm.cheer = Math.max(0, tm.cheer - dt);
@@ -738,6 +868,9 @@ function update(dt) {
   tm.moved = tm.lastX != null && Math.abs(tm.x - tm.lastX) > 1e-4; tm.lastX = tm.x; tm.stillT = tm.moved ? 0 : (tm.stillT || 0) + dt; // v7.1: walk cycles only when actually moving
   if (S.huddle.on) updateHuddle(dt);
   if (tm.mode === 'walk' && !S.breakDone && tm.x >= BREAK_X && !S.finished && (!settings.comms || mgFree())) startBreak();
+  if (tm.mode === 'walk' && S.water && S.water.pending && !S.finished && !S.huddle.on && mgFree() && !S.pulses.length && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager')) waterBreakCheck();
+  if (S.visit) updateVisit(dt);
+  if (S.gifts.logs) { const L = S.gifts.logs; L.t += dt; if (L.t >= 1.1 && !L.landed) { L.landed = true; sfx('thud'); } if (ob('river').prog >= 1) L.fade += dt * 0.8; }
   if (tm.mode === 'walk') {
     const next = S.obstacles.concat(S.surprises).filter(o => !o.done).sort((a, b) => a.x - b.x)[0];
     const spd = (settings.comms ? WALK_SPEED_INFORMED : WALK_SPEED_UNINFORMED) * (tm.tired ? 0.68 : 1);
@@ -828,15 +961,29 @@ function update(dt) {
 
   // --- routine communication ---
   if (mg.ready && !S.finished && !S.build.on) {
-    if (S.t > S.nextLeaderTalk && !ld.dist && !ld.meeting && mgFree() && !S.waiters.length && !S.pend.length && !(tm.seqOb && tm.seqOb.isSurprise)) {
+    // v7.6: one conversation at a time, so every reply comes straight after its question
+    const mgQuiet = !S.pulses.length && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager') && !S.visit;
+    if (S.t > S.nextLeaderTalk && !ld.dist && !ld.meeting && mgFree() && mgQuiet && !S.queue.leader.length && !S.bubbles.some(b => b.who === 'leader') && !S.waiters.length && !S.pend.length && !(tm.seqOb && tm.seqOb.isSurprise)) {
       S.nextLeaderTalk = S.t + 19;
-      const [a, b] = pick(LEADER_TALK, S.leaderTalkI++);
+      const n = S.leaderTalkI++, T = pick(LEADER_TALK, n), two = Math.floor(n / LEADER_TALK.length) % 2 === 1;
+      const a = two && T.a2 || T.a, b = two && T.b2 || T.b, relay = two && T.relay2 || T.relay;
       ld.beam = 'goal'; ld.beamT = 2.4;
-      say('leader', 'manager', a, b);
+      say('leader', 'manager', a, b, () => {
+        if (T.ack) later(1.4, () => bubble('leader', T.ack, 2.6));
+        if (relay) later(1.6, () => { if (settings.comms) say('manager', 'team', relay[0], relay[1]); else bubble('manager', '(...keeps it to themselves 🤐)', 2.4); });
+      });
     }
-    if (S.t > S.nextCheckin && mgFree() && tm.mode !== 'seq' && !tm.tired && !S.pend.length) {
+    else if (S.t > S.nextCheckin && mgFree() && mgQuiet && !S.queue.team.length && tm.mode !== 'seq' && !tm.tired && !S.pend.length && !S.water) {
       S.nextCheckin = S.t + 21;
-      if (settings.comms) { const [a, b] = pick(MANAGER_CHECKIN, S.checkinI++); say('manager', 'team', a, b); }
+      if (settings.comms) {
+        // v7.6: only promise a water break where there's a clearing coming up (otherwise it's owed for a later check-in)
+        const W = MANAGER_CHECKIN.find(c => c[2]);
+        let [a, b, then] = S.waterOwed && waterSpot(110) ? (S.waterOwed = false, S.checkinI--, W) : pick(MANAGER_CHECKIN, S.checkinI);
+        S.checkinI++;
+        if (then && S.breakDone) { a = 'Nearly at the build site, team! 🔺'; b = 'Woohoo, nearly there! 🐨'; then = null; S.waterOwed = false; }
+        else if (then && !waterSpot(110)) { S.waterOwed = true; [a, b, then] = pick(MANAGER_CHECKIN, S.checkinI++); }
+        say('manager', 'team', a, b, then);
+      }
       else bubble('team', pick(LONELY, S.checkinI++), 2.6);
     }
   }
@@ -978,7 +1125,7 @@ function spot(o) {
       log: ['Big log ahead: there\'s a hollow you can crawl through!', 'Ooh, a tunnel! 🐨'],
       cliff: ['Cliff ahead: braid a rope and climb down at the marked spot!', 'Vine rope it is! 🪢'],
       bees: ['Bees\' nest ahead: tiptoe quietly!', '(whispering) Okay... 🤫'],
-      wall: ['Rock wall ahead: gather poles for a ladder!', 'Poles it is! 🪜'],
+      wall: S.gifts.ladder ? ['Rock wall ahead: Project Manager B\'s ladder is waiting for you there! 🪜', 'A ladder, ready to go? Yay! 🪜'] : ['Rock wall ahead: gather poles for a ladder!', 'Poles it is! 🪜'],
     }[o.type];
     later(0.8, () => say('manager', 'team', '📻 ' + advice[0], advice[1], () => { o.informed = true; }));
   } else {
@@ -1208,8 +1355,8 @@ function buildSeq(on) {
       return [{ x: GOAL_X + cHalf(1) - 12, y: cTop(0), face: -1 }, at(0.25), at(0.55), at(0.85)]; },
   });
   const ladderStep = (dur, cap) => ({
-    dur, b: 'ladder', mood: 'work', phase: 'BUILD', cap, say: on ? 'Ladder, like at the rock wall! 🪜' : 'A ladder... like the wobbly one? 🪜', until: () => !S.leader.meeting,
-    onStart: () => skill('🪜', 'Ladder', 'the rock wall'),
+    dur, b: 'ladder', mood: 'work', phase: 'BUILD', cap, say: on ? (S.gifts.ladder ? 'A ladder, just like Project Manager B\'s! 🪜' : 'Ladder, like at the rock wall! 🪜') : 'A ladder... like the wobbly one? 🪜', until: () => !S.leader.meeting,
+    onStart: () => skill('🪜', 'Ladder', S.gifts.ladder ? 'Project Manager B\'s ladder at the rock wall' : 'the rock wall'),
     tick: p => { B.ladder = Math.max(B.ladder, ease(p)); B.mcarry = false; },
     st: () => { const T = stations(4, 1); T[3] = { x: LADDER.b[0] - 8, y: LADDER.b[1], face: 1 }; return T; },
   });
@@ -1251,12 +1398,12 @@ function buildSeq(on) {
   });
   if (on) return [
     { dur: 3.4, b: 'arrive', mood: '', phase: 'BUILD', cap: 'The build site, right under the Leader\'s vision. That golden blueprint is the goal: now the koalas will build the real pyramid themselves.',
-      onStart: () => { bubble('leader', 'There it stands, in the vision. Let\'s build it! 🔺', 3, true); later(1.1, () => say('manager', 'team', 'I\'ll organise the build: stones first, then course by course. 📋', 'Let\'s build! 🐨🔨')); } },
+      onStart: () => { bubble('leader', 'There it stands, in the vision. Let\'s build it! 🔺', 3, true); later(1.1, () => say('manager', 'team', 'I\'ll organise the build: stones first, then layer by layer. 📋', 'Let\'s build! 🐨🔨')); } },
     { dur: 4.6, b: 'gather', gather: 'stones', phase: 'BUILD', cap: 'Skill from the journey: gathering materials. Just like at the river, the bog and the cliff, the koalas fan out and bring back stone.',
       onStart: () => skill('🧺', 'Gathering materials', 'river, bog, cliff and wall'), tick: p => { B.stock = Math.max(B.stock, [0, 1, 2, 3].filter(i => gatherPose(i, p, {}).delivered).length * 2); } },
     { dur: 4.4, b: 'shape', mood: 'chisel', phase: 'BUILD', cap: 'Remember the boulder? The hammer-and-chisel training pays off: the koalas shape rough stone into neat, same-sized blocks.', say: 'Tap... tap... a perfect block! 🔨',
       onStart: () => { B.kpOn = true; B.stock = 8; skill('🔨', 'Hammer & chisel', 'the boulder training'); }, tick: p => { B.shaped = Math.max(B.shaped, p); }, st: shapeSpots },
-    course(0, 4.6, { cap: 'Course 1 of 6: block by block, the first layer goes down on the forest floor.',
+    course(0, 4.6, { cap: 'Layer 1 of 6: block by block, the base goes down on the forest floor.',
       onStart: () => later(1.4, () => { caption('Good managers support the work, they don\'t take it over: the owl rolls up its sleeves and brings stone to wherever it\'s needed.', 'SUPPORT', { hold: 3.4 }); bubble('manager', 'Next stone, coming through! 🪨', 2.4); }) }),
     rampStep(3.0, 'To build higher they need a ramp: planks laid end to end, just like the sinkhole crossing.', 'Planks, like at the sinkhole! 🪵'),
     course(1, 4.6, { ramp: [0, 0], phase: 'DELEGATION', cap: 'Delegation again: the owl hands Kip the lead on a section of the build, just like the bridge.',
@@ -1268,10 +1415,10 @@ function buildSeq(on) {
         later(1.6, () => { B.rollers = true; kbadge(1, '💡 Banjo: log rollers', 4.5, '#b3e5fc'); skill('💡', 'Log rollers', 'Banjo\'s idea, logs like the bridge'); }); } },
     course(3, 5.0, { ramp: [1, 2], rope: true, cap: 'Ropes, like at the cliff: Wattle hauls each block up the ramp on Banjo\'s rollers, and Kip sets it in place.',
       onStart: () => skill('🪢', 'Ropes', 'the cliff') }),
-    course(4, 5.0, { ramp: [2, 3], rope: true, cap: 'Course 5 of 6. The owl relays progress up: the Leader always knows where the build is.',
+    course(4, 5.0, { ramp: [2, 3], rope: true, cap: 'Layer 5 of 6. The owl relays progress up: the Leader always knows where the build is.',
       onStart: () => { say('manager', 'leader', 'Layer 4 done, two to go! 🔺', 'So proud of this team! 🦅'); later(1.2, () => { if (!S.leader.meeting) startMeeting(S.meetings[3]); }); } }),
-    ladderStep(2.6, 'For the very top they lash a ladder, a skill from the rock wall.'),
-    course(5, 4.4, { cap: 'The sixth and final course, passed up the ladder block by block.' }),
+    ladderStep(2.6, S.gifts.ladder ? 'For the very top they lash their own ladder, copying the one Project Manager B lent them at the rock wall.' : 'For the very top they lash a ladder, a skill from the rock wall.'),
+    course(5, 4.4, { cap: 'The sixth and final layer, passed up the ladder block by block.' }),
     capFlow(3.6, 'The golden capstone travels up the line, passed from paw to paw.'),
     climb(3.4, 'All four koalas climb to the top: this last stone goes on together.'),
     capLift(3.0, 'Together, all four lift the capstone and set it on top...'),
@@ -1285,20 +1432,20 @@ function buildSeq(on) {
       onStart: () => skill('🧺', 'Gathering materials', 'river, bog, cliff and wall'), tick: p => { B.stock = Math.max(B.stock, [0, 1, 2, 3].filter(i => gatherPose(i, p, { lost: true }).delivered).length * 2); } },
     { dur: 6.0, b: 'shape', mood: 'chisel', phase: 'BUILD', cap: 'Nobody says what size: the blocks come out all different shapes, and some have to be thrown away.', say: 'Is this one too big? 😕',
       onStart: () => { B.kpOn = true; B.stock = 8; skill('🔨', 'Hammer & chisel', 'the boulder'); }, tick: p => { B.shaped = Math.max(B.shaped, p); B.rejects = Math.max(B.rejects, Math.floor(p * 5)); }, st: shapeSpots },
-    course(0, 6.0, { cap: 'Course 1, a bit wonky. No owl is bringing stone, so every block is a long walk.' }),
+    course(0, 6.0, { cap: 'Layer 1, a bit wonky. No owl is bringing stone, so every block is a long walk.' }),
     rampStep(4.0, 'They remember the planks from the sinkhole and rig a wobbly ramp.', 'Planks... like at the sinkhole?'),
-    course(1, 6.0, { ramp: [0, 0], cap: 'Course 2. With nobody organising the build, they keep bumping into each other on the ramp.', say: 'Oof! Sorry! 😬' }),
-    course(2, 6.0, { ramp: [0, 1], wide: true, cap: 'Without the vision, they build course 3 straight up, as wide as the course below...' }),
+    course(1, 6.0, { ramp: [0, 0], cap: 'Layer 2. With nobody organising the build, they keep bumping into each other on the ramp.', say: 'Oof! Sorry! 😬' }),
+    course(2, 6.0, { ramp: [0, 1], wide: true, cap: 'Without the vision, they build layer 3 straight up, as wide as the layer below...' }),
     { dur: 3.4, b: 'hold', mood: 'confused', phase: 'REDO', wrong: true, st: holdStations, cap: 'Wait... was it meant to be pointy? The vision never reached the koalas, so the shape is wrong.', say: 'Wait, was it meant to be pointy?! 😳',
       onStart: () => { B.wrongShow = true; sfx('sting'); stats(); } },
-    course(2, 4.4, { ramp: [1, 1], tear: true, wide: false, phase: 'REDO', cap: 'They tear the whole course down and start it again. Days of work, lost.', say: 'Take it all down... 😩' }),
-    course(2, 6.0, { ramp: [1, 1], phase: 'REDO', cap: 'Second try: course 3, stepped in this time.', onStart: () => { B.wrongShow = false; B.wrongP = 0; } }),
+    course(2, 4.4, { ramp: [1, 1], tear: true, wide: false, phase: 'REDO', cap: 'They tear the whole layer down and start it again. Days of work, lost.', say: 'Take it all down... 😩' }),
+    course(2, 6.0, { ramp: [1, 1], phase: 'REDO', cap: 'Second try: layer 3, stepped in this time.', onStart: () => { B.wrongShow = false; B.wrongP = 0; } }),
     course(3, 7.0, { ramp: [1, 2], rope: true, cap: 'Rope from the cliff, but no rollers: Banjo\'s idea never gets passed on, so every block is dragged up the ramp.',
       onStart: () => { skill('🪢', 'Ropes', 'the cliff'); bubble('team', 'Banjo: Rollers might help? ...never mind. 😕', 2.6); } }),
-    course(4, 7.0, { ramp: [2, 3], rope: true, cap: 'Course 5. Slow, heavy going, and nobody up top knows how far along they are.',
+    course(4, 7.0, { ramp: [2, 3], rope: true, cap: 'Layer 5. Slow, heavy going, and nobody up top knows how far along they are.',
       onStart: () => later(1.2, () => { if (!S.leader.meeting) startMeeting(S.meetings[3]); }) }),
     ladderStep(3.2, 'They lash a ladder for the top, a skill learned the hard way at the rock wall.'),
-    course(5, 6.0, { cap: 'The sixth and final course.' }),
+    course(5, 6.0, { cap: 'The sixth and final layer.' }),
     capFlow(4.2, 'The capstone goes up the line, slowly.'),
     climb(3.8, 'All four koalas climb to the top.'),
     capLift(3.4, 'Together they lift the capstone and set it on top...'),
@@ -1492,7 +1639,8 @@ function updateMgrMeeting(dt) {
   const M = S.mgr.meeting; if (!M) return;
   M.t += dt;
   if (M.phase === 'talk') {
-    while (M.li < M.def.lines.length && M.t >= M.li * MM_LINE_GAP) { const [w, txt] = M.def.lines[M.li++]; bubble(w, txt, 2.3); }
+    const L = settings.comms || !M.def.offLines ? M.def.lines : M.def.offLines;
+    while (M.li < L.length && M.t >= M.li * MM_LINE_GAP) { const [w, txt] = L[M.li++]; bubble(w, txt, 2.3); mmLine(M, M.li - 1); }
   }
   if (M.t >= MM_PHASES[M.phase]) {
     M.t = 0;
@@ -1502,7 +1650,7 @@ function updateMgrMeeting(dt) {
       S.team.syncs++; stats();
       S.mgr.focusT = 2.0;
       caption('The visiting owl flies off, and the Manager refocuses on the koalas. 🐨', 'Refocus');
-    } else S.mgr.meeting = null;
+    } else { S.mgr.meeting = null; ropeVisitCheck(); }
   }
 }
 function mgrVisitorPos() {
@@ -1551,7 +1699,7 @@ function updateMeeting(dt) {
       caption(d.capLeave || 'The visiting eagles fly off. The Leader keeps the beam on the vision and the team keeps going. 🔺', 'Focus');
     } else {
       S.leader.meeting = null;
-      bubble('leader', 'Keep it going. Eyes on the vision. 🔺', 2.4);
+      bubble('leader', 'Onwards, everyone. Eyes on the vision! 🔺', 2.4); meetingFollowUp(d);
     }
   }
 }
@@ -1847,8 +1995,8 @@ function drawCliff() {
     ctx.fillStyle = '#ffcc33'; ctx.beginPath(); ctx.moveTo(x - 52, GROUND - 52); ctx.lineTo(x - 38, GROUND - 30); ctx.lineTo(x - 66, GROUND - 30); ctx.closePath(); ctx.fill();
     ctx.fillStyle = '#222'; ctx.font = 'bold 13px sans-serif'; ctx.fillText('!', x - 54, GROUND - 33);
   }
-  // rope
-  if (c.prog > 0) {
+  // rope (v7.6: Project Manager B takes it away once it has been shared)
+  if (c.prog > 0 && !S.gifts.ropeTaken) {
     ctx.fillStyle = '#5a3a1a'; ctx.fillRect(x - 14, GROUND - 16, 5, 18);
     ctx.strokeStyle = '#e0c38a'; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.moveTo(x - 12, GROUND - 14);
@@ -2038,7 +2186,7 @@ function drawOutreach() {
 const BUBBLE_VIEW = { all: null, leader: ['leader'], manager: ['manager', 'visitor'], team: ['team'] };
 function drawBubbles() {
   const cols = { leader: ['#fff7d6', '#b08a00'], manager: ['#f3e8ff', '#7b3fb0'], team: ['#e3f6ff', '#1f6f9f'],
-    visitor: S.mgr.meeting ? [S.mgr.meeting.def.belly, S.mgr.meeting.def.body] : ['#eee', '#777'] };
+    visitor: S.visit ? [S.visit.def.belly, S.visit.def.body] : S.mgr.meeting ? [S.mgr.meeting.def.belly, S.mgr.meeting.def.body] : ['#eee', '#777'] };
   ctx.font = '600 13px system-ui, sans-serif';
   const only = BUBBLE_VIEW[settings.view]; // v7.2: each perspective shows only that role's dialogue
   const ob = S.busy.bubble, list = ob && !S.leader.meeting && !S.bubbles.some(b => b.who === 'leader') ? S.bubbles.concat([ob]) : S.bubbles; // v7.4
@@ -2121,6 +2269,7 @@ function focusPoints(v) {
     const M = S.mgr, mx = M.x + M.ox, my = M.y + M.oy;
     pts.push([mx - 34, my - 34], [mx + 34, my + 30]);
     if (M.meeting && M.meeting.phase === 'talk') { const q = mgrVisitorPos(); pts.push([q.x - 34, q.y - 34], [q.x + 34, q.y + 30]); }
+    if (S.visit && S.visit.phase === 'talk') { const q = visitPos(); pts.push([q.x - 34, q.y - 34], [q.x + 34, q.y + 30]); } // v7.6
   }
   return pts;
 }
@@ -2555,15 +2704,17 @@ function drawWall() {
   ctx.strokeStyle = '#64544a'; ctx.lineWidth = 2;
   for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(x + 8 + k * 9, LOW_GROUND - 10 - k * 18); ctx.lineTo(x + w.w + 70, LOW_GROUND - 14 - k * 18); ctx.stroke(); }
   ctx.fillStyle = '#5f9a3a'; ctx.beginPath(); ctx.ellipse(x + w.w + 30, GROUND, 40, 5, 0, 0, 7); ctx.fill();
-  if (w.prog > 0) {
+  const lp = S.gifts.ladder ? 1 : w.prog; // v7.6: Project Manager B's ladder stands ready against the wall
+  if (lp > 0) {
     const bx = x - 16, byy = LOW_GROUND - 2, tx = x + w.w + 4, ty = GROUND - 8;
-    const L = Math.hypot(tx - bx, byy - ty), th = Math.atan2(byy - ty, tx - bx) * w.prog;
+    const L = Math.hypot(tx - bx, byy - ty), th = Math.atan2(byy - ty, tx - bx) * lp;
     const ex = bx + L * Math.cos(th), ey = byy - L * Math.sin(th);
     const nx = -Math.sin(th) * 5, ny = -Math.cos(th) * 5;
     ctx.strokeStyle = '#c08a4a'; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(bx + nx, byy + ny); ctx.lineTo(ex + nx, ey + ny); ctx.moveTo(bx - nx, byy - ny); ctx.lineTo(ex - nx, ey - ny); ctx.stroke();
     ctx.lineWidth = 2;
     for (let s = 0.1; s < 1; s += 0.12) { const px = lerp(bx, ex, s), py = lerp(byy, ey, s); ctx.beginPath(); ctx.moveTo(px + nx, py + ny); ctx.lineTo(px - nx, py - ny); ctx.stroke(); }
+    if (S.gifts.ladder && !w.done) tag(x - 30, LOW_GROUND - 112, '🪜 FROM PROJECT MANAGER B', '#ffe3c4');
   }
 }
 
@@ -2885,6 +3036,11 @@ function drawKoala(x, y, s, col, swing, mood, i, flip = false, carry = null, ex 
   // body + belly
   ctx.fillStyle = '#9aa1a8'; ctx.beginPath(); ctx.ellipse(0, -15, 12, 14, 0, 0, 7); ctx.fill();
   ctx.fillStyle = '#e8e8e8'; ctx.beginPath(); ctx.ellipse(2.5, -13, 7, 9, 0, 0, 7); ctx.fill();
+  if (S.vests) { // v7.6: hi-vis safety vest panels with a reflective stripe
+    ctx.save(); ctx.beginPath(); ctx.ellipse(0, -15, 12, 14, 0, 0, 7); ctx.clip();
+    ctx.fillStyle = '#ff9800'; ctx.fillRect(-12, -26, 8.5, 20); ctx.fillRect(7.5, -26, 6, 20);
+    ctx.fillStyle = '#eceff1'; ctx.fillRect(-12, -15, 8.5, 2.6); ctx.fillRect(7.5, -15, 6, 2.6); ctx.restore();
+  }
   // scarf / bandana neck
   if (i % 2 === 1) { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(-8, -27); ctx.lineTo(10, -27); ctx.lineTo(2, -19); ctx.closePath(); ctx.fill(); }
   if (ex.leaf) { // "Koala of the week": a gum leaf pinned on the chest
@@ -2912,7 +3068,7 @@ function drawKoala(x, y, s, col, swing, mood, i, flip = false, carry = null, ex 
   }
   // eyes
   ctx.fillStyle = '#1d1d1d';
-  if (mood === 'happy' || mood === 'rest') { ctx.strokeStyle = '#1d1d1d'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(-1, -36, 2, Math.PI, 0); ctx.arc(8, -36, 2, Math.PI, 0); ctx.stroke(); }
+  if (mood === 'happy' || mood === 'rest' || mood === 'drink') { ctx.strokeStyle = '#1d1d1d'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(-1, -36, 2, Math.PI, 0); ctx.arc(8, -36, 2, Math.PI, 0); ctx.stroke(); }
   else if (ex.tired || mood === 'struggle') { ctx.strokeStyle = '#1d1d1d'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(-3.5, -36); ctx.lineTo(1.5, -36.5); ctx.moveTo(5.5, -36.5); ctx.lineTo(10.5, -36); ctx.stroke(); }
   else { ctx.beginPath(); ctx.arc(-1, -37, 1.7, 0, 7); ctx.arc(8, -37, 1.7, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-0.5, -37.6, 0.6, 0, 7); ctx.arc(8.5, -37.6, 0.6, 0, 7); ctx.fill(); }
   // big black nose
@@ -2934,6 +3090,7 @@ function drawKoala(x, y, s, col, swing, mood, i, flip = false, carry = null, ex 
   else if (mood === 'stuck') a = Math.sin(t * 18 + i) * 1.1 - 0.4;
   else if (mood === 'struggle') a = -0.5 + Math.sin(t * 24) * 0.12; // saw jammed, arm trembling
   else if (mood === 'rest') a = i % 2 ? -1.3 + Math.sin(t * 2 + i) * 0.25 : -1.7 + Math.max(0, Math.sin(t * 1.6 + i)) * 0.6; // munching / drinking
+  else if (mood === 'drink') a = -1.75 + Math.max(0, Math.sin(t * 1.8 + i * 1.3)) * 0.55; // v7.6: water break
   else if (mood === 'sneak') a = -2.2;
   else if (mood === 'carry') a = -0.2;
   else if (mood === 'learn') a = 0.5 + Math.sin(t * 3 + i) * 0.15;
@@ -2943,6 +3100,7 @@ function drawKoala(x, y, s, col, swing, mood, i, flip = false, carry = null, ex 
   const sx = 5, sy = -22, len = mood === 'sneak' ? 7 : 9;
   const hx = sx + Math.cos(a) * len, hy = sy + Math.sin(a) * len;
   if (mood === 'carry' && carry) drawItem(carry, 13, -15, 1.0);
+  if (mood === 'drink') { ctx.save(); ctx.translate(hx, hy); ctx.rotate(a + 1.2); ctx.fillStyle = '#4fc3f7'; rr(-2.5, -9, 5, 12, 2); ctx.fill(); ctx.fillStyle = '#0277bd'; ctx.fillRect(-2, -11, 4, 2.5); ctx.restore(); }
   if (mood === 'rest') { // water bottle (hard hats) or a eucalyptus leaf snack (bandanas)
     ctx.save(); ctx.translate(hx, hy);
     if (i % 2) { ctx.fillStyle = '#7cb342'; ctx.beginPath(); ctx.ellipse(2, -3, 3, 7, 0.5, 0, 7); ctx.fill(); }
@@ -3171,6 +3329,7 @@ function render() {
   // so no leaves, trunks or light shafts ever cut across it.
   const site = S.build.on;
   if (!site) drawTeam();
+  if (!site) drawGiftLogs();
   drawSurpriseMarkers();
   drawBees(true);
   drawRiver(true);
@@ -3184,6 +3343,7 @@ function render() {
   drawDrop('gap');
   if (!site) drawManager();
   drawMgrMeeting();
+  drawVisit();
   drawCanopy();
   // The build site, in front of the canopy behind it: pyramid (courses, casing, cap, ramp, ladder, pile), then the koalas
   // and the gear they're carrying, then the owl helping out. The vision outline goes on top, like a blueprint overlay.
