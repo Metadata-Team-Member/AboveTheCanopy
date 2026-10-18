@@ -325,7 +325,7 @@ function reset() {
     leader: { x: START_X + 260, y: LEADER_Y, beam: null, beamT: 0, ox: 0, oy: 0, rot: 0, dist: null, meeting: null },
     bubbles: [], queue: { leader: [], manager: [], team: [], visitor: [] }, pulses: [], events: [], particles: [],
     caption: '', phase: '', capT: 0, cap: null, capQ: [], pend: [], finished: false, introCam: 'team', selected: null, hover: -1,
-    idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [], huddle: { on: false, done: false, t: 0, spk: -1, wrapT: -1, capLater: false },
+    idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [], capBy: {}, capShown: null, huddle: { on: false, done: false, t: 0, spk: -1, wrapT: -1, capLater: false },
     coachDone: false, breakDone: false, marks: new Set(['start']), chapter: 0, silent: false, quiet: false, tapT: 0, tapN: 0, finArgs: null, teachAt: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
     build: { on: false, t0: 0, c: [0, 0, 0, 0, 0, 0], wrongP: 0, wrongShow: false, pl: [0, 0, 0, 0, 0, 0, 0], doneK: [], rampL: -1, rampG: 0, ladder: 0,
@@ -363,9 +363,59 @@ function capHeld(prio = 1) {
   if (typeof c.hold === 'number') return S.t - c.shown < c.hold;
   return false;
 }
+// v7.3: every caption belongs to one or more roles (L = Leader, M = Manager, T = Team), so each perspective can show only
+// its own narration. First matching rule wins: [phase, text (optional), roles, role-specific wording (optional)].
+const CAP_RULES = [
+  [/^Goal reached$/, null, 'LMT'],
+  [/^VISION → REALITY$/, null, 'LT'],
+  [/^Vision$/, null, 'L'],
+  [/^Direction$/, null, 'LM'],
+  [/^Planning$/, /koalas argue/, 'T'],
+  [/^(Planning|Communication|Manager meeting|SUPPORT)$/, null, 'M'],
+  [/^LEADER SUPPORT$/, /supply drop/, 'LT', { T: 'Help from above: saws and safety gear float down through a gap in the canopy. 🪂' }],
+  [/^(Meeting|Priorities|Focus|LEADER SUPPORT)$/, null, 'L'],
+  [/^(Distraction|Refocus)$/, /Leader/, 'L'],
+  [/^(Distraction|Refocus)$/, null, 'M'],
+  [/^COACHING$/, /struggling|Wattle cuts/, 'MT'],
+  [/^COACHING$/, null, 'M'],
+  [/^(DELEGATION|RECOGNITION)$/, null, 'MT'],
+  [/^WELLBEING$/, /owl calls|Nobody calls/, 'MT'],
+  [/^COURSE CORRECTION$/, /Credit flows/, 'LT'],
+  [/^COURSE CORRECTION$/, null, 'L'],
+  [/^SURPRISE$/, /report the surprise straight up/, 'TM', { M: 'The koalas report a surprise up to the Manager: the owl listens, then takes it up the chain.' }],
+  [/^SURPRISE$/, /escalates it to the Leader/, 'ML', { L: 'The Manager brings the Leader the facts: what happened, what the team needs, and the likely delay.' }],
+  [/^SURPRISE$/, /Leader accepts the delay/, 'LT', { T: 'Word comes back down from the Leader: safety first, take the time. The goal stays the same.' }],
+  [/^No communication$/, /^The Manager spots/, 'M'],
+  [/^No communication$/, /final product/, 'TL'],
+  [/^No communication$/, /coach/, 'TM'],
+  [/^BUILD$/, /owl relays progress/, 'MLT', { T: 'Course 5 of 6: the koalas keep the blocks coming, one after another.', L: 'Progress comes up from the build: "Layer 4 done, two to go!" The Leader always knows where things stand.' }],
+  [/^BUILD$/, /nobody up top knows/, 'TL'],
+  [/^BUILD$/, /Leader's vision/, 'TL'],
+  [/^BUILD$/, /No owl|nobody organising/i, 'TM'],
+  [/^Obstacle$/, /The Manager (spotted|mapped|found)|the Manager has arranged/, 'MT'],
+  [null, null, 'T'], // everything else is the team's story: everyday work, obstacles, surprises, ideas, the break, the build
+];
+function capInfo(text, phase) {
+  const R = CAP_RULES.find(([pr, tr]) => (!pr || pr.test(phase)) && (!tr || tr.test(text)));
+  const roles = [...R[2]].map(c => ({ L: 'leader', M: 'manager', T: 'team' })[c]);
+  const alt = {}; if (R[3]) for (const [k, v] of Object.entries(R[3])) alt[{ L: 'leader', M: 'manager', T: 'team' }[k]] = v;
+  return { roles, alt };
+}
+const CAP_PLACEHOLDER = { leader: ['Watching the Leader... 🦅', 'Leader'], manager: ['Watching the Manager... 🦉', 'Manager'], team: ['Watching the koalas... 🐨', 'Team'] };
+// What the caption bar shows: everything in the Everything view, otherwise the latest caption for that role.
+function emitCaption(force) {
+  const v = settings.view; let text, phase;
+  if (v === 'all' || !CAP_PLACEHOLDER[v]) { if (!S.cap) return; text = S.cap.text; phase = S.cap.phase; }
+  else { const c = S.capBy[v]; if (c) { text = c.text; phase = c.phase; } else [text, phase] = CAP_PLACEHOLDER[v]; }
+  const role = v === 'all' ? '' : v, key = text + '|' + phase + '|' + role;
+  if (!force && key === S.capShown) return;
+  S.capShown = key; call('OnCaption', text, phase, role);
+}
 function showCaption(it) {
   it.shown = S.t; S.cap = it; S.caption = it.text; S.capT = S.t; S.phase = it.phase;
-  call('OnCaption', it.text, it.phase);
+  const ci = capInfo(it.text, it.phase); it.roles = ci.roles;
+  for (const r of ci.roles) S.capBy[r] = { text: ci.alt[r] || it.text, phase: it.phase, t: S.t };
+  emitCaption();
 }
 function pumpCaptions() {
   if (!S.capQ.length) return;
@@ -1964,7 +2014,7 @@ function onKey(e) {
   else if (e.key === 'n' || e.key === 'N') call('OnShortcut', 'next');
   else if (e.key === 'm' || e.key === 'M') call('OnShortcut', 'mute');
   else if (e.key === 'Escape') call('OnShortcut', 'escape');
-  else if (['1', '2', '3', '4'].includes(e.key)) { settings.view = ['all', 'leader', 'manager', 'team'][+e.key - 1]; call('OnViewChanged', settings.view); }
+  else if (['1', '2', '3', '4'].includes(e.key)) { settings.view = ['all', 'leader', 'manager', 'team'][+e.key - 1]; call('OnViewChanged', settings.view); emitCaption(true); }
 }
 
 
@@ -3002,12 +3052,12 @@ export function init(canvasEl, dotnetRef) {
   window.addEventListener('keydown', onKey);
   snd.init();
   lastT = 0; raf = requestAnimationFrame(frame);
-  window.aboveTheCanopy = { settings, get state() { return S; }, get cam() { return { camX, scale, viewW }; }, fastForward, restart, runToEnd, jumpTo, chapters: () => CH_MARKS.slice(), sound: () => snd.debug(), soundTestAll: () => snd.testAll() };
+  window.aboveTheCanopy = { settings, get state() { return S; }, get cam() { return { camX, scale, viewW }; }, fastForward, restart, runToEnd, jumpTo, chapters: () => CH_MARKS.slice(), capInfo, setView: v => setView(v), shownCaption: () => S.capShown, sound: () => snd.debug(), soundTestAll: () => snd.testAll() };
 }
 export function setPlaying(p) { settings.playing = !!p; snd.setPaused(!settings.playing); }
 export function restart() { reset(); }
 export function setSpeed(v) { settings.speed = clamp(+v || 1, 0.1, 5); snd.setSpeed(settings.speed); }
-export function setView(v) { settings.view = v; }
+export function setView(v) { settings.view = v; if (S) emitCaption(true); }
 export function setComms(on) { settings.comms = !!on; }
 export function select(role) { S.selected = role || null; }
 export function fastForward(seconds) { const step = 1 / 30, n = Math.round(seconds / step); S.silent = true; for (let i = 0; i < n; i++) { update(step); updateCamera(step); } S.silent = false; render(); }
@@ -3029,7 +3079,7 @@ export function jumpTo(i) {
     if (S.capQ.length) { const best = S.capQ.reduce((a, c) => c.prio > a.prio ? c : a, S.capQ[0]); S.capQ.splice(S.capQ.indexOf(best), 1); S.quiet = false; showCaption(best); }
     S.silent = S.quiet = false;
     updateCamera(JUMP_STEP); camX = camTarget;
-    stats(); call('OnDay', S.day); if (S.cap) call('OnCaption', S.cap.text, S.cap.phase); call('OnChapter', S.chapter);
+    stats(); call('OnDay', S.day); emitCaption(true); call('OnChapter', S.chapter);
     if (S.finArgs) call('OnFinished', ...S.finArgs);
   }
   render();

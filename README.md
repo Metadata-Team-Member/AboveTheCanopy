@@ -22,7 +22,7 @@ Nobody can see the whole picture on their own:
 - The **team** can see neither. They're down in the bush doing the work.
 
 The journey works when vision flows down (leader ➜ manager), warnings and plans flow down to the team (manager ➜ team), and requests and progress flow back up (team ➜ manager ➜ leader).
-Use the **Perspective** buttons to see the world through each role's eyes (each view also shows only that role's speech bubbles, so you can rewatch with one perspective to focus on that role's communication), and turn **Manager communication OFF**
+Use the **Perspective** buttons to see the world through each role's eyes (each view also shows only that role's speech bubbles and narration, so you can rewatch with one perspective to focus on that role's communication), and turn **Manager communication OFF**
 to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 202 days instead of about 157), and even build the wrong shape.
 
 ## What happens on the journey
@@ -120,6 +120,25 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 (meetings, surprises, coaching, course corrections) are never cut off by routine narration.
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
+
+## New in v7.3: narration by perspective
+
+The caption (narration) bar follows the perspective too. Every caption is tagged with the role(s) it's about:
+
+| Perspective | Captions shown |
+|---|---|
+| 👁️ Everything | All of them (unchanged), coloured by the kind of moment |
+| 🦅 Leader | The vision, eagle meetings and priorities, the Leader's distractions, leader support, the course correction, the Leader's replies to escalations, vision becomes reality |
+| 🦉 Manager | Warnings and scouting, manager meetings, coaching, delegation, the Manager's distractions, relaying news up and down, supporting the build |
+| 🐨 Team | Everyday work, obstacles as the koalas meet them, surprises they discover, team ideas, the rest break, the huddle, the build and the climb down |
+
+Some captions belong to several roles, and a few use role-specific wording: in the Leader view a sinkhole escalation reads
+*"The Manager brings the Leader the facts..."*, and in the Team view the reply reads *"Word comes back down from the Leader: safety first..."*.
+When the current caption isn't about the active role, the bar keeps showing that role's most recent caption (or *"Watching the Leader..."* before there is one),
+so it never shows another role's text. The pill and the left edge of the bar take the role's colour (gold, purple or blue). Switching is instant, and it
+works with chapter jumps, teaching mode and communication ON/OFF; the caption queue and hold timing are unchanged.
+
+![The sinkhole escalation narrated in the Leader view](docs/perspective-leader-caption.png)
 
 ## New in v7.2: dialogue by perspective
 
@@ -374,7 +393,7 @@ Use the speed slider (0.25× to 3×) to fit your session.
 | ▶ Play / ⏸ Pause | Start or stop the animation (keyboard: <kbd>Space</kbd>) |
 | ↻ Restart | Start the journey again (<kbd>R</kbd>) |
 | Speed slider | 0.25× to 3× |
-| Perspective: Everything / Leader / Manager / Team | Fogs out what that role **can't** see, and shows only that role's dialogue (<kbd>1</kbd> to <kbd>4</kbd>) |
+| Perspective: Everything / Leader / Manager / Team | Fogs out what that role **can't** see, and shows only that role's dialogue and narration (<kbd>1</kbd> to <kbd>4</kbd>) |
 | Manager communication ON/OFF | When OFF, the manager still spots obstacles but never tells the koalas |
 | Click the eagle, owl, koalas or pyramid | Opens an info card about that role |
 | Hover over a koala | Shows its name (Kip, Banjo, Matilda or Wattle) |

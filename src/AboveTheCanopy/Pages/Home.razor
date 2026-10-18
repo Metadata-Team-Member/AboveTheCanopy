@@ -97,7 +97,7 @@
         }
     </div>
 
-    <div class="caption" aria-live="polite">
+    <div class="caption @(captionRole != "" ? "cap-" + captionRole : "")" aria-live="polite">
         <span class="phase @PhaseClass">@phase</span>
         <span>@caption</span>
     </div>
@@ -179,7 +179,7 @@
         }
     </section>
 
-    <footer class="hint">Tip: click the eagle, the owl, the koalas or the pyramid (the vision) to learn about each role. Each perspective shows only that role's dialogue: rewatch with one perspective to focus on that role's communication. Keys: <kbd>Space</kbd> play/pause, <kbd>R</kbd> restart, <kbd>1</kbd>–<kbd>4</kbd> perspectives, <kbd>C</kbd> chapters, <kbd>N</kbd> next chapter, <kbd>M</kbd> sound on/off.
+    <footer class="hint">Tip: click the eagle, the owl, the koalas or the pyramid (the vision) to learn about each role. Each perspective shows only that role's dialogue and narration: rewatch with one perspective to focus on that role's communication. Keys: <kbd>Space</kbd> play/pause, <kbd>R</kbd> restart, <kbd>1</kbd>–<kbd>4</kbd> perspectives, <kbd>C</kbd> chapters, <kbd>N</kbd> next chapter, <kbd>M</kbd> sound on/off.
         <span class="licence">© 2026 Metadata-Team-Member · <a href="https://github.com/Metadata-Team-Member/AboveTheCanopy/blob/main/LICENSE">MIT licence</a></span></footer>
 </div>
 
@@ -205,7 +205,9 @@
     private string[] reflection = Array.Empty<string>();
     private int? daysOn, daysOff; // results from this session, for the ON vs OFF comparison
     private const int TypicalDaysOn = 157, TypicalDaysOff = 202; // measured at 1x, see README
-    private string PhaseClass => phase switch
+    private string captionRole = "";
+    // In a single-role perspective the pill takes that role's colour; in Everything it's coloured by the kind of moment.
+    private string PhaseClass => captionRole != "" ? $"ph-role-{captionRole}" : phase switch
     {
         "SURPRISE" => "ph-surprise", "Meeting" or "Priorities" or "Focus" => "ph-meeting", "Distraction" or "Refocus" => "ph-distraction",
         "Manager meeting" => "ph-mgr", "Goal reached" => "ph-goal", "LEADER SUPPORT" => "ph-support",
@@ -306,7 +308,7 @@
     private async Task CloseCard() { selected = null; await Js("select", ""); }
 
     // ---- callbacks from the JS engine ----
-    [JSInvokable] public void OnCaption(string text, string ph) { caption = text; phase = ph; StateHasChanged(); }
+    [JSInvokable] public void OnCaption(string text, string ph, string? role = null) { caption = text; phase = ph; captionRole = role ?? ""; StateHasChanged(); }
     [JSInvokable] public void OnAgentClicked(string role) { selected = Roles.Get(role); StateHasChanged(); }
     [JSInvokable] public void OnPlayState(bool isPlaying) { playing = isPlaying; StateHasChanged(); }
     [JSInvokable] public void OnViewChanged(string v) { view = v; StateHasChanged(); }
