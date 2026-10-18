@@ -1,4 +1,4 @@
-// Above the Canopy v7 - animation engine (plain canvas 2D, no dependencies).
+// Above the Canopy v7.4 - animation engine (plain canvas 2D, no dependencies).
 // v6: procedural Web Audio sound (sound.js), chapters with deterministic jumps, and a teaching mode.
 // v7: the pyramid is the Leader's VISION (a golden blueprint above the canopy) until the koalas BUILD it themselves at the end.
 import * as snd from './sound.js';
@@ -183,6 +183,28 @@ const LEADER_TALK = [
   ['Any blockers I can help with?', 'All handled for now, thanks!'],
   ['We\'re over halfway. Stay focused!', 'Copy that. 🧭'],
 ];
+// v7.4: the Leader is never idle. In the stretches between meetings, check-ins and escalations, the eagle sends
+// communication rings out to OTHER teams and projects (just off-screen) and gets decisions and feedback back.
+// Purely presentational: it never touches the simulation (no rand(), no S.pulses / S.bubbles / S.cap), so the story,
+// its timing and chapter jumps stay exactly the same. Shown in the Everything and Leader perspectives.
+const OUTREACH_TARGETS = [ // side: L/R = off the left/right edge at height y, T = off the top at fx * screen width
+  { label: 'Team North', icon: '🌲', side: 'L', y: 150, say: 'Approving the budget for Team North ✅' },
+  { label: 'Project B', icon: '📁', side: 'R', y: 122, say: 'Aligning Project B with the strategy 🧭' },
+  { label: 'Strategy', icon: '🧭', side: 'T', fx: 0.62, say: 'Steering the bigger picture 🔭' },
+  { label: 'Partners', icon: '🤝', side: 'R', y: 172, say: 'Keeping our partners on board 🤝' },
+  { label: 'Budget', icon: '💰', side: 'L', y: 84, say: 'Balancing the budget across all teams ⚖️' },
+  { label: 'Project C', icon: '🏗️', side: 'T', fx: 0.42, say: 'Green light for Project C ✅' },
+];
+const OUTREACH_ORDER = [1, 0, 2, 4, 3, 5];
+const OUTREACH_CAPS = [
+  'Between check-ins the Leader is far from idle: aligning other teams and projects with the organisation\'s strategy.',
+  'High-level decisions: the Leader approves budgets and priorities for several teams at once, not just this one.',
+  'The Leader keeps partners and stakeholders on board, so every team, the koalas included, has what it needs.',
+  'From above the canopy the Leader balances people, money and time across the whole organisation.',
+  'Decisions go out and feedback comes back: two-way communication with every team the Leader is responsible for.',
+  'Many teams, one direction: the Leader keeps every project pointing toward the bigger picture.',
+];
+const OUT = { first: 1.2, gap: 3.6, out: 1.5, hold: 0.5, back: 1.2, bubble: 2.6 };
 const MANAGER_CHECKIN = [
   ['How\'s everyone going down there?', 'Hacking away! 🌿'],
   ['Water break at the next clearing!', 'Yes please! 💧'],
@@ -328,6 +350,7 @@ function reset() {
     idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [], capBy: {}, capShown: null, huddle: { on: false, done: false, t: 0, spk: -1, wrapT: -1, capLater: false },
     coachDone: false, breakDone: false, marks: new Set(['start']), chapter: 0, silent: false, quiet: false, tapT: 0, tapN: 0, finArgs: null, teachAt: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
+    busy: { idleT: 0, next: 0, n: 0, rings: [], marks: {}, bubble: null, cap: null, capI: 0, log: [], capLog: [] }, // v7.4: the Leader's outreach
     build: { on: false, t0: 0, c: [0, 0, 0, 0, 0, 0], wrongP: 0, wrongShow: false, pl: [0, 0, 0, 0, 0, 0, 0], doneK: [], rampL: -1, rampG: 0, ladder: 0,
       rollers: false, cap: null, capSet: false, solid: 0, stock: 0, shaped: 0, rejects: 0, skills: [], kp: null, kpOn: false, tgt: null, mt: null, mcarry: false, check: 0, climbR: null, downR: null, clearT: null },
   };
@@ -369,6 +392,7 @@ const CAP_RULES = [
   [/^Goal reached$/, null, 'LMT'],
   [/^VISION → REALITY$/, null, 'LT'],
   [/^Vision$/, null, 'L'],
+  [/^Big picture$/, null, 'L'], // v7.4: the Leader's outreach to other teams (shown via S.busy.cap, see updateOutreach)
   [/^Direction$/, null, 'LM'],
   [/^Planning$/, /koalas argue/, 'T'],
   [/^(Planning|Communication|Manager meeting|SUPPORT)$/, null, 'M'],
@@ -405,7 +429,11 @@ const CAP_PLACEHOLDER = { leader: ['Watching the Leader... 🦅', 'Leader'], man
 // What the caption bar shows: everything in the Everything view, otherwise the latest caption for that role.
 function emitCaption(force) {
   const v = settings.view; let text, phase;
-  if (v === 'all' || !CAP_PLACEHOLDER[v]) { if (!S.cap) return; text = S.cap.text; phase = S.cap.phase; }
+  if (v === 'all' || !CAP_PLACEHOLDER[v]) {
+    const bc = S.busy && S.busy.cap; // v7.4: a Leader outreach caption shows until the story's next caption
+    if (bc && (!S.cap || bc.t > S.cap.shown)) { text = bc.text; phase = bc.phase; }
+    else { if (!S.cap) return; text = S.cap.text; phase = S.cap.phase; }
+  }
   else { const c = S.capBy[v]; if (c) { text = c.text; phase = c.phase; } else [text, phase] = CAP_PLACEHOLDER[v]; }
   const role = v === 'all' ? '' : v, key = text + '|' + phase + '|' + role;
   if (!force && key === S.capShown) return;
@@ -827,8 +855,62 @@ function update(dt) {
     p.y += p.vy * dt; p.r += p.vr * dt; p.life -= dt;
   }
   S.particles = S.particles.filter(p => p.life > 0);
+  updateOutreach(dt);
   for (const o of S.obstacles) o.angry = Math.max(0, o.angry - dt);
   if (S.finished && rand() < dt * 30) confetti(GOAL_X + (rand() - 0.5) * 300, 40 + rand() * 60, 1);
+}
+
+// ---------- v7.4: the Leader's outreach to other teams and projects ----------
+// The Leader counts as free when nothing else involves it: no meeting, distraction, beam, supply drop, escalation or message.
+function leaderFree() {
+  const L = S.leader, tm = S.team;
+  return S.mgr.ready && !S.finished && !L.dist && !L.meeting && !L.beam && !S.drop && !S.waiters.length && !S.introCam
+    && !S.pulses.some(p => p.from === 'leader' || p.to === 'leader') && !S.bubbles.some(b => b.who === 'leader') && !S.queue.leader.length
+    && !(tm.seqOb && tm.seqOb.isSurprise && !tm.seqOb.chainDone);
+}
+function outreach(ti, withBubble) {
+  const B = S.busy, T = OUTREACH_TARGETS[ti], P = outreachPt(T);
+  if (P.ax === 0 && Object.values(B.marks).some(m => m.P.ax === 0 && Math.abs(m.P.x - P.x) < 220)) P.x = P.x + 260 < viewW - 200 ? P.x + 260 : Math.max(420, P.x - 260); // two at once: keep apart
+  B.rings.push({ ti, P, t: 0, dur: OUT.out, back: false, fade: null, ret: B.n % 2 === 0 });
+  B.marks[ti] = { P, t0: S.t, until: S.t + OUT.out + OUT.hold + OUT.back + 1.2, ok: 0 };
+  if (outreachSeen()) sfx('outreach');
+  if (withBubble) B.bubble = { who: 'leader', text: T.say, t: 0, dur: OUT.bubble, busy: true };
+  B.log.push([+S.t.toFixed(2), T.label]);
+}
+const outreachSeen = () => settings.view === 'all' || settings.view === 'leader';
+function updateOutreach(dt) {
+  const B = S.busy, L = S.leader, free = leaderFree();
+  const big = L.meeting || L.dist || S.drop || S.finished; // the big moments always take over the sky
+  B.idleT = free ? B.idleT + dt : 0;
+  if (free && B.idleT >= OUT.first && S.t >= B.next) {
+    const i = B.n++; B.next = S.t + OUT.gap;
+    outreach(OUTREACH_ORDER[i % OUTREACH_ORDER.length], i % 2 === 1);
+    if (i % 3 === 2) outreach(OUTREACH_ORDER[(i + 4) % OUTREACH_ORDER.length], false); // now and then two at once, in other directions
+    // A short Leader caption now and then. The Leader view gets it once its own last caption is a few seconds old; the
+    // Everything view only while the caption bar is quiet. Either way it never queues, so the story's own captions are never delayed.
+    const lc = S.capBy.leader;
+    if (i % 2 === 1 && (!lc || S.t - lc.t > 5)) {
+      const text = OUTREACH_CAPS[B.capI++ % OUTREACH_CAPS.length];
+      S.capBy.leader = { text, phase: 'Big picture', t: S.t };
+      if (!S.capQ.length && !capHeld(1) && (!S.cap || S.t - S.cap.shown > 4)) B.cap = { text, phase: 'Big picture', t: S.t };
+      B.capLog.push([+S.t.toFixed(1), !!(B.cap && B.cap.t === S.t)]);
+      emitCaption();
+    }
+  }
+  for (const r of B.rings.slice()) {
+    r.t += dt;
+    if (big && r.fade == null) r.fade = 0;
+    if (r.fade != null) { r.fade += dt; if (r.fade > 0.4) B.rings.splice(B.rings.indexOf(r), 1); continue; }
+    if (r.back && !r.chimed && r.t >= 0) { r.chimed = true; if (outreachSeen()) sfx('outreachBack'); }
+    if (r.t >= r.dur) {
+      B.rings.splice(B.rings.indexOf(r), 1);
+      const m = B.marks[r.ti];
+      if (!r.back) { if (m) m.hit = S.t; if (r.ret) B.rings.push({ ti: r.ti, P: r.P, t: -OUT.hold, dur: OUT.back, back: true, fade: null }); }
+      else if (m) m.ok = S.t;
+    }
+  }
+  for (const k of Object.keys(B.marks)) if (S.t > B.marks[k].until || (big && !B.rings.some(r => r.ti === +k))) delete B.marks[k];
+  if (B.bubble) { B.bubble.t += dt; if (B.bubble.t >= B.bubble.dur || big) B.bubble = null; }
 }
 
 function startDistraction(ag, d) {
@@ -1890,6 +1972,61 @@ function drawPulses() {
   }
 }
 
+// v7.4: the Leader's outreach. Gold rings travel from the eagle to faint markers for other teams and projects just
+// beyond the edge of the screen; some come back (paler) with a decision or feedback, and the marker ticks ✅.
+// Where a target's marker sits on screen (fixed when the ring sets off). During the build the skills list fills the top
+// left, so left-hand targets move to the top edge; a top marker never sits right on top of the eagle.
+function outreachPt(T) {
+  const left = T.side === 'L' && !S.build.on;
+  if (left) return { x: 14, y: T.y, ax: -1 };
+  if (T.side === 'R') return { x: viewW - 14, y: T.y, ax: 1 };
+  const ex = S.leader.x - camX;
+  let x = viewW * (T.side === 'L' ? (T.y > 120 ? 0.5 : 0.36) : T.fx);
+  if (Math.abs(x - ex) < 170) x = ex + (ex > viewW * 0.5 ? -280 : 280);
+  return { x: clamp(x, 420, viewW - 200), y: 14, ax: 0 };
+}
+function drawOutreach() {
+  if (!outreachSeen()) return;
+  const B = S.busy, L = S.leader; if (!B.rings.length && !Object.keys(B.marks).length) return;
+  const ex = L.x + L.ox - camX, ey = L.y + L.oy;
+  ctx.save();
+  // the distant teams / projects
+  ctx.font = 'bold 12px system-ui, sans-serif';
+  for (const [k, m] of Object.entries(B.marks)) {
+    const T = OUTREACH_TARGETS[k], P = m.P, side = P.ax < 0 ? 'L' : P.ax > 0 ? 'R' : 'T';
+    const a = Math.min(1, (S.t - m.t0) / 0.6, (m.until - S.t) / 0.8) * 0.9; if (a <= 0) continue;
+    const ok = m.ok && S.t - m.ok < 2.2;
+    const text = side === 'L' ? `⬅ ${T.icon} ${T.label}${ok ? ' ✅' : ''}` : side === 'R' ? `${T.icon} ${T.label}${ok ? ' ✅' : ''} ➜` : `⬆ ${T.icon} ${T.label}${ok ? ' ✅' : ''}`;
+    const w = ctx.measureText(text).width + 18, h = 22;
+    const x = P.ax < 0 ? P.x - 6 : P.ax > 0 ? P.x - w + 6 : P.x - w / 2, y = P.ax === 0 ? P.y - 8 : P.y - h / 2;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = 'rgba(40,30,0,0.62)'; rr(x, y, w, h, 11); ctx.fill();
+    ctx.strokeStyle = ok ? 'rgba(255,241,184,0.95)' : 'rgba(255,211,77,0.8)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.fillStyle = '#ffe9a6'; ctx.fillText(text, x + 9, y + 15.5);
+    if (m.hit && S.t - m.hit < 0.9) { ctx.globalAlpha = a * (1 - (S.t - m.hit) / 0.9); ring(clamp(P.x, x + 12, x + w - 12), y + h / 2, 12 + (S.t - m.hit) * 26, '#ffd34d'); }
+  }
+  // the rings (same style as the message pulses: a faint dotted path and three trailing circles)
+  for (const r of B.rings) {
+    if (r.t < 0) continue;
+    const P = r.P;
+    const [ax, ay, bx, by] = r.back ? [P.x, P.y, ex, ey] : [ex, ey, P.x, P.y];
+    const fa = r.fade != null ? Math.max(0, 1 - r.fade / 0.4) : 1, t = r.t / r.dur;
+    const col = r.back ? '#fff1b8' : '#ffd34d';
+    ctx.globalAlpha = 0.4 * fa; ctx.strokeStyle = r.back ? '#fff1b8' : '#e0a800'; ctx.lineWidth = 2; ctx.setLineDash([3, 6]);
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); ctx.setLineDash([]);
+    for (let k = 0; k < 3; k++) {
+      const tt = t - k * 0.08; if (tt < 0) continue;
+      const cx = lerp(ax, bx, tt), cy = lerp(ay, by, tt), rad = (r.back ? 6 : 7) + k * 5 + Math.sin(S.t * 10) * 1.5;
+      ctx.globalAlpha = (1 - k * 0.3) * 0.45 * fa; ctx.strokeStyle = '#8a6a00'; ctx.lineWidth = 5; // soft dark edge so the gold reads against the pale sky
+      ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 7); ctx.stroke();
+      ctx.globalAlpha = (1 - k * 0.3) * fa; ctx.strokeStyle = col; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 7); ctx.stroke();
+    }
+    if (!r.back && r.t < 0.8) { ctx.globalAlpha = 0.6 * fa * (1 - r.t / 0.8); ring(ex, ey, 24 + r.t * 40, '#ffd34d'); } // a ripple as it leaves the eagle
+  }
+  ctx.restore();
+}
+
 // Which speakers' bubbles each perspective shows ('visitor' is the visiting owl in a manager meeting; the visiting
 // eagles in the Leader's meetings speak through their priority cards, which stay visible).
 const BUBBLE_VIEW = { all: null, leader: ['leader'], manager: ['manager', 'visitor'], team: ['team'] };
@@ -1898,7 +2035,8 @@ function drawBubbles() {
     visitor: S.mgr.meeting ? [S.mgr.meeting.def.belly, S.mgr.meeting.def.body] : ['#eee', '#777'] };
   ctx.font = '600 13px system-ui, sans-serif';
   const only = BUBBLE_VIEW[settings.view]; // v7.2: each perspective shows only that role's dialogue
-  for (const b of S.bubbles) {
+  const ob = S.busy.bubble, list = ob && !S.leader.meeting && !S.bubbles.some(b => b.who === 'leader') ? S.bubbles.concat([ob]) : S.bubbles; // v7.4
+  for (const b of list) {
     if (only && !only.includes(b.who)) continue;
     const p = agentPos(b.who);
     if (p.x - camX < -30 || p.x - camX > viewW + 30) continue; // speaker is off-screen
@@ -3003,6 +3141,7 @@ function render() {
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   drawBeam();
   drawPulses();
+  drawOutreach();
   drawParticles();
   drawBubbles();
   drawMiniMap();

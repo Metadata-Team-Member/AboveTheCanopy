@@ -21,7 +21,7 @@ function save() { try { localStorage.setItem(LS_ON, enabled ? 'on' : 'off'); loc
 const RATE = { saw: 0.42, tap: 0.16, thunk: 0.5, clack: 0.45, creak: 0.9, snip: 0.35, rustle: 0.8, hoot: 6, screech: 14, flap: 2.5,
   pulse: 0.35, chirp: 0.4, sparkle: 1.2, idea: 2, sting: 2, echo: 4, hiss: 2, splash: 1.2, squelch: 1, thud: 0.6,
   whoosh: 1.5, ding: 1.5, emailStorm: 4, magpie: 4, thunder: 6, mozzie: 4, branch: 3, sinkhole: 4, treefall: 4, parachute: 4,
-  fanfare: 6, pops: 2, support: 3, yes: 1.5, swarm: 3, block: 0.3, haul: 1.1, layer: 0.8, vision: 4 };
+  fanfare: 6, pops: 2, support: 3, yes: 1.5, swarm: 3, block: 0.3, haul: 1.1, layer: 0.8, vision: 4, outreach: 1.2, outreachBack: 1.2 };
 const rnd = (a, b) => a + Math.random() * (b - a);
 
 // ---------- graph ----------
@@ -158,6 +158,9 @@ const SFX = {
   idea(t) { bell(t, 988, 0.5, 0.04); bell(t + 0.12, 1319, 0.6, 0.04); bell(t + 0.24, 1760, 0.8, 0.035); },
   support(t) { for (const f of [392, 494, 587]) tone(t, f, 0.8, { type: 'triangle', peak: 0.03, a: 0.04 }); },
   yes(t) { bell(t, 784, 0.4, 0.04); bell(t + 0.1, 1175, 0.6, 0.035); },
+  // v7.4: the Leader's outreach to other teams and projects: a very soft, distant two-note chime out, and one back
+  outreach(t) { bell(t, 1319, 0.35, 0.011); bell(t + 0.09, 1760, 0.3, 0.008); },
+  outreachBack(t) { bell(t, 1568, 0.3, 0.009); bell(t + 0.09, 1175, 0.35, 0.008); },
   swarm(t) { tone(t, 230, 1.6, { type: 'sawtooth', vib: [11, 18], lp: 1200, peak: 0.04, a: 0.1 }); tone(t, 247, 1.6, { type: 'sawtooth', vib: [9, 15], lp: 1200, peak: 0.03, a: 0.1 }); },
   fanfare(t) {
     const brass = (tt, f, d, p = 0.035) => { tone(tt, f, d, { type: 'sawtooth', lp: 1700, peak: p, a: 0.03 }); tone(tt, f * 1.004, d, { type: 'triangle', peak: p * 0.8, a: 0.03 }); };
