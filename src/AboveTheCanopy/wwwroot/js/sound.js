@@ -208,6 +208,9 @@ const SFX = {
 // Any tap, click or key press unlocks audio. Turning sound ON (button or M) also counts, even while muted.
 function onGesture(e) {
   const toggling = e && ((e.target && e.target.closest && e.target.closest('[data-sound-toggle]')) || (e.type === 'keydown' && (e.key === 'm' || e.key === 'M')));
+  // v7.9: pressing Play (the app starts paused) un-pauses audio inside the gesture, so the AudioContext starts right on that press
+  const play = e && e.target && e.target.closest && e.target.closest('[data-play-toggle]');
+  if (play && paused && (e.type === 'click' || e.type === 'pointerdown')) paused = false;
   if (enabled || toggling) unlock(true);
 }
 export function init() {
@@ -226,6 +229,7 @@ export function unlock(force = false) {
     if (!ac && !build()) return;
     stats.unlocks++;
     if (!paused && ac.state !== 'running') ac.resume().catch(() => {});
+    else if (paused && ac.state === 'running') ac.suspend().catch(() => {}); // v7.9: a click while paused unlocks but stays quiet
     // iOS: play a silent one-sample buffer inside the gesture to fully unlock output
     const b = ac.createBuffer(1, 1, 22050), s = ac.createBufferSource(); s.buffer = b; s.connect(ac.destination); s.start(0);
   } catch (e) { stats.errors.push(String(e)); }

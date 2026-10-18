@@ -121,6 +121,18 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
 
+## New in v7.9: opens paused, ready when you are
+
+The app now opens **paused** on the opening scene (drawn in full, never a blank canvas) with a gentle hint on the canvas:
+*Press ▶ Play to begin. G'day! The koalas are ready when you are 🐨*. The button reads **▶ Play**; press it (or Space) to start.
+
+- Flipping **Manager communication** ON/OFF, changing the perspective, speed or sound before pressing Play doesn't start the story.
+- Sound starts on the Play press: the AudioContext is created and resumed inside that click, which suits browser autoplay rules.
+- Choosing a chapter or pressing **Restart** (including *Play again* from the end screen) is a deliberate choice, so those play straight away, as before.
+  With teaching mode on, a chapter jump still pauses on its teaching card.
+
+![Opens paused with a Press Play hint](docs/v79-opens-paused.png)
+
 ## New in v7.8: room to breathe in the cliff chapter
 
 Chapter 15 (*The cliff*) had too much going on at once with communication ON, so it has been spread out:
@@ -374,7 +386,7 @@ The last chapter goes straight to the finish summary and its 💬 Reflect panel 
 
 ### 🔊 Sound
 Every sound is **generated in the browser with the Web Audio API**: there are no audio files, no CDNs and no licensing issues, and it works offline.
-Sound is on by default but only starts after your first tap, click or key press (browser autoplay rules; on iOS Safari it unlocks on the first touch).
+Sound is on by default but only starts when you press Play (browser autoplay rules; on iOS Safari it unlocks on that first touch).
 **🔊 Sound on / 🔇 Sound off** (or <kbd>M</kbd>) and the volume slider are in the controls bar, and your choice is remembered on this device.
 Pausing the story pauses the audio. At high speeds repeated sounds are thinned out, and every sound has its own rate limit so nothing gets spammy.
 The mix is deliberately gentle for a classroom: soft envelopes, a compressor and a low-pass filter on the master output.

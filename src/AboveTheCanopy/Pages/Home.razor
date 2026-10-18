@@ -104,7 +104,7 @@
 
     <div class="controls">
         <div class="group">
-            <button class="primary" @onclick="TogglePlay">@(playing ? "⏸ Pause" : "▶ Play")</button>
+            <button class="primary" data-play-toggle @onclick="TogglePlay">@(playing ? "⏸ Pause" : "▶ Play")</button>
             <button @onclick="Restart">↻ Restart</button>
             <label class="speed">Speed
                 <input type="range" min="0.25" max="3" step="0.25" value="@speed" @oninput="OnSpeed" />
@@ -188,7 +188,7 @@
     private IJSObjectReference? module;
     private DotNetObjectReference<Home>? selfRef;
 
-    private bool playing = true;
+    private bool playing = false; // v7.9: opens paused on the opening scene
     private double speed = 1;
     private string view = "all";
     private bool comms = true;
