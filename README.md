@@ -22,7 +22,7 @@ Nobody can see the whole picture on their own:
 - The **team** can see neither. They're down in the bush doing the work.
 
 The journey works when vision flows down (leader ➜ manager), warnings and plans flow down to the team (manager ➜ team), and requests and progress flow back up (team ➜ manager ➜ leader).
-Use the **Perspective** buttons to see the world through each role's eyes, and turn **Manager communication OFF**
+Use the **Perspective** buttons to see the world through each role's eyes (each view also shows only that role's speech bubbles, so you can rewatch with one perspective to focus on that role's communication), and turn **Manager communication OFF**
 to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 202 days instead of about 157), and even build the wrong shape.
 
 ## What happens on the journey
@@ -120,6 +120,26 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 (meetings, surprises, coaching, course corrections) are never cut off by routine narration.
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
+
+## New in v7.2: dialogue by perspective
+
+Each perspective now shows only that role's speech bubbles, so you can **rewatch the story with one perspective to focus on that role's communication**:
+
+| Perspective | Speech bubbles shown |
+|---|---|
+| 👁️ Everything | Everyone (unchanged) |
+| 🦅 Leader | The Leader eagle (the visiting eagles in the Leader's meetings still show their priority cards) |
+| 🦉 Manager | The Manager owl, plus the visiting owls in manager meetings |
+| 🐨 Team | The koalas |
+
+The other roles keep talking in the simulation (nothing changes in the story), their bubbles just aren't drawn. The caption bar and the message pulses
+still show that messages are flowing, the fog for each view is unchanged, and the view banner says what's shown (*"💬 Showing only the Leader's dialogue"*).
+Switching is instant, mid-run, and works with chapter jumps and teaching mode.
+
+![A surprise escalation in the Leader view: only the eagle's reply is shown](docs/perspective-leader-dialogue.png)
+
+The pyramid is also drawn in front of the canopy behind it at every stage of the build (and the koalas, ladder, ramp and owl in front of the pyramid),
+so no leaves or tree tops cut across it.
 
 ## New in v7: the koalas build the final product
 
@@ -354,7 +374,7 @@ Use the speed slider (0.25× to 3×) to fit your session.
 | ▶ Play / ⏸ Pause | Start or stop the animation (keyboard: <kbd>Space</kbd>) |
 | ↻ Restart | Start the journey again (<kbd>R</kbd>) |
 | Speed slider | 0.25× to 3× |
-| Perspective: Everything / Leader / Manager / Team | Fogs out what that role **can't** see (<kbd>1</kbd> to <kbd>4</kbd>) |
+| Perspective: Everything / Leader / Manager / Team | Fogs out what that role **can't** see, and shows only that role's dialogue (<kbd>1</kbd> to <kbd>4</kbd>) |
 | Manager communication ON/OFF | When OFF, the manager still spots obstacles but never tells the koalas |
 | Click the eagle, owl, koalas or pyramid | Opens an info card about that role |
 | Hover over a koala | Shows its name (Kip, Banjo, Matilda or Wattle) |
