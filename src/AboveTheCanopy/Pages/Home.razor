@@ -50,7 +50,11 @@
             <div class="teach-card" role="dialog" aria-label="Teachable moment">
                 <div class="teach-kicker">🎓 Teachable moment · Chapter @(tc + 1) of @Chapters.All.Count</div>
                 <h2>@tch.Title</h2>
-                <p class="teach-point">@(comms ? tch.Point : tch.OffPoint ?? tch.Point)</p>
+                <p class="teach-point">@tch.PointFor(lcomms, comms, tcomms)</p>
+                @if (Mask != 7)
+                {
+                    <p class="teach-links">📵 This run: @OffNames communication OFF.</p>
+                }
                 <ul class="teach-q">
                     @foreach (var q in tch.Questions)
                     {
@@ -74,7 +78,7 @@
                     <div class="row">
                         <button class="reflect" @onclick="() => showReflection = true">💬 Reflect</button>
                         <button @onclick="Restart">↻ Play again</button>
-                        <button @onclick="RestartWithOtherComms">@(comms ? "Try with communication OFF" : "Try with communication ON")</button>
+                        <button @onclick="RestartWithOtherComms">@(Mask == 7 ? "Try with Manager comms OFF" : "Try with all comms ON")</button>
                         <button class="ghost" @onclick="() => finishedSummary = null">Close</button>
                     </div>
                 }
@@ -90,7 +94,7 @@
                     </ol>
                     <div class="row">
                         <button @onclick="() => showReflection = false">← Back</button>
-                        <button @onclick="RestartWithOtherComms">@(comms ? "↻ Try with comms OFF" : "↻ Try with comms ON")</button>
+                        <button @onclick="RestartWithOtherComms">@(Mask == 7 ? "↻ Try with Manager comms OFF" : "↻ Try with all comms ON")</button>
                     </div>
                 }
             </div>
@@ -120,11 +124,21 @@
             }
         </div>
 
-        <div class="group">
-            <label class="switch" title="When OFF, the manager still sees obstacles but never tells the team.">
+        <div class="group links" role="group" aria-label="Communication links">
+            <label class="switch sw-leader" title="Leader comms: when OFF, the vision, priorities, approvals and answers never come down from the eagle.">
+                <input type="checkbox" checked="@lcomms" @onchange="OnLeaderComms" />
+                <span class="slider"></span>
+                <span>Leader comms <b>@(lcomms ? "ON" : "OFF")</b></span>
+            </label>
+            <label class="switch sw-manager" title="Manager comms: when OFF, the owl still sees obstacles but never tells the team or passes anything on.">
                 <input type="checkbox" checked="@comms" @onchange="OnComms" />
                 <span class="slider"></span>
-                <span>Manager communication <b>@(comms ? "ON" : "OFF")</b></span>
+                <span>Manager comms <b>@(comms ? "ON" : "OFF")</b></span>
+            </label>
+            <label class="switch sw-team" title="Team comms: when OFF, the koalas don't report up, raise ideas, huddle or answer back.">
+                <input type="checkbox" checked="@tcomms" @onchange="OnTeamComms" />
+                <span class="slider"></span>
+                <span>Team comms <b>@(tcomms ? "ON" : "OFF")</b></span>
             </label>
         </div>
 
@@ -161,7 +175,7 @@
                     <li>
                         <button class="chapter @(idx == chapter ? "current" : "")" @onclick="() => JumpTo(idx)" aria-current="@(idx == chapter ? "step" : null)">
                             <span class="num">@(idx + 1)</span>
-                            <span class="txt"><b>@c.Title</b><small>@(comms ? c.Point : c.OffPoint ?? c.Point)</small></span>
+                            <span class="txt"><b>@c.Title</b><small>@c.PointFor(lcomms, comms, tcomms)</small></span>
                         </button>
                     </li>
                 }
@@ -191,7 +205,18 @@
     private bool playing = false; // v7.9: opens paused on the opening scene
     private double speed = 1;
     private string view = "all";
-    private bool comms = true;
+    private bool comms = true, lcomms = true, tcomms = true; // comms = Manager comms
+    private int Mask => (lcomms ? 4 : 0) | (comms ? 2 : 0) | (tcomms ? 1 : 0);
+    private static string NamesOff(int m)
+    {
+        var a = new List<string>();
+        if ((m & 4) == 0) a.Add("Leader");
+        if ((m & 2) == 0) a.Add("Manager");
+        if ((m & 1) == 0) a.Add("Team");
+        return a.Count < 2 ? string.Join("", a) : string.Join(", ", a.Take(a.Count - 1)) + " and " + a[^1];
+    }
+    private string OffNames => NamesOff(Mask);
+    private static string Pl(int n, string w) => $"{n} {w}{(n == 1 ? "" : "s")}";
     private string caption = "Loading the forest...";
     private string phase = "";
     private RoleInfo? selected;
@@ -203,8 +228,9 @@
     private double volume = 0.6;
     private sealed record SoundPrefs(bool enabled, double volume);
     private string[] reflection = Array.Empty<string>();
-    private int? daysOn, daysOff; // results from this session, for the ON vs OFF comparison
-    private const int TypicalDaysOn = 166, TypicalDaysOff = 204; // measured at 1x, see README
+    private readonly int?[] daysBy = new int?[8]; // results from this session per comms combo (mask L=4, M=2, T=1)
+    // Measured at 1x for each combo (index = mask: Leader 4 + Manager 2 + Team 1), see README.
+    private static readonly int[] TypicalDays = { 236, 220, 204, 198, 236, 219, 194, 173 };
     private string captionRole = "";
     // In a single-role perspective the pill takes that role's colour; in Everything it's coloured by the kind of moment.
     private string PhaseClass => captionRole != "" ? $"ph-role-{captionRole}" : phase switch
@@ -282,8 +308,8 @@
 
     private async Task RestartWithOtherComms()
     {
-        comms = !comms;
-        await Js("setComms", comms);
+        if (Mask == 7) comms = false; else lcomms = comms = tcomms = true;
+        await Js("setLinks", lcomms, comms, tcomms);
         await Restart();
     }
 
@@ -298,10 +324,16 @@
 
     private async Task SetView(string v) { view = v; await Js("setView", v); }
 
-    private async Task OnComms(ChangeEventArgs e)
+    // v8.0: changing a link restarts the run (it changes the whole story), but keeps play/pause as it was:
+    // before the first Play it stays paused on the opening scene.
+    private async Task OnComms(ChangeEventArgs e) { comms = e.Value is bool b && b; await ApplyLinks(); }
+    private async Task OnLeaderComms(ChangeEventArgs e) { lcomms = e.Value is bool b && b; await ApplyLinks(); }
+    private async Task OnTeamComms(ChangeEventArgs e) { tcomms = e.Value is bool b && b; await ApplyLinks(); }
+    private async Task ApplyLinks()
     {
-        comms = e.Value is bool b && b;
-        await Js("setComms", comms);
+        finishedSummary = null; showReflection = false; teachCard = null; chapter = 0; ResetCounters();
+        await Js("setLinks", lcomms, comms, tcomms);
+        await Js("restart");
     }
 
     private async Task Select(string key) { selected = Roles.Get(key); await Js("select", key); }
@@ -332,49 +364,68 @@
     [JSInvokable] public void OnStats(int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs, int teamIdeas) { wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; syncs = managerSyncs; ideas = teamIdeas; StateHasChanged(); }
 
     [JSInvokable]
-    public void OnFinished(int seconds, int days, int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs, int teamIdeas, int breaks, bool withComms)
+    public void OnFinished(int seconds, int days, int wrong, int surprised, int distracted, int filtered, int reportedUp, int managerSyncs, int teamIdeas, int breaks, int mask)
     {
         wrongTurns = wrong; surprises = surprised; distractions = distracted; priorities = filtered; reported = reportedUp; syncs = managerSyncs; ideas = teamIdeas;
         showReflection = false;
         day = days; lastDays = days;
-        if (withComms) daysOn = days; else daysOff = days;
+        mask &= 7; daysBy[mask] = days;
+        bool allOn = mask == 7, l = (mask & 4) != 0, m = (mask & 2) != 0, t = (mask & 1) != 0;
         var mins = seconds / 60; var secs = seconds % 60;
         var runTime = $"({mins}:{secs:00} at 1× speed)";
         string compare;
-        if (withComms)
+        if (allOn)
         {
-            var off = daysOff ?? TypicalDaysOff;
-            var src = daysOff is null ? "usually takes about" : "took";
+            var off = daysBy[5] ?? TypicalDays[5];
+            var src = daysBy[5] is null ? "usually takes about" : "took";
             compare = off > days
-                ? $" Without communication the same project {src} {off} days: {off - days} days lost. Try it with communication OFF and compare!"
-                : " Try it with communication OFF and compare!";
+                ? $" With Manager communication OFF the same project {src} {off} days: {off - days} days lost. Try switching off any of the three links and compare!"
+                : " Try switching off any of the three links and compare!";
         }
         else
         {
-            var on = daysOn ?? TypicalDaysOn;
-            var src = daysOn is null ? "usually takes about" : "took";
+            var on = daysBy[7] ?? TypicalDays[7];
+            var src = daysBy[7] is null ? "usually takes about" : "took";
             compare = days > on
-                ? $" With the Manager communicating, the same project {src} {on} days: that's {days - on} days lost to missing information."
+                ? $" With all three links ON, the same project {src} {on} days: that's {days - on} days lost to missing information."
                 : "";
         }
-        var people = withComms
-            ? $" Kip led the bridge build, Wattle was coached, Matilda was Koala of the week, Banjo's creek idea was adopted ({teamIdeas} team idea{(teamIdeas == 1 ? "" : "s")}), and {breaks} short break{(breaks == 1 ? "" : "s")} kept the pace sustainable. At the build site they used every skill from the journey, the owl supported without taking over, and the Leader's vision became the real pyramid."
-            : " Banjo's ideas never reached anyone, nobody coached Wattle, and with no break the koalas finished exhausted. Nobody shared the vision, so a whole layer of the pyramid had to be torn down and rebuilt.";
-        finishedSummary = withComms
-            ? $"With the Manager communicating, the koalas built the pyramid and delivered on day {days} {runTime}: {surprised} unwarned obstacles, {wrong} wrong turns and {reportedUp} surprises reported up and handled together. The Leader filtered {filtered} competing priorities, the Manager held {managerSyncs} manager syncs, and they shook off {distracted} distractions.{people}{compare}"
-            : $"Without communication, the koalas took {days} days {runTime}, hit {surprised} unwarned obstacles, made {wrong} wrong turns, and faced every surprise alone (0 reported up).{people}{compare} Same forest, same koalas: the difference is the information they had.";
-        reflection = withComms
+        var off3 = NamesOff(mask);
+        if (allOn)
+        {
+            var people = $" Kip led the bridge build, Wattle was coached, Matilda was Koala of the week, Banjo's creek idea was adopted ({teamIdeas} team idea{(teamIdeas == 1 ? "" : "s")}), and {breaks} short break{(breaks == 1 ? "" : "s")} kept the pace sustainable. At the build site they used every skill from the journey, the owl supported without taking over, and the Leader's vision became the real pyramid.";
+            finishedSummary = $"With all three links communicating, the koalas built the pyramid and delivered on day {days} {runTime}: {Pl(surprised, "unwarned obstacle")}, {Pl(wrong, "wrong turn")} and {Pl(reportedUp, "surprise")} reported up and handled together. The Leader filtered {filtered} competing priorities, the Manager held {managerSyncs} manager syncs, and they shook off {distracted} distractions.{people}{compare}";
+        }
+        else
+        {
+            var lost = new List<string>();
+            if (!l) lost.Add("the Leader's vision, approvals and answers never came down");
+            if (!m) lost.Add("the owl never passed warnings, plans or ideas on");
+            if (!t) lost.Add("the koalas never reported up, raised ideas or huddled");
+            var idea = teamIdeas > 0 ? "Banjo's creek idea was adopted" : !t ? "Banjo kept his creek idea to himself" : !m ? "Banjo's creek idea stopped at the owl" : "Banjo's creek idea reached the Leader but no answer came back";
+            var redo = !(l && m) ? " Nobody down below ever saw the vision, so a layer of the pyramid had to be torn down and rebuilt." : "";
+            finishedSummary = $"With {off3} communication OFF, the koalas took {days} days {runTime}: {Pl(surprised, "unwarned obstacle")}, {Pl(wrong, "wrong turn")} and {Pl(reportedUp, "surprise")} reported up. Messages stopped part-way: {string.Join("; ", lost)}. {idea}.{redo}{compare} Same forest, same koalas: the difference is the information that got through.";
+        }
+        reflection = allOn
             ? new[]
             {
                 "At the build site the koalas used every skill they had built on the journey: gathering, hammer and chisel, planks, ropes, ladders, teamwork. Which skills has your team built recently, and which deliverable will they make possible?",
                 "The owl organised the build, brought stone where it was needed and relayed progress up, but never took over. Where is the line between supporting the work and taking it over?",
                 "The Leader held the vision, said \"After the launch!\" to one last request, and the team made it real. How clear is your team's picture of the final product?"
             }
-            : new[]
+            : mask == 5 ? new[]
             {
                 "Nobody shared the vision, so the koalas built a whole layer the wrong shape and had to redo it (\"Wait, was it meant to be pointy?\"). Where has your team rebuilt something because the end product wasn't clear?",
                 "Nobody coached Wattle, Banjo's ideas went nowhere, and nobody organised the build. What happens in your team when no one supports the work?",
                 "The koalas never got a break and slowed right down. Where is your team running without breaks, and what is it costing?"
+            }
+            : new[]
+            {
+                $"This time {off3} communication was OFF, and every message stopped at that link. Where in your organisation do messages most often stop part-way: going up, coming down, or across the team?",
+                !t ? "With Team communication OFF the koalas worked hard but never spoke up: no reports, no ideas, no huddle. What makes it feel safe (or unsafe) for your team to speak up?"
+                   : !l ? "With Leader communication OFF the owl kept asking, but approvals and answers never came back down. How quickly do decisions come back to your team after they ask?"
+                   : "Banjo's idea only helps if it travels all the way up and the answer comes all the way back. How do ideas from the front line reach decision makers in your team?",
+                "Communication breaks at every level, not just one. Which one small habit at your level would keep messages moving?"
             };
         StateHasChanged();
     }

@@ -1,4 +1,4 @@
-// Above the Canopy v7.9 - animation engine (plain canvas 2D, no dependencies).
+// Above the Canopy v8.0 - animation engine (plain canvas 2D, no dependencies).
 // v6: procedural Web Audio sound (sound.js), chapters with deterministic jumps, and a teaching mode.
 // v7: the pyramid is the Leader's VISION (a golden blueprint above the canopy) until the koalas BUILD it themselves at the end.
 import * as snd from './sound.js';
@@ -10,7 +10,7 @@ import * as snd from './sound.js';
 // work on the forest floor: hacking through bushes and solving eight obstacles.
 
 const H = 600;
-const WORLD_W = 6000;
+const WORLD_W = 6600;
 const GROUND = 480;          // forest floor (normal level)
 const LOW_GROUND = 565;      // forest floor between the cliff (down) and the rock wall (up)
 const CANOPY_TOP = 120;
@@ -18,7 +18,7 @@ const CANOPY_BOTTOM = 245;
 const LEADER_Y = 68;
 const MANAGER_Y = 320;
 const START_X = 120;
-const GOAL_X = 5560;         // pyramid centre
+const GOAL_X = 6160;         // pyramid centre
 const PYR_HALF = 230;
 const PYR_APEX = 52;
 const MEMBER_GAP = 36;
@@ -39,10 +39,11 @@ const KOALAS = [
 ];
 const KOALA_SIZE = [1, 1, 1, 0.86];
 const COACH_X = 1000;                         // the thick bush where Wattle struggles (and gets coached)
-const SHRUBS = { x0: 3190, x1: 3470, n: 8 }; // thick shrubbery on the planned route
-const CREEK = { x0: 3150, x1: 3525 };         // the dry creek bed alongside it (Banjo's shortcut)
+const SHRUBS = { x0: 3310, x1: 3520, n: 8 }; // thick shrubbery on the planned route (v8.0: moved east to leave room to sit by the log)
+const CREEK = { x0: 3235, x1: 3560 };         // the dry creek bed alongside it (Banjo's shortcut)
+const IDEA_X = 3240;                          // v8.0: where the koalas sit down by the log while Banjo's idea travels up and back
 const SHRUB_HACK = { on: 2.2, off: 2.8 };
-const BREAK_X = 4900;                         // top of the rock wall: time for a break
+const BREAK_X = 5500;                         // top of the rock wall: time for a break
 // v7: the build site. The pyramid rises in six stepped courses inside the Leader's blueprint, then the capstone.
 const PYR_BY = GROUND + 2;
 const CAP_BASE = PYR_APEX + 44;               // the capstone sits on top of course 6
@@ -51,9 +52,9 @@ const COURSE_H = (PYR_BY - CAP_BASE) / COURSES;
 const halfAt = y => PYR_HALF * (y - PYR_APEX) / (PYR_BY - PYR_APEX);
 const cTop = k => k < 0 ? PYR_BY : PYR_BY - (k + 1) * COURSE_H;   // top of course k (k = -1: the forest floor)
 const cHalf = k => halfAt(cTop(k));                                // half-width of course k: its top corners touch the vision
-const BUILD_X = 5040;                         // where the koalas stop: the build site
+const BUILD_X = 5640;                         // where the koalas stop: the build site
 const STOCK_X = BUILD_X + 30;                 // the stone pile
-const RAMP_FOOT = 5120;
+const RAMP_FOOT = 5720;
 const rampTop = r => [GOAL_X - cHalf(r), cTop(r)];
 const LADDER = { b: [GOAL_X - cHalf(4) - 16, cTop(3)], t: [GOAL_X - cHalf(4) + 2, cTop(4)] };
 const FINAL = [[-36, 0], [36, 0], [56, 8], [-56, 8]];    // where the four koalas stand to set the capstone [dx, lane]
@@ -65,9 +66,9 @@ const OB_DEFS = [
   { type: 'river',   x: 1760, w: 190, name: 'fast river',       icon: '🌊' },
   { type: 'bog',     x: 2340, w: 210, name: 'smelly bog',       icon: '🟫' },
   { type: 'log',     x: 2950, w: 170, name: 'fallen giant log', icon: '🪵' },
-  { type: 'cliff',   x: 3560, w: 60,  name: 'cliff edge',       icon: '⛰️' },
-  { type: 'bees',    x: 4150, w: 120, name: 'bees\' nest',      icon: '🐝' },
-  { type: 'wall',    x: 4760, w: 44,  name: 'rock wall',        icon: '🧗' },
+  { type: 'cliff',   x: 3960, w: 60,  name: 'cliff edge',       icon: '⛰️' },
+  { type: 'bees',    x: 4550, w: 120, name: 'bees\' nest',      icon: '🐝' },
+  { type: 'wall',    x: 5360, w: 44,  name: 'rock wall',        icon: '🧗' },
 ];
 const defOf = type => OB_DEFS.find(o => o.type === type);
 
@@ -81,23 +82,35 @@ const SURPRISE_DEFS = [
     down: 'The boss says take the time you need. Let\'s gather planks!', teamAck: 'Thanks! On it 👍',
     gatherCap: 'Gathering materials: the koalas fan out into the bush and carry planks back to the sinkhole.',
     fixCap: 'Backed by the Manager and the Leader, the koalas lay planks across the sinkhole and cross safely.',
-    aloneCap: 'Alone and unsure if they\'re allowed the time, the koalas slowly rig a crossing.' },
-  { type: 'treefall', x: 3900, w: 150, name: 'fallen gum tree', icon: '🌳',
+    aloneCap: 'Alone and unsure if they\'re allowed the time, the koalas slowly rig a crossing.',
+    aloneCapT: 'Second try: without a word between them, the koalas slowly rig a crossing that holds.',
+    tryCapT: 'Nobody agrees on a plan: the first wobbly plank bridge sags into the hole, and they start over.', trySayT: 'Whoops... 😬',
+    noLeaderCap: 'No answer from the Leader, so they lay the planks carefully but slowly, not sure the delay is okay.',
+    downNoLeader: 'No word from the boss yet... let\'s bridge it carefully. 🤞', teamAckNoLeader: 'Okay... planks it is. 😟' },
+  { type: 'treefall', x: 4300, w: 150, name: 'fallen gum tree', icon: '🌳',
     reveal: 'SURPRISE! CRAAACK! A huge gum tree crashes down across the track. Even the Manager didn\'t see that one coming.',
     revSay: 'TIMBERRR! 😵',
     up: 'Manager! A gum tree just fell across the track! 🌳', ack: 'Is everyone okay? Escalating now.',
     toLeader: 'Tree down on the track. Team needs saws and safety gear, about 5 or 6 days.', leaderReply: 'Yes! Sending saws and safety gear down now. 🪂',
     down: 'The gear is down! Take your time and saw it up safely. 🪚', teamAck: 'Thanks, boss! Saws out! 🪚', support: true,
     fixCap: 'With the delay approved and the new saws, the koalas cut up the trunk and roll the pieces off the track.',
-    aloneCap: 'Nobody answers, so the koalas hack at the trunk for ages.' },
-  { type: 'snake', x: 4650, w: 110, name: 'brown snake', icon: '🐍',
+    aloneCap: 'Nobody answers, so the koalas hack at the trunk for ages.',
+    aloneCapT: 'With no saws and no help, the koalas hack at the trunk for ages.',
+    tryCapT: 'Each koala picks a different spot on the trunk to chop, so nobody gets very far.', trySayT: 'Chop... chop... 😓',
+    noLeaderCap: 'No yes from the Leader means no saws or safety gear, so the koalas hack at the trunk the slow way.',
+    downNoLeader: 'No word from the boss... no saws, I\'m afraid. Let\'s do our best. 🤞', teamAckNoLeader: 'Hack it is... 😟' },
+  { type: 'snake', x: 5250, w: 110, name: 'brown snake', icon: '🐍',
     reveal: 'SURPRISE! A big brown snake slides out onto the track. Nobody could have planned for this.',
     revSay: 'S-s-snake!! 🐍',
     up: 'Manager! Big brown snake on the track! 🐍', ack: 'Stay still and keep back! I\'ll tell the boss.',
     toLeader: 'Snake on the track. Team needs to wait it out, a few days.', leaderReply: 'No rush. Let it pass safely. Goal stays the same. 🔺',
     down: 'The boss says no rush: wait it out, safety first!', teamAck: 'Waiting quietly... 🤫',
     fixCap: 'The koalas wait calmly at a safe distance until the snake slithers off into the bush.',
-    aloneCap: 'Nobody tells them what to do, so the koalas panic, back off and wait nervously.' },
+    aloneCap: 'Nobody tells them what to do, so the koalas panic, back off and wait nervously.',
+    aloneCapT: 'Finally the snake slides off, and the koalas tiptoe past.',
+    tryCapT: 'With nobody to ask, the koalas back off and wait nervously, not sure how long is safe.', trySayT: 'Is it gone yet?? 😰',
+    noLeaderCap: 'No word from the Leader, so the koalas wait it out nervously, not sure how long is okay.',
+    downNoLeader: 'Still no word from the boss... stay back and wait it out. 🤞', teamAckNoLeader: 'Waiting... nervously. 😟' },
 ];
 
 // v3: meetings above the canopy. Visiting eagles bring competing priorities; the Leader filters them.
@@ -117,7 +130,7 @@ const MEETINGS = [
     ],
     yes: 'A better map? Yes, that helps us get there. ✅', no: 'The koalas need that time: the picnic can wait! 🛡️',
     support: 'The Leader backs the team: no picnic and no lending koalas. Protecting the team\'s time protects the goal.' },
-  { atX: 5030, who: 'Strategy, HR and Customers',
+  { atX: 5630, who: 'Strategy, HR and Customers',
     visitors: [
       { label: 'STRATEGY', body: '#6a1b9a', head: '#ead6ff', size: 0.9, ask: 'New initiative! 🚀' },
       { label: 'HR', body: '#00796b', head: '#c8f2ea', size: 0.78, ask: 'Can you also do a survey?' },
@@ -162,7 +175,7 @@ const DISTRACTIONS = [
     say: '📅 Meeting request: "Irrelevant meeting"', say2: 'Ugh, another meeting...',
     cap: 'Distraction! Mid-flight, the Manager gets yet another meeting request.',
     refocus: 'Politely declined. Back to the team. ✅' },
-  { who: 'leader', kind: 'email', atX: 4880, calm: true, // v7.8: moved out of the busy cliff chapter to the calm after the rock wall (the koalas' break, comms ON)
+  { who: 'leader', kind: 'email', atX: 5480, calm: true, // v7.8: moved out of the busy cliff chapter to the calm after the rock wall (the koalas' break, comms ON)
     when: () => { const tm = S.team, st = tm.seq && tm.seq[tm.step]; return tm.mode === 'walk' || tm.mode === 'hack' || !!(st && st.rest && tm.stepT > 0.3); },
     say: '📧 URGENT!!! Reply-all chain (47 new)', say2: 'Is it actually urgent though?',
     cap: 'Distraction! An "urgent" email storm floods the Leader\'s inbox.',
@@ -172,11 +185,12 @@ const DISTRACTIONS = [
     say: 'Bzzz! Mozzies everywhere! 🦟', say2: 'Shoo! SHOO!',
     cap: 'Distraction! A cloud of mozzies swarms the Manager.',
     refocus: 'Swatted. Back to scouting. 🔍' },
-  { who: 'leader', kind: 'storm', atX: 4480,
+  { who: 'leader', kind: 'storm', atX: 4720, // v8.0: in the walk between the bees and the snake (never over a surprise, see nearSurprise)
     say: 'Whoa! What a wind gust! 🌬️', say2: 'Hold on... hold on...',
     cap: 'Distraction! A storm front blows in and a gust knocks the Leader off course.',
     refocus: 'Steady. Back on course for the pyramid. 🔺' },
-  { who: 'manager', kind: 'branch', atX: 3000,
+  { who: 'manager', kind: 'branch', atX: 3000, // v8.0: once Banjo's idea has played out, on the way to the cliff
+    when: () => S.idea.resolved && S.t - S.idea.resolvedT > 3.2 && (S.team.mode === 'walk' || S.team.mode === 'hack'),
     say: 'Oof! Snagged in the branches! 🌿', say2: 'Who put this vine here?!',
     cap: 'Distraction! The Manager flies into a snag of branches and vines.',
     refocus: 'Untangled. Back to guiding the team. ✅' },
@@ -224,6 +238,9 @@ const MANAGER_CHECKIN = [
 const LONELY = ['Is anyone up there? 😕', 'Are we even going the right way?', 'Which way now? 🤔', 'Nobody tells us anything...'];
 const RECOGNITION = ['Great work, koalas! 🦅', 'Brilliant teamwork!', 'That\'s how it\'s done!', 'So proud of this team!'];
 const CHEERS = ['Woohoo! 🎉', 'Teamwork! 🤝', 'Nailed it! 😎', 'Easy as! 🐨', 'Too easy!'];
+// v8.0: with Team communication OFF the koalas still mutter to themselves, but stop coordinating out loud
+const T_QUIET = { 'Teamwork! 🤝': 'Phew. 😮‍💨', 'Kip: Spread out, grab logs! 🪵': 'Kip: (grabs a log without a word) 🪵' };
+const tq = text => TC() ? text : (T_QUIET[text] || text);
 const BUSH_LINES = [
   'Between the big obstacles, the koalas hack through bush after bush: the everyday work nobody up top sees.',
   'Hack, step, hack... most of a team\'s day is this steady, constant work.',
@@ -236,7 +253,15 @@ let fog, fctx;
 let scale = 1, viewW = 1200, camX = 0, camTarget = 0;
 let deco = null;
 let S = null;
-const settings = { speed: 1, playing: false, view: 'all', comms: true, teach: false };
+const settings = { speed: 1, playing: false, view: 'all', comms: true, lcomms: true, tcomms: true, teach: false }; // comms = Manager comms
+// v8.0: three communication links. A message only gets through if its sender's comms are ON:
+// Leader comms (eagle -> owl), Manager comms (owl -> koalas, and owl -> eagle), Team comms (koalas -> owl, and koalas with each other).
+const LC = () => settings.lcomms, MC = () => settings.comms, TC = () => settings.tcomms;
+const allOn = () => settings.lcomms && settings.comms && settings.tcomms;
+const visionKnown = () => settings.lcomms && settings.comms; // the vision reaches the koalas only via Leader -> Manager -> Team
+const commsMask = () => (settings.lcomms ? 4 : 0) | (settings.comms ? 2 : 0) | (settings.tcomms ? 1 : 0);
+const tReply = r => settings.tcomms ? r : null; // with Team comms OFF the koalas hear, but don't answer back
+function offNames() { const a = [!settings.lcomms && 'Leader', !settings.comms && 'Manager', !settings.tcomms && 'Team'].filter(Boolean); return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1]; }
 // v6 chapters: each chapter starts when its mark is first hit in the story (see mark()). Blazor passes the same list (Models/Chapters.cs).
 let CH_MARKS = ['start', 'dir', 'go', 'ob:vines', 'coach', 'ob:boulder', 'meet:0', 'ob:river', 'mm:0', 'sp:sinkhole', 'ob:bog', 'meet:1', 'ob:log', 'idea', 'ob:cliff', 'sp:treefall', 'ob:bees', 'sp:snake', 'ob:wall', 'break', 'meet:2', 'build', 'reality', 'finish'];
 const JUMP_STEP = 1 / 60, TEACH_DELAY = 0.4;
@@ -356,7 +381,7 @@ function reset() {
     leader: { x: START_X + 260, y: LEADER_Y, beam: null, beamT: 0, ox: 0, oy: 0, rot: 0, dist: null, meeting: null },
     bubbles: [], queue: { leader: [], manager: [], team: [], visitor: [] }, pulses: [], events: [], particles: [],
     caption: '', phase: '', capT: 0, cap: null, capQ: [], pend: [], finished: false, introCam: 'team', selected: null, hover: -1,
-    idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false }, drop: null, leafFly: null, kb: [], kpos: [], capBy: {}, capShown: null, huddle: { on: false, done: false, t: 0, spk: -1, wrapT: -1, capLater: false },
+    idea: { started: false, adopted: false, go: false, goT: 0, saved: 0, bulb: false, resolved: false, resolvedT: 0, broke: null }, drop: null, leafFly: null, kb: [], kpos: [], capBy: {}, capShown: null, huddle: { on: false, done: false, t: 0, spk: -1, wrapT: -1, capLater: false },
     coachDone: false, breakDone: false, marks: new Set(['start']), chapter: 0, silent: false, quiet: false, tapT: 0, tapN: 0, finArgs: null, teachAt: null,
     nextLeaderTalk: 26, leaderTalkI: 0, nextCheckin: 34, checkinI: 0,
     todo: [], handing: false, water: null, visit: null, vests: false, gifts: { logs: null, ropeDeal: false, ladderDeal: false, ropeTaken: false, visitQueued: false, ladder: false }, // v7.6
@@ -389,9 +414,11 @@ function caption(text, phase, opts = {}) {
   else if (capHeld(it.prio)) { S.capQ.push(it); if (S.capQ.length > 5) S.capQ.shift(); return; }
   showCaption(it);
 }
+// v8.0: big moments (meetings) wait until the current caption has had a fair go on screen
+const capSettled = () => !S.cap || S.t - S.cap.shown > (S.cap.prio === 0 ? 1.4 : 2.0);
 function capHeld(prio = 1) {
   const c = S.cap; if (!c) return false;
-  if (prio >= 2 && c.prio === 0 && S.t - c.shown > 0.8) return false;
+  if (prio >= 2 && c.prio === 0 && S.t - c.shown > 1.4) return false; // v8.0: was 0.8 s, too quick to read
   if (S.t - c.shown < CAP_MIN) return true;
   if (typeof c.hold === 'function') return !!c.hold();
   if (typeof c.hold === 'number') return S.t - c.shown < c.hold;
@@ -423,11 +450,14 @@ const CAP_RULES = [
   [/^SURPRISE$/, /report the surprise straight up/, 'TM', { M: 'The koalas report a surprise up to the Manager: the owl listens, then takes it up the chain.' }],
   [/^SURPRISE$/, /escalates it to the Leader/, 'ML', { L: 'The Manager brings the Leader the facts: what happened, what the team needs, and the likely delay.' }],
   [/^SURPRISE$/, /Leader accepts the delay/, 'LT', { T: 'Word comes back down from the Leader: safety first, take the time. The goal stays the same.' }],
+  [/^No communication$/, /Leader communication OFF/, 'LM'], // v8.0
+  [/^No communication$/, /stops at the owl/, 'TM'],
   [/^No communication$/, /^The Manager spots/, 'M'],
   [/^No communication$/, /final product/, 'TL'],
   [/^No communication$/, /coach/, 'TM'],
   [/^BUILD$/, /owl relays progress/, 'MLT', { T: 'Layer 5 of 6: the koalas keep the blocks coming, one after another.', L: 'Progress comes up from the build: "Layer 4 done, two to go!" The Leader always knows where things stand.' }],
   [/^BUILD$/, /nobody up top knows/, 'TL'],
+  [/^BUILD$/, /Leader communication OFF nobody/, 'TM'], // v8.0
   [/^BUILD$/, /Leader's vision/, 'TL'],
   [/^BUILD$/, /No owl|nobody organising/i, 'TM'],
   [/^Obstacle$/, /The Manager (spotted|mapped|found)|the Manager has arranged/, 'MT'],
@@ -524,6 +554,13 @@ function scheduleIntro() {
   });
   later(5.8, () => {
     S.introCam = null; mark('dir');
+    if (!LC()) { // v8.0: the vision stays up above the canopy
+      caption('With Leader communication OFF, the vision stays up above the canopy. The Manager only knows the build site is "somewhere east".', 'No communication');
+      bubble('leader', '(so much on today... 📥)', 2.6, true);
+      later(1.9, () => bubble('manager', 'No word from above... east, I think? I\'ll scout a route. 🤞', 3, true));
+      later(4.4, () => { caption('The Manager turns what little it knows into a plan, flying ahead under the canopy to scout the way.', 'Planning'); later(0.3, kickOffTeam); later(1.4, () => { S.mgr.ready = true; }); });
+      return;
+    }
     caption('The Leader shares the vision and the direction with the Manager below the canopy.', 'Direction');
     say('leader', 'manager', 'Head east: that\'s where we build the pyramid.', 'Got it. I\'ll scout a route.', () => {
       caption('The Manager turns the vision into a plan, flying ahead under the canopy to scout the way.', 'Planning');
@@ -536,12 +573,12 @@ function scheduleIntro() {
 function kickOffTeam() {
   mark('go');
   if (settings.comms) {
-    say('manager', 'team', 'Koalas, we\'re heading east to the build site! I\'ll warn you about hazards. 🧭', 'East it is! Tools out! 🐨💪', () => {
+    say('manager', 'team', LC() ? 'Koalas, we\'re heading east to the build site! I\'ll warn you about hazards. 🧭' : 'Koalas, we\'re heading east... somewhere. I\'ll warn you about hazards. 🧭', tReply('East it is! Tools out! 🐨💪'), () => {
       S.team.mode = 'walk';
       caption('The koalas set off on the forest floor. Down here they can only see a few metres ahead.', 'Execution');
     });
   } else {
-    caption('Communication is OFF: the koalas never hear the plan, so they don\'t even know which way to go.', 'Execution');
+    caption('Manager communication is OFF: the koalas never hear the plan, so they don\'t even know which way to go.', 'Execution');
     runSeq([
       { dur: 2.2, cap: 'Which way? The koalas argue and wander west first...', mood: 'confused', move: -60, wrong: true, say: 'Which way?? 🤔' },
       { dur: 2.0, mood: 'confused', move: 60, say: 'Hmm, maybe this way...' },
@@ -582,7 +619,7 @@ function sequenceFor(o, informed) {
     case 'river': return informed ? [
       { dur: 0.6, mood: 'work', cap: 'The Manager spotted the river early, so the koalas know exactly what they need: logs for a bridge.' },
       { dur: 2.8, mood: '', phase: 'DELEGATION', cap: 'Delegation: the Manager hands Kip the lead on the bridge build. Growing people means trusting them with real responsibility.',
-        onStart: () => { S.team.lead = 0; kbadge(0, '⭐ Kip leads the build', 9); say('manager', 'team', 'Kip, would you like to lead the bridge build? ⭐', 'Kip: On it! Follow me, team! 🌟'); } },
+        onStart: () => { S.team.lead = 0; kbadge(0, '⭐ Kip leads the build', 9); say('manager', 'team', 'Kip, would you like to lead the bridge build? ⭐', tReply('Kip: On it! Follow me, team! 🌟')); } },
       { dur: 4.2, gather: 'logs', cap: 'Gathering materials: Kip sends the koalas into the bush to pick up logs and carry them back to the bank.', say: 'Kip: Spread out, grab logs! 🪵' },
       // v7.6: the Ops manager's spare logs go into the bridge too, so the build starts once they've landed
       { dur: 0.4, mood: 'work', until: () => !settings.comms || (S.gifts.logs && S.gifts.logs.t > 1.3) || (S.mgrMeetings[0].done && !S.mgr.meeting) },
@@ -679,7 +716,7 @@ function mmLine(M, i) {
     const v = mgrVisitorPos(), r = ob('river');
     G.logs = { t: 0, x: r.x - 24, fx: v.x, fy: v.y, p0: r.prog, fade: 0 }; sfx('flap');
     later(1.2, () => caption('Managers sharing resources: the Ops team\'s spare logs land by the river, and the koalas build them into the bridge. 🪵', 'SHARING', { force: true, hold: 2.6 }));
-    later(1.5, () => bubble('team', 'Kip: Spare logs from the Ops team? Thanks! 🪵', 2.6));
+    if (TC()) later(1.5, () => bubble('team', 'Kip: Spare logs from the Ops team? Thanks! 🪵', 2.6));
   }
   if (d.ob === 'cliff' && i === 1) G.ropeDeal = true;
   if (d.ob === 'cliff' && i === 3) G.ladderDeal = true;
@@ -689,7 +726,8 @@ function ropeVisitCheck() {
   const G = S.gifts;
   if (!settings.comms || !G.ropeDeal || G.visitQueued || !ob('cliff').done || S.mgr.meeting) return;
   G.visitQueued = true;
-  whenReady(() => mgFree() && !S.pulses.length && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager') && !(S.team.seqOb && S.team.seqOb.isSurprise) && !S.surprises.some(o => o.active && !o.done), () => {
+  whenReady(() => mgFree() && !S.pulses.length && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager') && !(S.team.seqOb && S.team.seqOb.isSurprise) && !S.surprises.some(o => o.active && !o.done)
+    && !S.surprises.some(o => !o.done && o.x > S.team.x - 60 && o.x - S.team.x < 420), () => { // v8.0: not just before a surprise either
     S.visit = { def: S.mgrMeetings.find(m => m.ob === 'cliff'), phase: 'in', t: 0, said: 0 }; sfx('hoot', { visitor: true });
   });
 }
@@ -697,7 +735,7 @@ const VISIT_PH = { in: 1.8, talk: 5.4, out: 1.8 };
 function updateVisit(dt) {
   const V = S.visit, G = S.gifts; V.t += dt;
   if (V.phase === 'talk') {
-    if (V.said === 0 && V.t >= 0.2) { V.said = 1; bubble('team', 'Kip: Here\'s our rope, all yours! 🪢', 2.4); }
+    if (V.said === 0 && V.t >= 0.2) { V.said = 1; if (TC()) bubble('team', 'Kip: Here\'s our rope, all yours! 🪢', 2.4); }
     if (V.said === 1 && V.t >= 1.5) { V.said = 2; G.ropeTaken = true; sfx('chirp'); }
     if (V.said === 2 && V.t >= 1.7) { V.said = 3; bubble('visitor', 'Got the rope, thanks! 🪢 Your ladder\'s waiting at the rock wall. 🪜', 2.6); }
     if (V.said === 3 && V.t >= 3.4) { V.said = 4; bubble('manager', 'You\'re a legend, thanks! 🤝', 2.4); }
@@ -753,15 +791,19 @@ function drawGiftLogs() {
 function meetingFollowUp(d) {
   const idx = S.meetings.indexOf(d);
   const free = () => mgFree() && !S.pulses.length && !S.leader.meeting && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager') && S.team.mode === 'walk' && clearAhead(300);
-  if (idx === 0) whenReady(free, () => (S.handing = true, say('leader', 'manager', 'Safety gear for the koalas: approved! 🦺 It\'s on its way.', 'Brilliant, thanks boss! 🦺', () => {
+  if (idx === 0 && !LC()) whenReady(free, () => { // v8.0: the yes never leaves the Leader
+    bubble('leader', '(approved... and filed with everything else 📥)', 2.8);
+    caption('The Leader said yes to safety gear, but with Leader communication OFF the approval never reaches the Manager. No vests this time.', 'No communication');
+  });
+  else if (idx === 0) whenReady(free, () => (S.handing = true, say('leader', 'manager', 'Safety gear for the koalas: approved! 🦺 It\'s on its way.', 'Brilliant, thanks boss! 🦺', () => {
     if (!settings.comms) { later(1.2, () => { S.handing = false; bubble('manager', '(...keeps it to themselves 🤐)', 2.4); }); return; }
-    later(1.4, () => whenReady(() => mgFree() && !S.pulses.length && !S.queue.manager.length && !S.queue.team.length && !S.bubbles.some(b => b.who === 'manager'), () => say('manager', 'team', 'New safety vests for everyone, from the boss! 🦺', 'Ooh, safety first! Thanks! 🦺', () => {
+    later(1.4, () => whenReady(() => mgFree() && !S.pulses.length && !S.queue.manager.length && !S.queue.team.length && !S.bubbles.some(b => b.who === 'manager') && !(S.team.seqOb && S.team.seqOb.isSurprise), () => say('manager', 'team', 'New safety vests for everyone, from the boss! 🦺', tReply('Ooh, safety first! Thanks! 🦺'), () => {
       S.vests = true; kbadge(2, '🦺 New safety vests', 4.5, '#ffcc80');
       caption('Leaders back the team: the safety gear the Leader said yes to reaches the koalas, and on go the new hi-vis vests. 🦺', 'LEADER SUPPORT', { prio: 2 });
       later(2.0, () => { S.handing = false; }); // v7.7: no distraction for the owl in the middle of the hand-out
     })));
   })));
-  if (idx === 1) whenReady(free, () => say('leader', 'manager', 'Here\'s Product\'s better map for you! 🗺️', 'Thanks! That makes scouting much easier. 🗺️'));
+  if (idx === 1 && LC()) whenReady(free, () => say('leader', 'manager', 'Here\'s Product\'s better map for you! 🗺️', 'Thanks! That makes scouting much easier. 🗺️'));
 }
 
 function runSeq(steps, obstacle, onDone = null) {
@@ -776,7 +818,7 @@ function runSeq(steps, obstacle, onDone = null) {
 function startStep() {
   const tm = S.team, st = tm.seq[tm.step], seq = tm.seq, idx = tm.step;
   if (st.cap) caption(st.cap, st.phase || (tm.seqOb ? (tm.seqOb.isSurprise ? 'SURPRISE' : 'Obstacle') : S.phase), { valid: () => tm.seq === seq && tm.step === idx || (idx === 0 && S.t - tm.seqStart < 4), hold: st.capHold, prio: st.capPrio != null ? st.capPrio : idx === 0 && tm.seqOb ? 2 : undefined });
-  if (st.say) bubble('team', st.say, Math.max(2, st.dur + 0.6));
+  if (st.say) bubble('team', tq(st.say), Math.max(2, st.dur + 0.6));
   const words = (st.cap || '') + ' ' + (st.say || '');
   if (/SPLASH/.test(words)) sfx('splash'); else if (/sinks|Squelch/.test(words)) sfx('squelch'); else if (/BONK/.test(words)) sfx('thud');
   else if (/BZZZ/.test(words)) sfx('swarm'); else if (/slide/.test(words)) sfx('rustle');
@@ -784,6 +826,7 @@ function startStep() {
   if (st.ask) {
     const [q, a] = st.ask;
     later(0.5, () => {
+      if (!TC()) return;
       if (settings.comms) say('team', 'manager', q, a);
       else bubble('team', q + ' ...hello?', 2.6);
     });
@@ -824,11 +867,12 @@ function obstacleCleared(o) {
   const Name = o.name[0].toUpperCase() + o.name.slice(1);
   if (o.isSurprise) {
     tm.cheer = 1.0;
-    caption(settings.comms
-      ? `Surprise handled! The ${o.name} cost ${dd(days)}, but everyone knew why and the goal stayed the same.`
-      : `Handled alone: the ${o.name} cost ${dd(days)}, and nobody up top even knew.`, 'Execution');
-    bubble('team', pick(CHEERS, tm.cleared + 2), 2.2);
-    if (settings.comms) later(1.0, () => say('manager', 'leader', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} sorted. Back on track!`, 'Great recovery, team! 🦅'));
+    caption(!o.broke ? `Surprise handled! The ${o.name} cost ${dd(days)}, but everyone knew why and the goal stayed the same.`
+      : o.broke === 'leader' ? `Handled, but the ${o.name} cost ${dd(days)}: the Leader never answered, so nobody knew if the delay was okay.`
+      : o.broke === 'team' ? `Handled alone: the ${o.name} cost ${dd(days)}. The koalas never said a word, so nobody up the chain even knew.`
+      : `Handled alone: the ${o.name} cost ${dd(days)}, and nobody up top even knew.`, 'Execution', { prio: 1, hold: 3 });
+    bubble('team', o.broke ? pick(['Phew... 😮‍💨', 'Made it... 😅'], tm.cleared) : pick(CHEERS, tm.cleared + 2), 2.2);
+    if (!o.broke || o.broke === 'leader') later(1.0, () => say('manager', 'leader', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} sorted. Back on track!`, LC() ? 'Great recovery, team! 🦅' : null));
     return;
   }
   tm.cleared++; tm.cheer = 1.0;
@@ -837,16 +881,17 @@ function obstacleCleared(o) {
     const plan = Math.max(1, Math.round(sequenceFor(o, true).reduce((a, st) => a + st.dur, 0) / SEC_PER_DAY));
     caption(`${Name} cleared, but going in blind took ${dd(days)} instead of about ${dd(plan)}.`, 'Execution');
   }
-  bubble('team', pick(CHEERS, tm.cleared), 2.2);
+  bubble('team', tq(pick(CHEERS, tm.cleared)), 2.2);
   if (o.type === 'bees' && settings.comms) { later(0.8, () => whenFree(() => mgFree() && !S.visit && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager'), startRecognition)); return; }
   // Manager reports progress up; the Leader recognises the team.
   const due = S.t + 1.0;
   later(1.0, () => whenReady(() => S.t - due > 5 || mgFree() && !S.visit && !S.waiters.length && !(tm.seqOb && tm.seqOb.isSurprise) && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager'),
     () => S.t - due > 5 ? null : say('manager', 'leader', `${o.icon} ${o.name[0].toUpperCase() + o.name.slice(1)} cleared! ✅`, null, () => { // v7.8: never mid-meeting
+    if (!LC()) { if (o.type === 'river') tm.lead = -1; return; } // v8.0: no word back from the Leader
     if (tm.cleared % 2 === 1 || !settings.comms) bubble('leader', pick(RECOGNITION, tm.cleared >> 1), 2.8);
     else bubble('leader', 'Good progress. Keep going!', 2.4);
-    if (settings.comms && o.type === 'river' && tm.lead === 0) whenFree(mgFree, () => say('manager', 'team', 'Great leading, Kip! The boss noticed. ⭐', 'Kip: Thanks! Team effort! 😊', () => { tm.lead = -1; }));
-    else if (settings.comms && tm.cleared % 2 === 1) later(0.6, () => say('manager', 'team', 'The boss says great work! 🌟', 'Thanks boss! 😊'));
+    if (settings.comms && o.type === 'river' && tm.lead === 0) whenFree(mgFree, () => say('manager', 'team', 'Great leading, Kip! The boss noticed. ⭐', tReply('Kip: Thanks! Team effort! 😊'), () => { tm.lead = -1; }));
+    else if (settings.comms && tm.cleared % 2 === 1) later(0.6, () => say('manager', 'team', 'The boss says great work! 🌟', tReply('Thanks boss! 😊')));
   })));
 }
 
@@ -880,13 +925,15 @@ function update(dt) {
   if (S.gifts.logs) { const L = S.gifts.logs; L.t += dt; if (L.t >= 1.1 && !L.landed) { L.landed = true; sfx('thud'); } if (ob('river').prog >= 1) L.fade += dt * 0.8; }
   if (tm.mode === 'walk') {
     const next = S.obstacles.concat(S.surprises).filter(o => !o.done).sort((a, b) => a.x - b.x)[0];
-    const spd = (settings.comms ? WALK_SPEED_INFORMED : WALK_SPEED_UNINFORMED) * (tm.tired ? 0.68 : 1) * (mg.dist && mg.dist.phase === 'away' ? 0.75 : 1); // v7.7: unsure without the owl
+    const spd = (settings.comms ? WALK_SPEED_INFORMED : WALK_SPEED_UNINFORMED) * (tm.tired ? 0.68 : 1) * (mg.dist && mg.dist.phase === 'away' ? 0.75 : 1) * (TC() ? 1 : 0.93); // v8.0: less coordination without team comms // v7.7: unsure without the owl
     const nx = tm.x + spd * dt;
     const stopX = next ? next.x - 28 : BUILD_X;
     const bush = S.pathBushes.find(b => !b.cut && !(b.shrub && S.idea.go) && b.x - 22 > tm.x - 1);
     const bushStop = bush ? bush.x - 22 : Infinity;
+    const ideaStop = !S.idea.started && ob('log').done ? IDEA_X : Infinity; // v8.0: sit down by the log for Banjo's idea
     tm.mood = '';
-    if (bush && bushStop < stopX && nx >= bushStop) {
+    if (ideaStop < stopX && ideaStop <= bushStop && nx >= ideaStop) { tm.x = ideaStop; startIdea(); }
+    else if (bush && bushStop < stopX && nx >= bushStop) {
       tm.x = bushStop; tm.bush = bush; tm.hackT = 0;
       if (bush.coach && !S.coachDone) { S.coachDone = true; runSeq(coachSeq(), null, () => coachDone(bush)); }
       else tm.mode = 'hack';
@@ -900,8 +947,8 @@ function update(dt) {
     const b = tm.bush;
     let dur = b.shrub ? (settings.comms ? SHRUB_HACK.on : SHRUB_HACK.off) : (settings.comms ? 0.9 : 1.3);
     if (tm.tired) dur *= 1.6;
+    if (!TC()) dur *= 1.2; // v8.0: nobody calls out, so they get in each other's way
     tm.hackT += dt; tm.mood = 'hack';
-    if (b.shrub && !S.idea.started) startIdea();
     if (b.shrub && S.idea.go) { tm.mode = 'walk'; tm.bush = null; } // leave the shrubs for the creek route
     else {
     b.hp = Math.max(0, 1 - tm.hackT / dur);
@@ -919,12 +966,14 @@ function update(dt) {
   // --- distractions (triggered by team progress, between obstacles; v7.8: or at a chosen quiet moment via d.when) ---
   if (!S.finished) {
     const between = tm.mode === 'walk' || tm.mode === 'hack';
+    const nearSurprise = (tm.seqOb && tm.seqOb.isSurprise) || S.surprises.some(o => !o.done && o.x > tm.x - 60 && o.x - tm.x < 320); // v8.0: surprises get the stage to themselves
+    const ideaQuiet = !(S.idea.started && (!S.idea.resolved || S.t - S.idea.resolvedT < 4.5)); // v8.0: let the idea's outcome land first
     for (const d of S.distractions) {
       const ag = d.who === 'leader' ? ld : mg;
-      if (!d.done && (between || d.when) && tm.x >= d.atX && !ag.dist && !(d.who === 'leader' && ld.meeting) && !(d.who === 'manager' && (mg.meeting || mg.task || mg.busy || S.handing)) && mg.ready && distQuiet(d)) { d.done = true; startDistraction(ag, d); }
+      if (!d.done && ideaQuiet && !nearSurprise && capSettled() && (between || d.when) && tm.x >= d.atX && !ag.dist && !(d.who === 'leader' && ld.meeting) && !(d.who === 'manager' && (mg.meeting || mg.task || mg.busy || S.handing)) && mg.ready && distQuiet(d)) { d.done = true; startDistraction(ag, d); }
     }
     for (const m of S.meetings) {
-      if (!m.done && tm.x >= m.atX && !ld.dist && !ld.meeting && !mg.meeting && !S.waiters.length && mg.ready) { m.done = true; startMeeting(m); }
+      if (!m.done && tm.x >= m.atX && !ld.dist && !ld.meeting && !mg.meeting && !S.waiters.length && mg.ready && capSettled()) { m.done = true; startMeeting(m); }
     }
   }
   // v4: manager meetings start while the koalas are gathering materials for that obstacle
@@ -932,7 +981,7 @@ function update(dt) {
     if (m.done || S.finished) continue;
     const o = ob(m.ob), st = tm.seq && tm.seq[tm.step];
     if (!m.pending && ((tm.seqOb === o && st && st.gather && tm.stepT >= 1.0) || o.done)) m.pending = true;
-    if (m.pending && mgFree() && !ld.meeting && !S.waiters.length && !(tm.seqOb && tm.seqOb.isSurprise)) { m.done = true; startMgrMeeting(m); }
+    if (m.pending && mgFree() && !ld.meeting && !S.waiters.length && !(tm.seqOb && tm.seqOb.isSurprise) && capSettled()) { m.done = true; startMgrMeeting(m); }
   }
   updateMgrMeeting(dt);
   updateDistraction(ld, dt);
@@ -950,7 +999,9 @@ function update(dt) {
     const target = Math.min(tm.x + lead, GOAL_X - 40);
     const nextUnspotted = S.obstacles.find(o => !o.spotted);
     const distracted = mg.dist && mg.dist.phase === 'distract';
-    const ideaPending = S.idea.started && (settings.comms ? !S.idea.go : S.idea.bulb);
+    const branch = S.distractions.find(d => d.kind === 'branch');
+    const ideaPending = S.idea.started && !S.idea.resolved || !S.idea.started && ob('log').done && tm.x > IDEA_X - 320
+      || S.idea.resolved && (!branch.done || mg.dist) && S.t - S.idea.resolvedT < 14; // the snag comes first, then the cliff is spotted // v8.0: no new hazard talk while Banjo's idea is in the air
     if (!distracted && !ideaPending && nextUnspotted && mg.x + 230 >= nextUnspotted.x) spot(nextUnspotted);
     const dx = target - mg.x;
     mg.x += clamp(dx * 1.4 * dt, -140 * dt, 140 * dt);
@@ -971,14 +1022,14 @@ function update(dt) {
   if (mg.ready && !S.finished && !S.build.on) {
     // v7.6: one conversation at a time, so every reply comes straight after its question
     const mgQuiet = !S.pulses.length && !S.queue.manager.length && !S.bubbles.some(b => b.who === 'manager') && !S.visit;
-    if (S.t > S.nextLeaderTalk && !ld.dist && !ld.meeting && mgFree() && mgQuiet && !S.queue.leader.length && !S.bubbles.some(b => b.who === 'leader') && !S.waiters.length && !S.pend.length && !(tm.seqOb && tm.seqOb.isSurprise)) {
+    if (LC() && S.t > S.nextLeaderTalk && !ld.dist && !ld.meeting && mgFree() && mgQuiet && !S.queue.leader.length && !S.bubbles.some(b => b.who === 'leader') && !S.waiters.length && !S.pend.length && !(tm.seqOb && tm.seqOb.isSurprise)) {
       S.nextLeaderTalk = S.t + 19;
       const n = S.leaderTalkI++, T = pick(LEADER_TALK, n), two = Math.floor(n / LEADER_TALK.length) % 2 === 1;
       const a = two && T.a2 || T.a, b = two && T.b2 || T.b, relay = two && T.relay2 || T.relay;
       ld.beam = 'goal'; ld.beamT = 2.4;
       say('leader', 'manager', a, b, () => {
         if (T.ack) later(1.4, () => bubble('leader', T.ack, 2.6));
-        if (relay) later(1.6, () => { if (settings.comms) say('manager', 'team', relay[0], relay[1]); else bubble('manager', '(...keeps it to themselves 🤐)', 2.4); });
+        if (relay) later(1.6, () => { if (settings.comms) say('manager', 'team', relay[0], tReply(relay[1])); else bubble('manager', '(...keeps it to themselves 🤐)', 2.4); });
       });
     }
     else if (S.t > S.nextCheckin && mgFree() && mgQuiet && !S.queue.team.length && tm.mode !== 'seq' && !tm.tired && !S.pend.length && !S.water) {
@@ -990,9 +1041,10 @@ function update(dt) {
         S.checkinI++;
         if (then && S.breakDone) { a = 'Nearly at the build site, team! 🔺'; b = 'Woohoo, nearly there! 🐨'; then = null; S.waterOwed = false; }
         else if (then && !waterSpot(110)) { S.waterOwed = true; [a, b, then] = pick(MANAGER_CHECKIN, S.checkinI++); }
-        say('manager', 'team', a, b, then);
+        say('manager', 'team', a, tReply(b), then);
       }
-      else bubble('team', pick(LONELY, S.checkinI++), 2.6);
+      else if (TC()) bubble('team', pick(LONELY, S.checkinI++), 2.6);
+      else S.checkinI++;
     }
   }
 
@@ -1158,9 +1210,9 @@ function spot(o) {
       bees: ['Bees\' nest ahead: tiptoe quietly!', '(whispering) Okay... 🤫'],
       wall: S.gifts.ladder || S.gifts.ladderDeal ? ['Rock wall ahead: Project Manager B\'s ladder is waiting for you there! 🪜', 'A ladder, ready to go? Yay! 🪜'] : ['Rock wall ahead: gather poles for a ladder!', 'Poles it is! 🪜'],
     }[o.type];
-    whenReady(() => shown != null && S.t - shown >= 0.8, () => say('manager', 'team', '📻 ' + advice[0], advice[1], () => { o.informed = true; }));
+    whenReady(() => shown != null && S.t - shown >= 0.8, () => say('manager', 'team', '📻 ' + advice[0], tReply(advice[1]), () => { o.informed = true; }));
   } else {
-    caption(`The Manager spots a ${o.name}, but communication is OFF, so the koalas never hear about it.`, 'No communication');
+    caption(`The Manager spots a ${o.name}, but Manager communication is OFF, so the koalas never hear about it.`, 'No communication');
     later(1.2, () => bubble('manager', '(...keeps it to themselves 🤐)', 2.4));
   }
 }
@@ -1169,18 +1221,20 @@ function finish() {
   const tm = S.team, B = S.build, days = Math.ceil(S.t / SEC_PER_DAY);
   S.finished = true; tm.mode = 'done'; tm.mood = 'happy';
   sfx('fanfare');
-  caption(settings.comms
+  caption(allOn()
     ? `Safely down, now we celebrate! Delivered on day ${days}! 🎉 The koalas built the pyramid themselves: vision (Leader) + support & communication (Manager) + skills & hard work (Team).`
-    : `Safely down at last. Finally delivered on day ${days}! 🎉 The koalas built the pyramid, but without communication it took a redo and many extra days.`, 'Goal reached', { force: true });
-  S.mgr.task = { kind: 'build', t: 0 }; S.mgr.busy = false; B.mt = { x: 5160, dy: GROUND - 150 - MANAGER_Y }; B.mcarry = false; B.clearT = S.t; // everyone celebrates on the ground
+    : !settings.comms && settings.lcomms && settings.tcomms
+    ? `Safely down at last. Finally delivered on day ${days}! 🎉 The koalas built the pyramid, but with Manager communication OFF it took a redo and many extra days.`
+    : `Safely down at last. Finally delivered on day ${days}! 🎉 The koalas built the pyramid, but with ${offNames()} communication OFF, messages stopped part-way${visionKnown() ? '' : ', it took a redo,'} and it cost extra days.`, 'Goal reached', { force: true });
+  S.mgr.task = { kind: 'build', t: 0 }; S.mgr.busy = false; B.mt = { x: 5760, dy: GROUND - 150 - MANAGER_Y }; B.mcarry = false; B.clearT = S.t; // everyone celebrates on the ground
   bubble('team', 'We built it!! 🎉🐨', 5);
   later(1.0, () => bubble('manager', 'Brilliant work, koalas! 🦉', 4));
-  later(1.8, () => bubble('leader', settings.comms ? 'You built the vision. Proud of every one of you! 🦅' : 'We got there in the end. Proud of you all! 🦅', 4));
+  later(1.8, () => bubble('leader', allOn() ? 'You built the vision. Proud of every one of you! 🦅' : 'We got there in the end. Proud of you all! 🦅', 4));
   later(4.6, () => bubble('team', 'Group hug!! 🤗', 4));
-  for (let i = 0; i < 80; i++) confetti(5250 + (rand() - 0.5) * 160, GROUND - 90, 1);
+  for (let i = 0; i < 80; i++) confetti(5850 + (rand() - 0.5) * 160, GROUND - 90, 1);
   for (let i = 0; i < 30; i++) confetti(GOAL_X + (rand() - 0.5) * 60, CAP_BASE - 20, 1);
   S.day = days; call('OnDay', days);
-  S.finArgs = [Math.round(S.t), days, tm.wrong, tm.surprises, tm.distractions, tm.priorities, tm.reported, tm.syncs, tm.ideas, tm.breaks, settings.comms];
+  S.finArgs = [Math.round(S.t), days, tm.wrong, tm.surprises, tm.distractions, tm.priorities, tm.reported, tm.syncs, tm.ideas, tm.breaks, commsMask()];
   call('OnFinished', ...S.finArgs);
   mark('finish');
 }
@@ -1207,7 +1261,8 @@ function coachSeq() {
   const tm = S.team; mark('coach');
   if (settings.comms) return [
     { dur: 2.0, mood: 'hack', struggle: true, bushHp: [1, 0.8], phase: 'COACHING', until: mgFree,
-      cap: 'The everyday work, but Wattle, the smallest koala, is struggling: her saw keeps getting stuck and she\'s falling behind.', say: 'Wattle: My saw keeps getting stuck... 😣' },
+      cap: TC() ? 'The everyday work, but Wattle, the smallest koala, is struggling: her saw keeps getting stuck and she\'s falling behind.'
+        : 'The everyday work, but Wattle, the smallest koala, is struggling. With Team communication OFF she doesn\'t say a word, but the owl notices anyway.', say: TC() ? 'Wattle: My saw keeps getting stuck... 😣' : 'Wattle: (struggles quietly) 😣' },
     { dur: 2.9, mood: 'hack', struggle: true, bushHp: [0.8, 0.6], phase: 'COACHING', cap: 'Managers grow people: the owl drops down to coach Wattle one-to-one.',
       onStart: () => { S.mgr.task = { kind: 'coach', t: 0 }; later(0.7, () => bubble('manager', 'You\'ve got this, Wattle! Hold it like this. ✂️', 2.4, true)); } },
     { dur: 2.0, mood: 'hack', bushHp: [0.6, 0], phase: 'COACHING', cap: 'A little coaching and Wattle cuts as well as anyone. A small investment that lasts the whole journey.',
@@ -1217,7 +1272,7 @@ function coachSeq() {
     { dur: 2.0, mood: 'hack', struggle: true, bushHp: [1, 0.7], phase: 'Everyday work', capPrio: 2,
       cap: 'Wattle, the smallest koala, is struggling: her saw keeps getting stuck and she\'s falling behind.', say: 'Wattle: My saw keeps getting stuck... 😣' },
     { dur: 2.6, mood: 'hack', struggle: true, bushHp: [0.7, 0], phase: 'No communication',
-      cap: 'Nobody notices. With communication OFF there\'s no one to coach her, so Wattle just keeps struggling.', say: 'Wattle: Am I doing this right? ...anyone? 😓' },
+      cap: 'Nobody notices. With Manager communication OFF there\'s no one to coach her, so Wattle just keeps struggling.', say: 'Wattle: Am I doing this right? ...anyone? 😓' },
   ];
 }
 function coachDone(bush) {
@@ -1226,29 +1281,41 @@ function coachDone(bush) {
   for (let i = 0; i < 6; i++) leaf(bush.x, groundBase(bush.x) - 12);
   if (S.mgr.task && S.mgr.task.kind === 'coach') { S.mgr.task = null; S.mgr.focusT = 1.6; }
 }
-// Banjo spots a dry creek bed beside the shrubs. ON: the idea goes up, the Leader adopts it and changes course.
+// v8.0: just past the giant log Banjo spots a dry creek bed beside the shrubs. The koalas sit down by the log while the idea
+// travels up (Team -> Manager -> Leader) and the answer comes back down (Leader -> Manager -> Team). The chain breaks at the
+// first link that's OFF; then the koalas get up and hack through the shrubs the long way.
 function startIdea() {
-  const I = S.idea; I.started = true; I.bulb = true;
-  if (!settings.comms) mark('idea');
-  if (settings.comms) whenFree(() => mgFree() && !S.bubbles.some(b => b.who !== 'visitor') && !S.queue.team.length && !S.queue.manager.length && !S.pulses.length && !S.handing, () => {
-    mark('idea');
-    caption('Team members lead too: hacking through thick shrubbery, Banjo spots a dry creek bed running alongside. A better route, seen from the ground!', 'TEAM IDEA', { hold: 3.2 });
-    bubble('team', 'Banjo: There\'s a shortcut along the creek bed! 💡', 2.8, true); sfx('idea');
-    whenFree(mgFree, () => {
-      S.mgr.busy = true;
-      later(0.4, () => say('team', 'manager', 'Banjo: A dry creek bed skips all these shrubs!', 'Smart! Taking it to the boss. 🦉', () => {
-        caption('Ideas travel up too: the Manager passes Banjo\'s idea straight to the Leader.', 'TEAM IDEA');
-        S.waiters.push(() => say('manager', 'leader', 'The team found a creek route that skips the shrubs.', null, adoptIdea));
+  const I = S.idea, mg = S.mgr; I.started = true; I.bulb = true; mark('idea');
+  mg.busy = true;
+  runSeq([{ dur: 1.0, mood: 'wait', sit: true, until: () => I.resolved }], null, ideaDone);
+  caption('Team members lead too: just past the giant log, Banjo spots a dry creek bed running alongside the shrubs. The koalas sit down by the log to see what the bosses think.', 'TEAM IDEA', { hold: 3.2, prio: 2 });
+  bubble('team', 'Banjo: Look! A dry creek bed, right beside the shrubs! 💡', 2.8, true); sfx('idea');
+  const resolve = broke => { I.resolved = true; I.resolvedT = S.t; I.broke = broke; I.bulb = false; mg.busy = false; };
+  later(2.6, () => {
+    if (!TC()) {
+      caption('With Team communication OFF, Banjo keeps the idea to himself, so it never leaves the forest floor.', 'No communication', { hold: 2.8 });
+      bubble('team', 'Banjo: ...nah, probably not worth mentioning. 🤐', 2.8);
+      later(3.4, () => resolve('team'));
+      return;
+    }
+    say('team', 'manager', 'Banjo: Manager! A dry creek bed skips all these shrubs!', MC() ? 'Smart! Taking it to the boss. 🦉' : null, () => {
+      if (!MC()) {
+        later(0.6, () => bubble('manager', '(...keeps it to themselves 🤐)', 2.4));
+        caption('Banjo speaks up, but with Manager communication OFF the idea stops at the owl and never reaches the Leader.', 'No communication', { hold: 3 });
+        later(4.2, () => { bubble('team', 'Banjo: No answer... back to the shrubs, I guess. 😕', 2.6); later(1.2, () => resolve('manager')); });
+        return;
+      }
+      caption('Ideas travel up too: the Manager passes Banjo\'s idea straight to the Leader.', 'TEAM IDEA');
+      S.waiters.push(() => say('manager', 'leader', 'The team found a creek route that skips the shrubs.', null, () => {
+        if (LC()) { adoptIdea(resolve); return; }
+        later(0.4, () => bubble('leader', '(adds it to a very full inbox... 📥)', 2.6));
+        caption('The idea reaches the Leader, but with Leader communication OFF no decision comes back down: the eagle is busy with other teams.', 'No communication', { hold: 3.2 });
+        later(4.6, () => say('manager', 'team', 'No word back from the boss... we\'d better stick to the plan. 😕', tReply('Banjo: Okay... back to the shrubs. 😕'), () => later(0.8, () => resolve('leader'))));
       }));
     });
-  }); else {
-    caption('Banjo spots a dry creek bed that would skip the shrubs, but with communication OFF the idea goes nowhere.', 'No communication', { hold: 3 });
-    bubble('team', 'Banjo: Psst... a creek bed! Should we tell someone? 🤔', 3, true); sfx('idea');
-    later(3.4, () => bubble('team', 'Banjo: ...hello? Guess we keep hacking. 😕', 2.6));
-    later(6.2, () => { I.bulb = false; });
-  }
+  });
 }
-function adoptIdea() {
+function adoptIdea(resolve) {
   const I = S.idea, tm = S.team;
   const left = S.pathBushes.filter(b => b.shrub && !b.cut).length;
   const days = Math.max(1, Math.round((left - 1.3) * SHRUB_HACK.on / SEC_PER_DAY));
@@ -1257,10 +1324,17 @@ function adoptIdea() {
   bubble('leader', `New info from the ground. We'll take the creek route; it saves ${days} days.`, 3.6, true);
   caption(`Course correction: leaders adapt. With new information from the ground, the Leader changes the plan: the creek route saves about ${days} days.`, 'COURSE CORRECTION', { force: true, hold: 3.6 });
   later(2.0, () => pulse('leader', 'manager', PULSE_COL.leader, () => say('manager', 'team', 'Creek route approved! Great idea, Banjo! 🌟', 'Banjo: Woohoo! Follow me! 🐨', () => {
-    I.go = true; I.bulb = false; S.mgr.busy = false;
+    I.go = true; resolve(null);
     kbadge(1, '💡 Banjo: idea adopted!', 5, '#b3e5fc');
-    caption('Credit flows back down: the koalas leave the shrubs behind and follow Banjo along the creek bed.', 'COURSE CORRECTION');
+    caption('Credit flows back down: the koalas get up and follow Banjo along the creek bed, leaving the shrubs behind.', 'COURSE CORRECTION', { hold: 3.4 });
   })));
+}
+// The koalas get up from the log: along the creek (idea adopted) or into the shrubs the long way.
+function ideaDone() {
+  const I = S.idea;
+  if (I.go) return;
+  const where = { team: 'Banjo never said a word', manager: 'the idea stopped at the owl', leader: 'no answer came back from the Leader' }[I.broke] || 'nobody decided';
+  caption(`Back to the plan: ${where}, so the koalas get up and hack through the thick shrubs the long way.`, 'Everyday work', { prio: 1, hold: 3.4 });
 }
 // Small wins: Matilda gets a gum leaf, "Koala of the week".
 function startRecognition() {
@@ -1269,8 +1343,8 @@ function startRecognition() {
   caption('Celebrating small wins: the owl names Matilda "Koala of the week" for keeping everyone calm past the bees. 🌿', 'RECOGNITION', { hold: 3.4 });
   later(1.0, () => bubble('manager', 'Koala of the week: Matilda! 🌿 You kept us calm.', 2.6, true));
   later(1.7, () => { S.leafFly = { t: 0 }; sfx('rustle'); });
-  later(2.7, () => { tm.leaf = 2; kbadge(2, '🌿 Matilda: Koala of the week', 4.5, '#c5e1a5'); bubble('team', 'Matilda: Aww, thanks! 🥰', 2.2); });
-  later(4.4, () => { mg.task = null; mg.focusT = 1.4; say('manager', 'leader', '🐝 Bees\' nest cleared! ✅ Matilda kept everyone calm.', 'Great work, Matilda! 🦅'); });
+  later(2.7, () => { tm.leaf = 2; kbadge(2, '🌿 Matilda: Koala of the week', 4.5, '#c5e1a5'); if (TC()) bubble('team', 'Matilda: Aww, thanks! 🥰', 2.2); });
+  later(4.4, () => { mg.task = null; mg.focusT = 1.4; say('manager', 'leader', '🐝 Bees\' nest cleared! ✅ Matilda kept everyone calm.', LC() ? 'Great work, Matilda! 🦅' : null); });
 }
 // Wellbeing: after the toughest stretch. ON: the owl calls a break. OFF: no break, and the koalas tire.
 function startBreak() {
@@ -1322,7 +1396,7 @@ function stations(k, p, o = {}) {
   const kip = { x: placeX(k, o.tear ? 1 - c : c, o.wide || o.tear), y: cTop(k - 1), face: (k % 2 === 0) !== !!o.tear ? 1 : -1 };
   const mat = { x: STOCK_X - 26, y: GROUND, face: 1 };
   let ban, wat;
-  if (k === 0) { ban = { x: 5180, y: GROUND, face: 1 }; wat = { x: 5290, y: GROUND, face: 1 }; }
+  if (k === 0) { ban = { x: 5780, y: GROUND, face: 1 }; wat = { x: 5890, y: GROUND, face: 1 }; }
   else {
     ban = { x: RAMP_FOOT - 12, y: GROUND, face: 1 };
     if (k <= 2) wat = { x: lerp(RAMP_FOOT, rt[0], 0.5), y: lerp(GROUND, rt[1], 0.5), face: 1 };
@@ -1333,7 +1407,7 @@ function stations(k, p, o = {}) {
 }
 function holdStations() { return S.build.tgt || S.build.kp.map(P => ({ x: P.x, y: P.y, face: 1 })); }
 // v7.1: where the koalas celebrate, safely back on the ground beside the pyramid (first one down walks furthest).
-function grounds() { return [[5265, 2, -1], [5230, 6, 1], [5195, 0, 1], [5300, 8, -1]].map(([x, lane, face]) => ({ x, y: GROUND, lane, face })); }
+function grounds() { return [[5865, 2, -1], [5830, 6, 1], [5795, 0, 1], [5900, 8, -1]].map(([x, lane, face]) => ({ x, y: GROUND, lane, face })); }
 function finals() { return FINAL.map(([dx, lane]) => ({ x: GOAL_X + dx, y: cTop(4), lane, face: dx < 0 ? 1 : -1 })); }
 // The supply line: blocks travel from the pile, paw to paw, up the ramp (on rollers, pulled by rope) and the ladder, to Kip.
 // Each point is [x, y, height of the block above the feet].
@@ -1393,7 +1467,7 @@ function buildSeq(on) {
   });
   const capFlow = (dur, cap) => ({
     dur, b: 'capflow', phase: 'BUILD', cap,
-    onStart: () => { B.cap = { s: 0, lift: 0 }; if (on) say('manager', 'leader', 'Layer 6 done! The capstone is going up! ✨', 'This is it! 🦅'); },
+    onStart: () => { B.cap = { s: 0, lift: 0 }; if (on) say('manager', 'leader', 'Layer 6 done! The capstone is going up! ✨', LC() ? 'This is it! 🦅' : null); },
     tick: p => { B.cap.s = p; B.mcarry = false; if (on) B.mt = { x: GOAL_X - 150, dy: cTop(4) - 60 - MANAGER_Y }; },
     st: () => stations(5, 1), flow: () => ({ pts: flowPts(5), n: 0, cap: true }),
   });
@@ -1427,37 +1501,53 @@ function buildSeq(on) {
     onStart: () => { B.capSet = true; mark('reality'); sfx('vision'); S.leader.beam = 'goal'; S.leader.beamT = 3; later(0.7, () => bubble('leader', leaderSays, 2.8, true)); },
     tick: p => { B.solid = Math.max(B.solid, ease(clamp(p / 0.7, 0, 1))); },
   });
+  // v8.0: with the owl supporting, the build still depends on the vision (Leader -> Manager) and on koalas who talk to each other.
+  const v = visionKnown(), t = TC(), k = t ? 1 : 1.2;
+  const redo = v ? [] : [
+    { dur: 3.4, b: 'hold', mood: 'confused', phase: 'REDO', wrong: true, st: holdStations, cap: 'Wait... was it meant to be pointy? The vision never came down from the Leader, so the shape is wrong.', say: 'Wait, was it meant to be pointy?! 😳',
+      onStart: () => { B.wrongShow = true; sfx('sting'); stats(); later(1.6, () => bubble('manager', 'Sorry, team, I never saw the plans either. 😬', 2.6, true)); } },
+    course(2, 4.4, { ramp: [1, 1], tear: true, wide: false, phase: 'REDO', cap: 'They tear the whole layer down and start it again. Days of work, lost.', say: 'Take it all down... 😩' }),
+    course(2, 4.6 * k, { ramp: [1, 1], phase: 'REDO', cap: 'Second try: layer 3, stepped in this time.', onStart: () => { B.wrongShow = false; B.wrongP = 0; } }),
+  ];
   if (on) return [
-    { dur: 3.4, b: 'arrive', mood: '', phase: 'BUILD', cap: 'The build site, right under the Leader\'s vision. That golden blueprint is the goal: now the koalas will build the real pyramid themselves.',
-      onStart: () => { bubble('leader', 'There it stands, in the vision. Let\'s build it! 🔺', 3, true); later(1.1, () => say('manager', 'team', 'I\'ll organise the build: stones first, then layer by layer. 📋', 'Let\'s build! 🐨🔨')); } },
-    { dur: 4.6, b: 'gather', gather: 'stones', phase: 'BUILD', cap: 'Skill from the journey: gathering materials. Just like at the river, the bog and the cliff, the koalas fan out and bring back stone.',
+    { dur: 3.4, b: 'arrive', mood: v ? '' : 'confused', phase: 'BUILD', cap: v ? 'The build site, right under the Leader\'s vision. That golden blueprint is the goal: now the koalas will build the real pyramid themselves.'
+        : 'The build site. The owl is ready to organise the build, but with Leader communication OFF nobody down here has seen the vision.',
+      onStart: () => { if (v) bubble('leader', 'There it stands, in the vision. Let\'s build it! 🔺', 3, true); later(1.1, () => say('manager', 'team', v ? 'I\'ll organise the build: stones first, then layer by layer. 📋' : 'No plans from the boss... let\'s build something big and solid! 📋', tReply(v ? 'Let\'s build! 🐨🔨' : 'Big and solid it is! 🐨'))); } },
+    { dur: 4.6 * k, b: 'gather', gather: 'stones', phase: 'BUILD', cap: t ? 'Skill from the journey: gathering materials. Just like at the river, the bog and the cliff, the koalas fan out and bring back stone.'
+        : 'Gathering materials, but with Team communication OFF nobody calls out who\'s fetching what: two koalas haul the same stones and the pile grows slowly.',
       onStart: () => skill('🧺', 'Gathering materials', 'river, bog, cliff and wall'), tick: p => { B.stock = Math.max(B.stock, [0, 1, 2, 3].filter(i => gatherPose(i, p, {}).delivered).length * 2); } },
-    { dur: 4.4, b: 'shape', mood: 'chisel', phase: 'BUILD', cap: 'Remember the boulder? The hammer-and-chisel training pays off: the koalas shape rough stone into neat, same-sized blocks.', say: 'Tap... tap... a perfect block! 🔨',
+    { dur: 4.4 * k, b: 'shape', mood: 'chisel', phase: 'BUILD', cap: 'Remember the boulder? The hammer-and-chisel training pays off: the koalas shape rough stone into neat, same-sized blocks.', say: 'Tap... tap... a perfect block! 🔨',
       onStart: () => { B.kpOn = true; B.stock = 8; skill('🔨', 'Hammer & chisel', 'the boulder training'); }, tick: p => { B.shaped = Math.max(B.shaped, p); }, st: shapeSpots },
-    course(0, 4.6, { cap: 'Layer 1 of 6: block by block, the base goes down on the forest floor.',
+    course(0, 4.6 * k, { cap: 'Layer 1 of 6: block by block, the base goes down on the forest floor.',
       onStart: () => later(1.4, () => { caption('Good managers support the work, they don\'t take it over: the owl rolls up its sleeves and brings stone to wherever it\'s needed.', 'SUPPORT', { hold: 3.4 }); bubble('manager', 'Next stone, coming through! 🪨', 2.4); }) }),
-    rampStep(3.0, 'To build higher they need a ramp: planks laid end to end, just like the sinkhole crossing.', 'Planks, like at the sinkhole! 🪵'),
-    course(1, 4.6, { ramp: [0, 0], phase: 'DELEGATION', cap: 'Delegation again: the owl hands Kip the lead on a section of the build, just like the bridge.',
-      onStart: () => { tm.lead = 0; say('manager', 'team', 'Kip, can you lead the east side? ⭐', 'Kip: On it! 🌟'); kbadge(0, '⭐ Kip leads a section', 5); later(2.4, () => { B.check = 2.6; bubble('manager', 'Checked against the vision: the angles match! 📐✅', 2.6, true); }); } }),
-    course(2, 4.6, { ramp: [0, 1], cap: 'Wattle, coached back at the thick bush, now sets the corner stones with confidence.',
-      onStart: () => { kbadge(3, '💪 Wattle: confident since coaching', 4.5, '#b9f6ca'); bubble('team', 'Wattle: I\'ve got the corners! 💪', 2.4); skill('🤝', 'Teamwork & delegation', 'Kip leads, Wattle was coached'); } }),
-    { dur: 2.8, b: 'hold', mood: '', phase: 'TEAM IDEA', cap: 'Team members lead too: the blocks are getting heavy for the steep ramp, so Banjo suggests log rollers, a trick from the river bridge.', st: holdStations,
-      onStart: () => { B.mcarry = false; say('manager', 'leader', 'Layer 3 done, halfway there! 🔺', 'Brilliant. Keep that shape! 🦅'); later(0.4, () => { bubble('team', 'Banjo: Logs as rollers, like the bridge! 💡', 2.6, true); sfx('idea'); });
-        later(1.6, () => { B.rollers = true; kbadge(1, '💡 Banjo: log rollers', 4.5, '#b3e5fc'); skill('💡', 'Log rollers', 'Banjo\'s idea, logs like the bridge'); }); } },
-    course(3, 5.0, { ramp: [1, 2], rope: true, cap: 'Ropes, like at the cliff: Wattle hauls each block up the ramp on Banjo\'s rollers, and Kip sets it in place.',
-      onStart: () => skill('🪢', 'Ropes', 'the cliff') }),
-    course(4, 5.0, { ramp: [2, 3], rope: true, cap: 'Layer 5 of 6. The owl relays progress up: the Leader always knows where the build is.',
-      onStart: () => { say('manager', 'leader', 'Layer 4 done, two to go! 🔺', 'So proud of this team! 🦅'); later(1.2, () => { if (!S.leader.meeting) startMeeting(S.meetings[3]); }); } }),
-    ladderStep(2.6, S.gifts.ladder ? 'For the very top they lash their own ladder, copying the one Project Manager B lent them at the rock wall.' : 'For the very top they lash a ladder, a skill from the rock wall.'),
-    course(5, 4.4, { cap: 'The sixth and final layer, passed up the ladder block by block.' }),
+    rampStep(3.0 * k, 'To build higher they need a ramp: planks laid end to end, just like the sinkhole crossing.', 'Planks, like at the sinkhole! 🪵'),
+    course(1, 4.6 * k, { ramp: [0, 0], phase: 'DELEGATION', cap: t ? 'Delegation again: the owl hands Kip the lead on a section of the build, just like the bridge.'
+        : 'Delegation again: the owl hands Kip the lead on a section. With Team communication OFF, though, the koalas keep bumping into each other on the ramp.',
+      onStart: () => { tm.lead = 0; say('manager', 'team', 'Kip, can you lead the east side? ⭐', tReply('Kip: On it! 🌟')); kbadge(0, '⭐ Kip leads a section', 5); if (v) later(2.4, () => { B.check = 2.6; bubble('manager', 'Checked against the vision: the angles match! 📐✅', 2.6, true); }); } }),
+    v ? course(2, 4.6 * k, { ramp: [0, 1], cap: 'Wattle, coached back at the thick bush, now sets the corner stones with confidence.',
+      onStart: () => { kbadge(3, '💪 Wattle: confident since coaching', 4.5, '#b9f6ca'); if (t) bubble('team', 'Wattle: I\'ve got the corners! 💪', 2.4); skill('🤝', 'Teamwork & delegation', 'Kip leads, Wattle was coached'); } })
+      : course(2, 4.6 * k, { ramp: [0, 1], wide: true, cap: 'Without the vision, they build layer 3 straight up, as wide as the layer below...',
+      onStart: () => { kbadge(3, '💪 Wattle: confident since coaching', 4.5, '#b9f6ca'); skill('🤝', 'Teamwork & delegation', 'Kip leads, Wattle was coached'); } }),
+    ...redo,
+    ...(t ? [{ dur: 2.8, b: 'hold', mood: '', phase: 'TEAM IDEA', cap: 'Team members lead too: the blocks are getting heavy for the steep ramp, so Banjo suggests log rollers, a trick from the river bridge.', st: holdStations,
+      onStart: () => { B.mcarry = false; say('manager', 'leader', 'Layer 3 done, halfway there! 🔺', LC() ? (v ? 'Brilliant. Keep that shape! 🦅' : 'Brilliant. Keep going! 🦅') : null); later(0.4, () => { bubble('team', 'Banjo: Logs as rollers, like the bridge! 💡', 2.6, true); sfx('idea'); });
+        later(1.6, () => { B.rollers = true; kbadge(1, '💡 Banjo: log rollers', 4.5, '#b3e5fc'); skill('💡', 'Log rollers', 'Banjo\'s idea, logs like the bridge'); }); } }] : []),
+    course(3, 5.0 * (t ? 1 : 1.3), { ramp: [1, 2], rope: true, cap: t ? 'Ropes, like at the cliff: Wattle hauls each block up the ramp on Banjo\'s rollers, and Kip sets it in place.'
+        : 'Ropes, like at the cliff, but no rollers: Banjo has a good idea, and with Team communication OFF he keeps it to himself. Every block is dragged.',
+      onStart: () => { skill('🪢', 'Ropes', 'the cliff'); if (!t) say('manager', 'leader', 'Layer 3 done, halfway there! 🔺', LC() ? 'Brilliant. Keep going! 🦅' : null); } }),
+    course(4, 5.0 * k, { ramp: [2, 3], rope: true, cap: LC() ? 'Layer 5 of 6. The owl relays progress up: the Leader always knows where the build is.' : 'Layer 5 of 6. The owl relays progress up, though with Leader communication OFF nothing comes back.',
+      onStart: () => { say('manager', 'leader', 'Layer 4 done, two to go! 🔺', LC() ? 'So proud of this team! 🦅' : null); later(1.2, () => { if (!S.leader.meeting) startMeeting(S.meetings[3]); }); } }),
+    ladderStep(2.6 * k, S.gifts.ladder ? 'For the very top they lash their own ladder, copying the one Project Manager B lent them at the rock wall.' : 'For the very top they lash a ladder, a skill from the rock wall.'),
+    course(5, 4.4 * k, { cap: 'The sixth and final layer, passed up the ladder block by block.' }),
     capFlow(3.6, 'The golden capstone travels up the line, passed from paw to paw.'),
     climb(3.4, 'All four koalas climb to the top: this last stone goes on together.'),
     capLift(3.0, 'Together, all four lift the capstone and set it on top...'),
-    reality(3.2, 'Vision becomes reality: the pyramid the team built fills the Leader\'s blueprint exactly, and the outline turns solid. ✨', 'That\'s it! That\'s the vision! 🦅✨'),
+    v ? reality(3.2, 'Vision becomes reality: the pyramid the team built fills the Leader\'s blueprint exactly, and the outline turns solid. ✨', allOn() ? 'That\'s it! That\'s the vision! 🦅✨' : 'That\'s it, the vision! Well done, all. 🦅')
+      : reality(3.0, 'After the redo the pyramid matches the Leader\'s vision at last, the one nobody down here ever got to see.', 'There it is... at last. 🦅'),
     down(6.0, 'Safety first, right to the end: one at a time, the koalas climb back down the ladder and the ramp.', 'Careful now, one at a time! 🪜'),
   ];
   return [
-    { dur: 3.0, b: 'arrive', mood: 'confused', phase: 'No communication', cap: 'They\'ve reached the spot, but with communication OFF nobody ever told the koalas what the final product looks like.', say: 'Right... where do we even start? 🤷',
+    { dur: 3.0, b: 'arrive', mood: 'confused', phase: 'No communication', cap: 'They\'ve reached the spot, but with Manager communication OFF nobody ever told the koalas what the final product looks like.', say: 'Right... where do we even start? 🤷',
       onStart: () => later(1.2, () => bubble('manager', '(...keeps it to themselves 🤐)', 2.4)) },
     { dur: 6.0, b: 'gather', gather: 'stones', lost: true, phase: 'BUILD', cap: 'They fan out for stone, unsure what they need or how much...', say: 'Big rocks? Small rocks? 🤷',
       onStart: () => skill('🧺', 'Gathering materials', 'river, bog, cliff and wall'), tick: p => { B.stock = Math.max(B.stock, [0, 1, 2, 3].filter(i => gatherPose(i, p, { lost: true }).delivered).length * 2); } },
@@ -1557,14 +1647,22 @@ const HUDDLE_LINES = {
   on: [[0, 0.9, "Kip: Okay team, next steps? 👉🔺"], [2, 2.7, "Matilda: I'll shape the stone. 🔨"], [1, 4.5, "Banjo: Rollers from the logs, like the bridge! 🪵"], [3, 6.3, "Wattle: I can haul. I've got this now! 💪"]],
   off: [[0, 0.9, "Kip: So... what's next?"], [1, 2.6, "Banjo: What are we even building? 🤔"], [2, 4.3, "Matilda: Something big? A box?"]],
 };
+const huddleOn = () => visionKnown() && TC(); // v8.0: a real plan needs the vision AND koalas who talk to each other
 function startHuddle() {
-  const H = S.huddle, on = settings.comms; H.on = true; H.t = 0; H.spk = -1; H.wrapT = -1;
+  const H = S.huddle, on = huddleOn();
+  if (!TC()) { // v8.0: no huddle at all
+    H.done = true;
+    caption('With Team communication OFF there\'s no huddle: each koala just starts on their own bit, without a shared plan.', 'TEAM HUDDLE', { hold: 3 });
+    later(2.0, () => bubble('team', '(everyone picks a job... the same job 😬)', 2.6, true)); // after the caption has landed
+    return;
+  }
+  H.on = true; H.t = 0; H.spk = -1; H.wrapT = -1;
   if (on || !S.leader.meeting) caption(on ? 'The team meets to plan their next steps: teams self-organise when they understand the goal.' : HUDDLE_OFF_CAP, 'TEAM HUDDLE', { hold: 3.4 });
   else H.capLater = true; // OFF: the Leader's meeting holds the caption bar, so say it when the huddle breaks up
   for (const [i, at, text] of HUDDLE_LINES[on ? 'on' : 'off']) later(at, () => { if (!H.on) return; H.spk = i; bubble('team', text, 1.7, true); });
 }
 function updateHuddle(dt) {
-  const H = S.huddle, on = settings.comms; H.t += dt;
+  const H = S.huddle, on = huddleOn(); H.t += dt;
   const talkEnd = on ? 8.1 : 6.0;
   if (H.wrapT < 0 && H.t >= talkEnd && !S.leader.meeting) { // the plan is agreed (and the Leader's meeting is over): paws in
     H.wrapT = H.t; H.spk = -1;
@@ -1577,12 +1675,12 @@ function updateHuddle(dt) {
 function huddleK() {
   const H = S.huddle, inK = ease(clamp(H.t / 0.9, 0, 1));
   if (H.wrapT < 0) return inK;
-  const outAt = H.wrapT + (settings.comms ? 1.8 : 2.2);
+  const outAt = H.wrapT + (huddleOn() ? 1.8 : 2.2);
   return inK * (1 - ease(clamp((H.t - outAt) / 0.6, 0, 1)));
 }
 function huddlePoses() {
   const H = S.huddle; if (!H.on) return null;
-  const tm = S.team, cx = tm.x - 1.5 * MEMBER_GAP, k = huddleK(), on = settings.comms;
+  const tm = S.team, cx = tm.x - 1.5 * MEMBER_GAP, k = huddleK(), on = huddleOn();
   const inMove = H.t < 0.9, outMove = H.wrapT >= 0 && k < 0.999 && H.t > H.wrapT + 0.5;
   const paws = on && H.wrapT >= 0 ? clamp((H.t - H.wrapT) / 0.4, 0, 1) * k : 0;
   return HUDDLE.map(([dx, ln, left], i) => {
@@ -1600,7 +1698,7 @@ function huddlePoses() {
 }
 // The plan, scratched in the dirt in the middle of the circle: a stepped triangle (ON) or a wobbly box with a "?" (OFF).
 function drawHuddleSketch() {
-  const H = S.huddle, tm = S.team, cx = tm.x - 1.5 * MEMBER_GAP, x = cx - camX, y = memberY(cx) + 3, on = settings.comms;
+  const H = S.huddle, tm = S.team, cx = tm.x - 1.5 * MEMBER_GAP, x = cx - camX, y = memberY(cx) + 3, on = huddleOn();
   const a = huddleK(); if (a <= 0.01) return;
   const f = clamp((H.t - 1.2) / (on ? 4.8 : 3.6), 0, 1);
   ctx.save(); ctx.globalAlpha = a;
@@ -1621,7 +1719,24 @@ function drawHuddleSketch() {
 function surpriseSeq(sp) {
   const snake = sp.type === 'snake';
   const first = { dur: 1.6, mood: 'stuck', cap: sp.reveal, say: sp.revSay, rev: true, phase: 'SURPRISE' };
-  if (settings.comms) return [
+  sp.broke = !TC() ? 'team' : !MC() ? 'manager' : !LC() ? 'leader' : null; // v8.0: the chain breaks at the first OFF link
+  if (sp.broke === 'leader') return [ // reported up, but no answer comes back down
+    first,
+    { dur: 1.0, mood: '', until: () => sp.chainDone, onStart: () => upChain(sp) },
+    ...(sp.type === 'sinkhole' ? [{ dur: 4.4, gather: 'planks', cap: 'Without a yes from above, the koalas gather planks anyway, not sure they\'re allowed the time.' }] : []),
+    { dur: snake ? 3.6 : 4.8, mood: snake ? 'sneak' : 'work', prog: true, cap: sp.noLeaderCap },
+  ];
+  if (sp.broke === 'team') return [ // the koalas never report it
+    first,
+    { dur: 2.6, mood: 'confused', cap: 'With Team communication OFF, the koalas don\'t report the surprise, so nobody up the chain even knows.', say: 'We\'ll just... sort it ourselves. 😬' },
+    sp.type === 'sinkhole'
+      ? { dur: 7.0, gather: 'planks', lost: true, wrong: true, cap: 'On their own, the koalas search the bush for anything to bridge the hole...' }
+      : { dur: 2.4, mood: 'confused', move: -70, wrong: true },
+    ...(sp.type === 'sinkhole' ? [] : [{ dur: 1.8, mood: 'walk', move: 70 }]),
+    { dur: sp.type === 'sinkhole' ? 4.4 : 3.2, mood: snake ? 'confused' : 'work', cap: sp.tryCapT, say: sp.trySayT },
+    { dur: snake ? 5.4 : sp.type === 'sinkhole' ? 6.4 : 7.0, mood: snake ? 'sneak' : 'work', prog: true, cap: sp.aloneCapT },
+  ];
+  if (!sp.broke) return [
     first,
     { dur: 1.0, mood: '', until: () => sp.chainDone, onStart: () => upChain(sp) },
     ...(sp.type === 'sinkhole' ? [{ dur: 3.6, gather: 'planks', cap: sp.gatherCap }] : []),
@@ -1629,7 +1744,7 @@ function surpriseSeq(sp) {
   ];
   return [
     first,
-    { dur: 2.2, mood: 'confused', cap: 'The koalas call up for help... but with communication OFF, nobody answers.', say: sp.up + ' ...hello?' },
+    { dur: 2.2, mood: 'confused', cap: 'The koalas call up for help... but with Manager communication OFF, the owl never answers or passes it on.', say: sp.up + ' ...hello?' },
     sp.type === 'sinkhole'
       ? { dur: 5.2, gather: 'planks', lost: true, wrong: true, say: 'Guess we\'re on our own... 😟', cap: 'On their own, the koalas search the bush for anything to bridge the hole...' }
       : { dur: 2.0, mood: 'confused', move: -70, wrong: true, say: 'Guess we\'re on our own... 😟' },
@@ -1643,8 +1758,14 @@ function upChain(sp) {
   say('team', 'manager', sp.up, sp.ack, () => {
     S.waiters.push(() => {
       caption('The Manager escalates it to the Leader: what happened, what the team needs, and the likely delay.', 'SURPRISE');
-      say('manager', 'leader', sp.toLeader, sp.leaderReply, () => {
+      say('manager', 'leader', sp.toLeader, LC() ? sp.leaderReply : null, () => {
         S.team.reported++; stats();
+        if (!LC()) { // v8.0: the escalation reaches the Leader, but nothing comes back
+          later(0.4, () => bubble('leader', '(another message in the pile... 📥)', 2.6));
+          caption('The Manager escalates, but with Leader communication OFF no answer comes back down: no approval, no extra gear.', 'No communication', { hold: 3 });
+          later(4.2, () => say('manager', 'team', sp.downNoLeader, tReply(sp.teamAckNoLeader), () => { sp.chainDone = true; }));
+          return;
+        }
         S.leader.beam = 'goal'; S.leader.beamT = 2.6;
         const down = () => pulse('leader', 'manager', PULSE_COL.leader, () => say('manager', 'team', sp.down, sp.teamAck, () => { sp.chainDone = true; }));
         if (sp.support) {
@@ -1730,7 +1851,7 @@ function updateMeeting(dt) {
       caption(d.capLeave || 'The visiting eagles fly off. The Leader keeps the beam on the vision and the team keeps going. 🔺', 'Focus');
     } else {
       S.leader.meeting = null;
-      bubble('leader', 'Onwards, everyone. Eyes on the vision! 🔺', 2.4); meetingFollowUp(d);
+      bubble('leader', LC() ? 'Onwards, everyone. Eyes on the vision! 🔺' : '(back to the inbox... 📥)', 2.4); meetingFollowUp(d);
     }
   }
 }
@@ -2479,7 +2600,7 @@ function drawPile(a) {
     const shaped = j < B.shaped * B.stock, px = STOCK_X - 22 + (j % 4) * 14 + Math.floor(j / 4) * 6, py = GROUND + 4 - Math.floor(j / 4) * 9;
     drawItem(shaped ? 'block' : 'stones', px - camX, py, 1.15);
   }
-  const REJ = [[4985, 0.5, 1.3], [5000, -0.3, 0.8], [5150, 0.9, 1.5], [5205, -0.6, 0.7], [4965, 0.2, 1.1]];
+  const REJ = [[5585, 0.5, 1.3], [5600, -0.3, 0.8], [5750, 0.9, 1.5], [5805, -0.6, 0.7], [5565, 0.2, 1.1]];
   for (let j = 0; j < B.rejects; j++) { // wrong-sized blocks, thrown away
     const [rx, rot, sz] = REJ[j]; ctx.save(); ctx.translate(rx - camX, GROUND + 6); ctx.rotate(rot); ctx.scale(sz, 0.75 + sz * 0.3);
     ctx.fillStyle = '#c9a466'; ctx.strokeStyle = '#7a5a2a'; ctx.lineWidth = 1; ctx.fillRect(-8, -11, 16, 11); ctx.strokeRect(-8, -11, 16, 11); ctx.restore();
@@ -2764,7 +2885,7 @@ function drawLeader() {
   ctx.fillStyle = '#222'; ctx.beginPath(); ctx.arc(-3, -16, 1.4, 0, 7); ctx.arc(3, -16, 1.4, 0, 7); ctx.fill();
   ctx.restore();
   if (L.dist) drawLeaderFX(L, x, y);
-  tag(x, y - 34, 'LEADER', '#ffd34d');
+  tag(x, y - 34, LC() ? 'LEADER' : 'LEADER · 📵 COMMS OFF', '#ffd34d');
 }
 function drawLeaderFX(L, x, y) {
   const d = L.dist, t = S.t, fade = d.phase === 'distract' ? 1 : Math.max(0, 1 - d.t / 0.8);
@@ -2837,7 +2958,7 @@ function drawManager() {
   ctx.restore();
   if (M.dist) drawManagerFX(M, x, y);
   if (M.alert > 0) { ctx.fillStyle = '#ff7043'; ctx.font = 'bold 22px sans-serif'; ctx.fillText('!', x - 4, y - 30); }
-  tag(x, y - 42, S.build.on && settings.comms && !S.finished ? 'MANAGER · SUPPORTING' : 'MANAGER', '#c792ff');
+  tag(x, y - 42, S.build.on && settings.comms && !S.finished ? 'MANAGER · SUPPORTING' : settings.comms ? 'MANAGER' : 'MANAGER · 📵 COMMS OFF', '#c792ff');
   if (S.build.on && S.build.mcarry) drawItem('block', x + 2, y + 30, 1.1); // bringing stone to where it's needed
   if (S.build.check > 0) { // checking the plan against the Leader's vision
     ctx.save(); ctx.globalAlpha = Math.min(1, S.build.check); ctx.strokeStyle = '#d6a8ff'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]); ctx.lineDashOffset = -S.t * 20;
@@ -3006,6 +3127,7 @@ function drawTeam() {
     let mood = tm.mood;
     if (st && st.struggle && i === 3) mood = 'struggle';
     if (st && st.rest) { mood = 'rest'; flip = i < 2; mx += i < 2 ? 4 : -4; lane = 12; moving = false; }
+    if (st && st.sit) { mood = 'wait'; moving = false; lane = [4, 9, 2, 11][i]; flip = i === 3 || (i !== 1 && Math.sin(S.t * 0.55 + i * 2.3) > 0.7); } // v8.0: sitting by the log, waiting
     if (g) {
       const P = gatherPose(i, sp, g);
       mx = tm.x + P.x; lane = P.lane; flip = P.flip; crouch = P.crouch; moving = P.moving;
@@ -3025,7 +3147,7 @@ function drawTeam() {
     bob += hhop;
     if (tm.cheer > 0) bob += Math.abs(Math.sin(S.t * 10 + i)) * 10 * tm.cheer;
     const shake = tm.mood === 'stuck' ? Math.sin(S.t * 30 + i) * 1.5 : 0;
-    if (mx > logO.x - 6 && mx < logO.x + logO.w + 6) mood = 'sneak'; // crawling through the hollow log
+    if (mood !== 'wait' && mx > logO.x - 6 && mx < logO.x + logO.w + 6) mood = 'sneak'; // crawling through the hollow log
     const s = KOALA_SCALE * (1 + lane / 120) * KOALA_SIZE[i];
     if (tm.tired && moving) bob *= 0.4;
     drawKoala(mx - camX + shake, gy - bob, s, TEAM_COLORS[i], moving ? Math.sin(ph) * (tm.tired ? 0.6 : 1) : 0, mood, i, flip, carry, { tired: tm.tired && mood !== 'happy', leaf: tm.leaf === i, lead: tm.lead === i });
@@ -3045,8 +3167,8 @@ function drawTeam() {
   else if (tm.supplied > 0) badge(p.x - camX, p.y - 26, '🪂 SUPPLIES ARRIVED', '#ffe082', Math.min(1, tm.supplied * 2));
   else if (S.idea.bulb) badge(p.x - camX, p.y - 26, '💡 BANJO HAS AN IDEA', '#b3e5fc', 0.8 + Math.sin(S.t * 5) * 0.2);
   else if (tm.tired && !S.finished) badge(p.x - camX, p.y - 26, '😓 EXHAUSTED', '#ffccbc', 1);
-  else if (!S.build.kpOn) tag(p.x - camX, p.y - 26, 'TEAM', '#5dd3ff');
-  else if (S.kpos[2]) tag(S.kpos[2].x - camX, S.kpos[2].y - 78, 'TEAM', '#5dd3ff'); // on the build site: over Matilda at the stone pile
+  else if (!S.build.kpOn) tag(p.x - camX, p.y - 26, TC() ? 'TEAM' : 'TEAM · 📵 COMMS OFF', '#5dd3ff');
+  else if (S.kpos[2]) tag(S.kpos[2].x - camX, S.kpos[2].y - 78, TC() ? 'TEAM' : 'TEAM · 📵 COMMS OFF', '#5dd3ff'); // on the build site: over Matilda at the stone pile
 }
 function badge(x, y, text, col, a) {
   ctx.save(); ctx.globalAlpha = a; ctx.font = 'bold 11px system-ui, sans-serif';
@@ -3058,7 +3180,8 @@ function badge(x, y, text, col, a) {
 function drawKoala(x, y, s, col, swing, mood, i, flip = false, carry = null, ex = {}) {
   const t = S.t;
   ctx.save(); ctx.translate(x, y); ctx.scale(s * (flip ? -1 : 1), s * (mood === 'sneak' ? 0.86 : 1));
-  if (mood === 'rest') ctx.translate(0, 6); // sitting down
+  if (mood === 'rest' || mood === 'wait') ctx.translate(0, 6); // sitting down
+  if (mood === 'wait') ctx.rotate(Math.sin(t * 1.1 + i * 1.7) * 0.035); // v8.0: a little fidget while they wait
   if (ex.tired) ctx.rotate(0.06);           // slumped forward
   if (ex.lead) { // a little leader pennant for the task they were handed
     ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.moveTo(-9, -18); ctx.lineTo(-11, -74); ctx.stroke();
@@ -3109,6 +3232,7 @@ function drawKoala(x, y, s, col, swing, mood, i, flip = false, carry = null, ex 
   ctx.fillStyle = '#1d1d1d';
   if (mood === 'happy' || mood === 'rest' || mood === 'drink') { ctx.strokeStyle = '#1d1d1d'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(-1, -36, 2, Math.PI, 0); ctx.arc(8, -36, 2, Math.PI, 0); ctx.stroke(); }
   else if (ex.tired || mood === 'struggle') { ctx.strokeStyle = '#1d1d1d'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(-3.5, -36); ctx.lineTo(1.5, -36.5); ctx.moveTo(5.5, -36.5); ctx.lineTo(10.5, -36); ctx.stroke(); }
+  else if (mood === 'wait' && (t * 0.8 + i * 0.61) % 3.2 < 0.13) { ctx.strokeStyle = '#1d1d1d'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(-3, -37); ctx.lineTo(1, -37); ctx.moveTo(6, -37); ctx.lineTo(10, -37); ctx.stroke(); } // blink
   else { ctx.beginPath(); ctx.arc(-1, -37, 1.7, 0, 7); ctx.arc(8, -37, 1.7, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-0.5, -37.6, 0.6, 0, 7); ctx.arc(8.5, -37.6, 0.6, 0, 7); ctx.fill(); }
   // big black nose
   ctx.fillStyle = '#262626'; ctx.beginPath(); ctx.ellipse(4, -31, 3.8, 4.8, 0, 0, 7); ctx.fill();
@@ -3128,6 +3252,7 @@ function drawKoala(x, y, s, col, swing, mood, i, flip = false, carry = null, ex 
   else if (mood === 'happy') a = -1.9 + Math.sin(t * 8 + i) * 0.3;
   else if (mood === 'stuck') a = Math.sin(t * 18 + i) * 1.1 - 0.4;
   else if (mood === 'struggle') a = -0.5 + Math.sin(t * 24) * 0.12; // saw jammed, arm trembling
+  else if (mood === 'wait') a = 0.7 + Math.sin(t * 1.3 + i * 1.9) * 0.16; // paws on knees, tapping
   else if (mood === 'rest') a = i % 2 ? -1.3 + Math.sin(t * 2 + i) * 0.25 : -1.7 + Math.max(0, Math.sin(t * 1.6 + i)) * 0.6; // munching / drinking
   else if (mood === 'drink') a = -1.75 + Math.max(0, Math.sin(t * 1.8 + i * 1.3)) * 0.55; // v7.6: water break
   else if (mood === 'sneak') a = -2.2;
@@ -3472,6 +3597,8 @@ export function restart() { reset(); }
 export function setSpeed(v) { settings.speed = clamp(+v || 1, 0.1, 5); snd.setSpeed(settings.speed); }
 export function setView(v) { settings.view = v; if (S) emitCaption(true); }
 export function setComms(on) { settings.comms = !!on; }
+// v8.0: all three links at once (Leader, Manager, Team)
+export function setLinks(l, m, t) { settings.lcomms = !!l; settings.comms = !!m; settings.tcomms = !!t; }
 export function select(role) { S.selected = role || null; }
 export function fastForward(seconds) { const step = 1 / 30, n = Math.round(seconds / step); S.silent = true; for (let i = 0; i < n; i++) { update(step); updateCamera(step); } S.silent = false; render(); }
 // Simulates a full run (used for testing pacing); returns the sim-time when the team finished.

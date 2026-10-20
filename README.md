@@ -22,8 +22,8 @@ Nobody can see the whole picture on their own:
 - The **team** can see neither. They're down in the bush doing the work.
 
 The journey works when vision flows down (leader ➜ manager), warnings and plans flow down to the team (manager ➜ team), and requests and progress flow back up (team ➜ manager ➜ leader).
-Use the **Perspective** buttons to see the world through each role's eyes (each view also shows only that role's speech bubbles and narration, so you can rewatch with one perspective to focus on that role's communication), and turn **Manager communication OFF**
-to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 204 days instead of about 166), and even build the wrong shape.
+Use the **Perspective** buttons to see the world through each role's eyes (each view also shows only that role's speech bubbles and narration, so you can rewatch with one perspective to focus on that role's communication), and turn the **Leader**, **Manager** or **Team communication** links OFF (any combination)
+to watch the same koalas in the same forest get surprised, take wrong turns and take much longer (about 236 days with every link OFF instead of about 173), and even build the wrong shape.
 
 ## What happens on the journey
 
@@ -120,6 +120,41 @@ sweat drops fly, and they slow right down to the finish (😓 **EXHAUSTED**). Th
 (meetings, surprises, coaching, course corrections) are never cut off by routine narration.
 
 **Rubble stays.** After the boulder is broken up, the rubble is swept to the side of the path and stays visible.
+
+## New in v8.0: three communication links, and Banjo's idea waits for an answer
+
+Communication can break at every level, not just in the middle. There are now **three independent toggles**, each in its role's colour:
+
+| Toggle | The link | When it's OFF |
+|---|---|---|
+| 🟡 **Leader comms** | Leader ➜ Manager | The vision, priorities, approvals (safety vests, saws, the supply drop), good news and answers to escalations never come down. The Manager only knows the build site is "somewhere east". Escalations still reach the Leader, but nothing comes back, so the koalas handle surprises carefully and slowly, unsure if the delay is okay. The Leader still leads other teams (outreach carries on). At the build site nobody has seen the vision, so layer 3 goes up the wrong shape and has to be redone. |
+| 🟣 **Manager comms** | Manager ➜ Team (and on up to the Leader) | The original OFF switch: the owl still sees every obstacle but never warns the koalas, never passes anything on, never coaches or organises. |
+| 🔵 **Team comms** | Team ➜ Manager, and koala to koala | The koalas don't report surprises, raise ideas, huddle or answer back. They coordinate less, so walking, hacking and building are slower, surprises cost more (first attempts fail), and Banjo keeps both of his ideas to himself. |
+
+A message travels link by link, and **the chain breaks at the first link that's OFF**, with a caption saying where (for example *"Banjo speaks up, but with Manager communication OFF the idea stops at the owl and never reaches the Leader."*).
+Each OFF link also shows on the canvas tag (*LEADER · 📵 COMMS OFF*). All 8 combinations are seeded and deterministic, and chapters, teaching mode, perspectives, spotlight, sound and outreach work in each.
+
+**Banjo's idea, reworked.** Just past the giant log Banjo spots a dry creek bed beside the shrubs. The koalas **sit down by the log** (small fidgets, paw-tapping and blinks, no walking on the spot)
+while the idea travels **up** (Banjo ➜ Manager ➜ Leader) and the decision comes back **down**. With every link ON the Leader adopts it, the approval comes down, and the koalas get up and follow Banjo along the creek.
+If any link is OFF the chain stops there and the koalas get up and hack through the shrubs the long way: Banjo keeps quiet (Team OFF), the idea stops at the owl (Manager OFF), or it sits in the Leader's inbox (Leader OFF).
+The map is stretched a little east of the log so the wait, the owl's snag in the branches and the cliff each get their own moment.
+
+**Changing a toggle restarts the run** (it changes the whole story). Before the first Play it stays paused on the opening scene, as in v7.9; while playing it carries on playing.
+The end summary lists which links were OFF, what that cost, and compares with the all-ON run (your own result this session, or the typical figure below). The buttons offer *Try with Manager comms OFF* or *Try with all comms ON*.
+In teaching mode the card notes which links are OFF, and key chapters (direction, everyday work, coaching, the surprises, Banjo's idea, the build) have their own teaching point per link.
+
+| Leader | Manager | Team | Project time | Real time at 1× |
+|---|---|---|---|---|
+| ON | ON | ON | about 173 days | about 5 min 46 s (346 s) |
+| **OFF** | ON | ON | about 198 days | about 6 min 34 s (394 s) |
+| ON | **OFF** | ON | about 219 days | about 7 min 16 s (436 s) |
+| ON | ON | **OFF** | about 194 days | about 6 min 27 s (387 s) |
+| **OFF** | **OFF** | ON | about 220 days | about 7 min 18 s (438 s) |
+| **OFF** | ON | **OFF** | about 204 days | about 6 min 46 s (406 s) |
+| ON | **OFF** | **OFF** | about 236 days | about 7 min 51 s (471 s) |
+| **OFF** | **OFF** | **OFF** | about 236 days | about 7 min 50 s (470 s) |
+
+Every OFF link costs time, and the costs add up. Manager communication is the most expensive single link (the owl's warnings are what keep the koalas out of trouble), and with every link OFF the same pyramid takes about 63 days longer than with every link ON.
 
 ## New in v7.9: opens paused, ready when you are
 
@@ -469,15 +504,17 @@ Project time: **1 project day = 2 seconds of animation at 1× speed.**
 
 | | Project time | Real time at 1× | Unwarned obstacles | Wrong turns | Surprises reported up | Manager meetings |
 |---|---|---|---|---|---|---|
-| Communication **ON** | **about 166 days** | about 5½ min (331 s) | 0 | 0 | 3 | 3 |
-| Communication **OFF** | **about 204 days** | about 6¾ min (407 s) | 8 | 13 | 0 | 3 |
+| Communication **ON** (all three links) | **about 173 days** | about 5¾ min (346 s) | 0 | 0 | 3 | 3 |
+| Manager communication **OFF** | **about 219 days** | about 7¼ min (437 s) | 8 | 13 | 0 | 3 |
+
+For every combination of the three v8.0 toggles, see the table in the v8.0 section above.
 
 With communication ON the run also has 1 team idea adopted (the creek route saves 4 to 6 days) and 1 rest break (about 4 days).
 With communication OFF there's no idea and no break, but the exhausted koalas slow right down.
 The build itself (including the climb back down) takes about 36 days with communication ON and about 48 days OFF (the wrong-shaped layer has to be redone).
 
 The finish summary shows "Pyramid built in N days" and compares it with the other mode: your own result if you've run both in this session, otherwise the typical figure.
-For example: "Without communication the same project usually takes about 204 days: 38 days lost."
+For example: "Without Manager communication the same project usually takes about 219 days: 46 days lost."
 
 ![Finish summary: pyramid built in about 157 days, compared with communication OFF](docs/finish-days.png)
 Use the speed slider (0.25× to 3×) to fit your session.
@@ -512,7 +549,7 @@ Use the speed slider (0.25× to 3×) to fit your session.
 | ↻ Restart | Start the journey again (<kbd>R</kbd>) |
 | Speed slider | 0.25× to 3× |
 | Perspective: Everything / Leader / Manager / Team | Fogs out what that role **can't** see, and shows only that role's dialogue and narration (<kbd>1</kbd> to <kbd>4</kbd>) |
-| Manager communication ON/OFF | When OFF, the manager still spots obstacles but never tells the koalas |
+| Leader / Manager / Team comms ON/OFF | Three links. Leader OFF: no vision, approvals or answers come down. Manager OFF: the owl still spots obstacles but never tells the koalas. Team OFF: the koalas don't report, raise ideas or coordinate. Changing one restarts the run (still paused if you haven't pressed Play) |
 | Click the eagle, owl, koalas or pyramid | Opens an info card about that role |
 | Hover over a koala | Shows its name (Kip, Banjo, Matilda or Wattle) |
 | 📖 Chapters | Lists every chapter; tap one to jump to it (<kbd>C</kbd>) |

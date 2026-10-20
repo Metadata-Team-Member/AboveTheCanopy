@@ -4,7 +4,18 @@ namespace AboveTheCanopy.Models;
 /// A chapter (teachable moment) in the story. <see cref="Mark"/> is the story event that starts it in the
 /// animation engine (canopy.js calls mark(...) when it happens), so chapters follow the real event order.
 /// </summary>
-public sealed record Chapter(string Mark, string Title, string Point, string[] Questions, string? OffPoint = null);
+public sealed record Chapter(string Mark, string Title, string Point, string[] Questions, string? OffPoint = null, string? LeaderOffPoint = null, string? TeamOffPoint = null)
+{
+    // v8.0: the teaching point for a combination of links. Ideas and surprises travel up (Team link first);
+    // vision, direction and the build travel down (Leader link first).
+    public string PointFor(bool l, bool m, bool t)
+    {
+        if (!m) return OffPoint ?? Point;
+        var up = Mark == "idea" || Mark.StartsWith("sp:") || Mark == "go" || Mark == "coach";
+        var lo = l ? null : LeaderOffPoint; var to = t ? null : TeamOffPoint;
+        return (up ? to ?? lo : lo ?? to) ?? Point;
+    }
+}
 
 public static class Chapters
 {
@@ -15,11 +26,13 @@ public static class Chapters
             new[] { "Who in your organisation can see the \"pyramid\"? How does everyone else find out about it?" }),
         new("dir", "Passing the direction down",
             "The Leader shares the vision with the Manager, who turns it into a plan and scouts the way.",
-            new[] { "How does direction reach your team: one clear message, or bits and pieces?", "What gets lost between the vision and the plan?" }),
+            new[] { "How does direction reach your team: one clear message, or bits and pieces?", "What gets lost between the vision and the plan?" },
+            LeaderOffPoint: "With Leader communication OFF the vision stays above the canopy: the Manager only knows the build site is \"somewhere east\" and plans as best it can."),
         new("go", "Everyday work",
             "The koalas set off and spend most of their time hacking through small bushes: the everyday work nobody up top sees.",
             new[] { "What is the \"bush hacking\" in your week that nobody sees?" },
-            "With communication OFF the koalas never hear the plan, so they argue about which way to go and wander west first."),
+            "With Manager communication OFF the koalas never hear the plan, so they argue about which way to go and wander west first.",
+            TeamOffPoint: "The koalas set off, but with Team communication OFF they don't answer back or check in, so nobody up the chain hears how it's going."),
         new("ob:vines", "The vines: a warning in time",
             "Warned early, the koalas arrive with cutting tools ready and clear the vines straight away.",
             new[] { "Which warning saved your team time recently? Which one did you never get?" },
@@ -27,7 +40,8 @@ public static class Chapters
         new("coach", "Coaching Wattle",
             "Managers grow people: a minute of one-to-one coaching helps Wattle, the smallest koala, for the rest of the journey.",
             new[] { "Who in your team is quietly struggling, and who would notice?", "What is one thing you could coach someone on this week?" },
-            "Nobody notices Wattle struggling, so she keeps falling behind."),
+            "Nobody notices Wattle struggling, so she keeps falling behind.",
+            TeamOffPoint: "With Team communication OFF Wattle doesn't say she's struggling, but a good manager notices anyway and coaches her."),
         new("ob:boulder", "The boulder & upskilling",
             "The boulder is too big to go around. A quick hammer-and-chisel training session makes the koalas able to break it down together.",
             new[] { "Where would an hour of training save your team days?" },
@@ -45,7 +59,9 @@ public static class Chapters
         new("sp:sinkhole", "Surprise! The sinkhole",
             "Nobody could have seen it coming. The koalas report it up, the Leader answers, and the answer comes back down.",
             new[] { "When something unplanned happens, how fast does the news travel up?", "Does an answer come back down?" },
-            "The koalas call up for help, but nobody answers. They handle the sinkhole alone, slowly."),
+            "The koalas call up for help, but nobody answers. They handle the sinkhole alone, slowly.",
+            LeaderOffPoint: "The koalas report it and the Manager escalates, but with Leader communication OFF no answer comes back down: they bridge it carefully, unsure the delay is okay.",
+            TeamOffPoint: "With Team communication OFF the koalas never report the sinkhole. Nobody up the chain even knows, and their first wobbly bridge sags."),
         new("ob:bog", "The bog",
             "The Manager mapped the firm spots, so the koalas know exactly what to gather: flat stepping stones.",
             new[] { "Does your team know what \"good\" looks like before it starts a job?" },
@@ -60,7 +76,9 @@ public static class Chapters
         new("idea", "Banjo's idea & course correction",
             "Team members lead too: Banjo spots a creek-bed shortcut, it travels up the chain, the Leader changes the plan, and Banjo gets the credit.",
             new[] { "How do ideas from the ground reach decision-makers where you work?", "Is changing the plan seen as a failure, or as good leadership?" },
-            "Banjo spots a shortcut, but with no one to pass it up to, the idea goes nowhere and the koalas hack through all the shrubbery."),
+            "Banjo spots a shortcut, but with no one to pass it up to, the idea goes nowhere and the koalas hack through all the shrubbery.",
+            LeaderOffPoint: "The koalas sit by the log while Banjo's idea travels up to the Leader, but with Leader communication OFF no decision comes back down, so they hack through the shrubs.",
+            TeamOffPoint: "With Team communication OFF Banjo keeps his creek idea to himself, so the koalas hack through every shrub the long way."),
         new("ob:cliff", "The cliff",
             "The Manager found the safe spot, so the koalas know to braid a vine rope and abseil down.",
             new[] { "Which risks does your manager scout ahead for you?" },
@@ -68,7 +86,9 @@ public static class Chapters
         new("sp:treefall", "Supply drop: leaders back the team",
             "A gum tree falls. The koalas ask for saws and safety gear, the Leader says YES, and a supply drop floats down through the canopy.",
             new[] { "What does your team need right now that only a leader can approve?" },
-            "The tree falls and nobody answers the koalas' call: no gear arrives, and they cut through it alone."),
+            "The tree falls and nobody answers the koalas' call: no gear arrives, and they cut through it alone.",
+            LeaderOffPoint: "A gum tree falls. The Manager asks for saws and safety gear, but with Leader communication OFF no yes comes back: no supply drop, so they hack at the trunk the slow way.",
+            TeamOffPoint: "A gum tree falls, and with Team communication OFF nobody reports it: no saws, no help, just a long, slow chop."),
         new("ob:bees", "The bees & Koala of the week",
             "Warned, the koalas tiptoe past the bees' nest. Then the owl names Matilda \"Koala of the week\" for keeping everyone calm.",
             new[] { "Who would you give the gum leaf to this week, and why?" },
@@ -76,7 +96,9 @@ public static class Chapters
         new("sp:snake", "The snake",
             "Some delays you just wait out safely. The news goes up, the Leader says \"no rush\", and the goal stays the same.",
             new[] { "How does your team handle delays that nobody can control?" },
-            "Alone again: the koalas back off, wait, and nobody up top knows why they're late."),
+            "Alone again: the koalas back off, wait, and nobody up top knows why they're late.",
+            LeaderOffPoint: "The news goes up, but with Leader communication OFF no \"no rush\" comes back down, so the koalas wait nervously, unsure how long is okay.",
+            TeamOffPoint: "With Team communication OFF the koalas don't say a word: they back off and wait, and nobody up top knows why they're late."),
         new("ob:wall", "The rock wall",
             "Gather poles, lash a ladder, up it goes: preparation pays off.",
             new[] { "What is your team's next \"rock wall\", and what do you need to gather now?" },
@@ -92,7 +114,9 @@ public static class Chapters
         new("build", "Building the final product",
             "The journey was a string of milestones where the team built knowledge and skills. Now they use them all: gathering materials, hammer and chisel, planks for a ramp, Banjo's log rollers, ropes, a ladder, Kip leading a section and a confident Wattle. The owl organises, brings stone and relays progress up, but never takes over: the koalas build.",
             new[] { "Which skills that your team built along the way make the final delivery possible?", "Does your manager support the work or take it over? What does good support look like?" },
-            "Nobody told the koalas what the final product looks like: the blocks come out all different sizes, there's no owl bringing materials, and a whole layer has to be torn down and rebuilt (\"Wait, was it meant to be pointy?\")."),
+            "Nobody told the koalas what the final product looks like: the blocks come out all different sizes, there's no owl bringing materials, and a whole layer has to be torn down and rebuilt (\"Wait, was it meant to be pointy?\").",
+            LeaderOffPoint: "The owl still organises the build, but with Leader communication OFF nobody below has seen the vision, so layer 3 goes up the wrong shape and has to be redone.",
+            TeamOffPoint: "The owl organises the build, but with Team communication OFF the koalas don't call out to each other: no huddle plan, no log rollers, and every step takes longer."),
         new("reality", "Vision becomes reality",
             "All four koalas set the capstone together, and the Leader's golden blueprint turns solid: the Leader held the vision, the team made it real. Then, safety first, they climb back down one at a time before anyone celebrates.",
             new[] { "Is your team's picture of the final product clear enough to build it without you?", "Who gets the credit when the vision becomes real?" },
